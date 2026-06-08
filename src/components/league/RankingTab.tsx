@@ -27,15 +27,23 @@ export function RankingTab({ league }: RankingTabProps) {
     return baselines.reduce((max, b) => b.effective_date > max ? b.effective_date : max, '')
   }, [baselines])
 
-  // Auto-initialise le "since" à la dernière baseline dès le changement de ligue
+  // Auto-set le "since" à la dernière baseline :
+  // - au premier chargement de chaque ligue
+  // - quand une baseline plus récente que le since courant est ajoutée en temps réel
   const initializedLeague = useRef('')
+  const sinceDateRef = useRef(sinceDate)
+  sinceDateRef.current = sinceDate
+
   useEffect(() => {
-    if (!lastBaselineDate || initializedLeague.current === league.id) return
-    setSinceDate(lastBaselineDate)
-    initializedLeague.current = league.id
+    if (!lastBaselineDate) return
+    const isNewLeague = initializedLeague.current !== league.id
+    const isNewerBaseline = lastBaselineDate > sinceDateRef.current
+    if (isNewLeague || isNewerBaseline) {
+      setSinceDate(lastBaselineDate)
+      initializedLeague.current = league.id
+    }
   }, [lastBaselineDate, league.id])
 
-  // Reset l'initialisation quand la ligue change (pour réinitialiser sur la nouvelle ligue)
   useEffect(() => {
     initializedLeague.current = ''
   }, [league.id])

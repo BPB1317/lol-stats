@@ -80,7 +80,7 @@ export function computeLeagueRatings(
   const inputMap: Record<string, number> = {}
   for (const team of teams) {
     const sorted = baselines
-      .filter(b => b.team_id === team.id && b.effective_date < sinceDate)
+      .filter(b => b.team_id === team.id && b.effective_date <= sinceDate)
       .sort((a, b) => b.effective_date.localeCompare(a.effective_date))
     inputMap[team.id] = sorted[0]?.rating ?? 1500
   }
