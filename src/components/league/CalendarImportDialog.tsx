@@ -13,7 +13,6 @@ interface ParsedSeries {
   team2Name: string
   score1: number
   score2: number
-  stage: string
   date: string
   team1Id: string | null
   team2Id: string | null
@@ -61,14 +60,10 @@ function parseLine(line: string, teamMap: Map<string, string>): ParsedSeries | n
   const team1Name = before[before.length - 1]
   const team2Name = after[0]
 
-  // Stage: optional — look for ROUND/WEEK/FINALS/PLAY-IN pattern
-  const stageMatch = cols.find(c => /^(ROUND\d*|WEEK\d*|FINALS|SEMIFINALS|PLAY[-_]IN|PLAYOFF|GROUPS?)$/i.test(c))
-  const stage = stageMatch ? stageMatch.toUpperCase().replace('-', '_') : ''
-
   const team1Id = teamMap.get(team1Name.toLowerCase()) ?? null
   const team2Id = teamMap.get(team2Name.toLowerCase()) ?? null
 
-  return { team1Name, team2Name, score1, score2, stage, date, team1Id, team2Id, games: score1 + score2 }
+  return { team1Name, team2Name, score1, score2, date, team1Id, team2Id, games: score1 + score2 }
 }
 
 export function CalendarImportDialog({ league, teams, onClose }: CalendarImportDialogProps) {
@@ -108,7 +103,7 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
         team2_id:   series.team2Id!,
         winner_id:  series.team1Id!,
         score:      `${series.score1}-${series.score2}`,
-        stage:      series.stage,
+        stage:      '',
         match_date: series.date,
       })),
       ...Array.from({ length: series.score2 }, () => ({
@@ -117,7 +112,7 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
         team2_id:   series.team2Id!,
         winner_id:  series.team2Id!,
         score:      `${series.score1}-${series.score2}`,
-        stage:      series.stage,
+        stage:      '',
         match_date: series.date,
       })),
     ])
