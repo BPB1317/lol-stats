@@ -6,6 +6,7 @@ import { useMatches, useMatchNotes } from '@/hooks/useMatches'
 import { computeLeagueRatings } from '@/lib/rating'
 import { RatingControls } from './RatingControls'
 import { RankingTable } from './RankingTable'
+import { EloCalculator } from './EloCalculator'
 
 interface RankingTabProps {
   league: League
@@ -72,6 +73,7 @@ export function RankingTab({ league }: RankingTabProps) {
         </div>
         <RankingTable ratings={ratings} />
       </div>
+      <EloCalculator ratings={ratings} />
     </div>
   )
 }
