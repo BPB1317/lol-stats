@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { format, subMonths } from 'date-fns'
 import type { League } from '@/types'
 import { useTeams, useAllBaselines } from '@/hooks/useTeams'
@@ -12,14 +12,32 @@ interface RankingTabProps {
 }
 
 export function RankingTab({ league }: RankingTabProps) {
-  const defaultSince = format(subMonths(new Date(), 3), 'yyyy-MM-dd')
-  const [sinceDate, setSinceDate] = useState(defaultSince)
+  const [sinceDate, setSinceDate] = useState(format(subMonths(new Date(), 3), 'yyyy-MM-dd'))
   const [sensitivity, setSensitivity] = useState(100)
 
   const { teams, loading: teamsLoading } = useTeams(league.id)
   const baselines = useAllBaselines(league.id)
   const { matches, loading: matchesLoading } = useMatches(league.id)
   const notes = useMatchNotes(league.id)
+
+  // Date de la dernière mise à jour des baselines pour cette ligue
+  const lastBaselineDate = useMemo(() => {
+    if (baselines.length === 0) return null
+    return baselines.reduce((max, b) => b.effective_date > max ? b.effective_date : max, '')
+  }, [baselines])
+
+  // Auto-initialise le "since" à la dernière baseline dès le changement de ligue
+  const initializedLeague = useRef('')
+  useEffect(() => {
+    if (!lastBaselineDate || initializedLeague.current === league.id) return
+    setSinceDate(lastBaselineDate)
+    initializedLeague.current = league.id
+  }, [lastBaselineDate, league.id])
+
+  // Reset l'initialisation quand la ligue change (pour réinitialiser sur la nouvelle ligue)
+  useEffect(() => {
+    initializedLeague.current = ''
+  }, [league.id])
 
   const ratings = useMemo(() => {
     if (!teams.length) return []
@@ -41,9 +59,16 @@ export function RankingTab({ league }: RankingTabProps) {
       <div className="rounded-xl overflow-hidden" style={{ background: 'hsl(222 47% 14%)', border: '1px solid hsl(216 34% 22%)' }}>
         <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: 'hsl(216 34% 22%)' }}>
           <h2 className="text-sm font-semibold text-white">Classement — {league.name}</h2>
-          <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
-            Seuil notes : {(league.threshold * 100).toFixed(0)}%
-          </span>
+          <div className="flex items-center gap-4">
+            {lastBaselineDate && (
+              <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+                Last updated : {format(new Date(lastBaselineDate + 'T00:00:00'), 'dd/MM/yyyy')}
+              </span>
+            )}
+            <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+              Seuil notes : {(league.threshold * 100).toFixed(0)}%
+            </span>
+          </div>
         </div>
         <RankingTable ratings={ratings} />
       </div>
