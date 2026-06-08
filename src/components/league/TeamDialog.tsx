@@ -63,7 +63,7 @@ interface BaselineDialogProps {
 }
 
 export function BaselineDialog({ team, baselines, onClose }: BaselineDialogProps) {
-  const [rating, setRating] = useState(0.5)
+  const [rating, setRating] = useState(1500)
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [loading, setLoading] = useState(false)
 
@@ -84,12 +84,12 @@ export function BaselineDialog({ team, baselines, onClose }: BaselineDialogProps
         <div className="p-5 space-y-4">
           <form onSubmit={handleAdd} className="flex gap-3 items-end">
             <div className="flex-1">
-              <label className="block text-xs mb-1" style={{ color: 'hsl(215 20% 65%)' }}>Rating (0–1)</label>
+              <label className="block text-xs mb-1" style={{ color: 'hsl(215 20% 65%)' }}>ELO Input (ex: 1500)</label>
               <input
                 type="number"
-                min="0" max="1" step="0.01"
+                min="0" max="9999" step="1"
                 value={rating}
-                onChange={e => setRating(parseFloat(e.target.value))}
+                onChange={e => setRating(parseInt(e.target.value))}
                 className="w-full rounded-lg px-2 py-2 text-sm text-white outline-none"
                 style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)' }}
               />
@@ -111,11 +111,11 @@ export function BaselineDialog({ team, baselines, onClose }: BaselineDialogProps
 
           <div className="space-y-1 max-h-60 overflow-y-auto">
             {baselines.length === 0 && (
-              <p className="text-xs text-center py-4" style={{ color: 'hsl(215 20% 65%)' }}>Aucune baseline (défaut: 50%)</p>
+              <p className="text-xs text-center py-4" style={{ color: 'hsl(215 20% 65%)' }}>Aucune baseline (défaut: 1500 ELO)</p>
             )}
             {baselines.map(b => (
               <div key={b.id} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: 'hsl(222 47% 11%)' }}>
-                <span className="text-sm text-white font-mono">{(b.rating * 100).toFixed(1)}%</span>
+                <span className="text-sm text-white font-mono">{Math.round(b.rating)} ELO</span>
                 <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>{format(new Date(b.effective_date + 'T00:00:00'), 'dd/MM/yyyy')}</span>
                 <button onClick={() => deleteBaseline(b.id)} className="text-xs text-red-400 hover:text-red-300">Suppr.</button>
               </div>

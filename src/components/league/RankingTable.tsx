@@ -2,31 +2,28 @@ import type { TeamRating } from '@/types'
 
 interface RankingTableProps {
   ratings: TeamRating[]
-  threshold: number
 }
 
 function DeltaBadge({ delta }: { delta: number }) {
-  if (Math.abs(delta) < 0.001) {
+  if (Math.abs(delta) < 1) {
     return <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>—</span>
   }
   const color = delta > 0 ? '#4ade80' : '#f87171'
   const sign = delta > 0 ? '▲' : '▼'
   return (
     <span className="text-xs font-medium" style={{ color }}>
-      {sign} {Math.abs(delta * 100).toFixed(1)}%
+      {sign} {Math.abs(delta).toFixed(0)}
     </span>
   )
 }
 
-function MiniBar({ value, max }: { value: number; max: number }) {
-  const pct = Math.round((value / max) * 100)
-  const color = value >= 0.7 ? '#4ade80' : value >= 0.5 ? '#60a5fa' : '#f87171'
+function EloDisplay({ input, output }: { input: number; output: number }) {
+  const color = output >= input ? '#4ade80' : output < input ? '#f87171' : '#60a5fa'
   return (
-    <div className="flex items-center gap-2">
-      <div className="h-1.5 rounded-full w-20 overflow-hidden" style={{ background: 'hsl(216 34% 22%)' }}>
-        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
-      </div>
-      <span className="text-xs font-mono text-white">{(value * 100).toFixed(1)}%</span>
+    <div className="flex items-center justify-end gap-2">
+      <span className="text-xs font-mono text-white font-semibold" style={{ color }}>
+        {Math.round(output)}
+      </span>
     </div>
   )
 }
@@ -36,12 +33,12 @@ function HistoryDots({ history, input }: { history: TeamRating['history']; input
   return (
     <div className="flex items-center gap-1">
       {last8.map((entry, i) => {
-        const isWin = entry.note > input
+        const isWin = entry.performance > input
         return (
           <div
             key={i}
-            title={`${entry.opponentName}: ${(entry.note * 100).toFixed(0)}%`}
-            className="w-2 h-2 rounded-full"
+            title={`${entry.opponentName}: ${Math.round(entry.performance)} ELO (note: ${(entry.note * 100).toFixed(0)}%)`}
+            className="w-2 h-2 rounded-full cursor-default"
             style={{ background: isWin ? '#4ade80' : '#f87171' }}
           />
         )
@@ -50,7 +47,7 @@ function HistoryDots({ history, input }: { history: TeamRating['history']; input
   )
 }
 
-export function RankingTable({ ratings, threshold }: RankingTableProps) {
+export function RankingTable({ ratings }: RankingTableProps) {
   const sorted = [...ratings].sort((a, b) => b.output - a.output)
 
   if (sorted.length === 0) {
@@ -86,11 +83,11 @@ export function RankingTable({ ratings, threshold }: RankingTableProps) {
               <td className="py-3 px-4 font-medium text-white">{r.team.name}</td>
               <td className="py-3 px-4 text-right">
                 <span className="font-mono text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
-                  {(r.input * 100).toFixed(1)}%
+                  {Math.round(r.input)}
                 </span>
               </td>
               <td className="py-3 px-4 text-right">
-                <MiniBar value={r.output} max={threshold} />
+                <EloDisplay input={r.input} output={r.output} />
               </td>
               <td className="py-3 px-4 text-center">
                 <DeltaBadge delta={r.delta} />

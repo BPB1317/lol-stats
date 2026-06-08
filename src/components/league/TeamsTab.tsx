@@ -17,7 +17,7 @@ function TeamRow({ team, onBaselines }: { team: Team; onBaselines: () => void })
       <td className="py-3 px-4 font-medium text-white">{team.name}</td>
       <td className="py-3 px-4 text-center">
         <span className="font-mono text-sm" style={{ color: 'hsl(217 91% 60%)' }}>
-          {latest ? `${(latest.rating * 100).toFixed(1)}%` : '50.0%'}
+          {latest ? `${Math.round(latest.rating)} ELO` : '1500 ELO'}
         </span>
         {latest && (
           <span className="ml-2 text-xs" style={{ color: 'hsl(215 20% 65%)' }}>

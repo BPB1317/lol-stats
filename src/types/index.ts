@@ -49,7 +49,8 @@ export interface MatchNote {
 }
 
 export interface RatingEntry {
-  note: number
+  note: number        // valeur 0-1 saisie par l'utilisateur
+  performance: number // ELO de la performance (opponent_input + adjusted_delta)
   date: string
   matchId: string
   opponentName: string

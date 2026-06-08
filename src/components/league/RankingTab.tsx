@@ -14,7 +14,7 @@ interface RankingTabProps {
 export function RankingTab({ league }: RankingTabProps) {
   const defaultSince = format(subMonths(new Date(), 3), 'yyyy-MM-dd')
   const [sinceDate, setSinceDate] = useState(defaultSince)
-  const [sensitivity, setSensitivity] = useState(0.1)
+  const [sensitivity, setSensitivity] = useState(100)
 
   const { teams, loading: teamsLoading } = useTeams(league.id)
   const baselines = useAllBaselines(league.id)
@@ -42,10 +42,10 @@ export function RankingTab({ league }: RankingTabProps) {
         <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: 'hsl(216 34% 22%)' }}>
           <h2 className="text-sm font-semibold text-white">Classement — {league.name}</h2>
           <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
-            Seuil max : {(league.threshold * 100).toFixed(0)}%
+            Seuil notes : {(league.threshold * 100).toFixed(0)}%
           </span>
         </div>
-        <RankingTable ratings={ratings} threshold={league.threshold} />
+        <RankingTable ratings={ratings} />
       </div>
     </div>
   )
