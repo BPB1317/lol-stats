@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Match, MatchNote } from '@/types'
 
 export function useMatches(leagueId: string) {
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
+  const fetchRef = useRef(async () => {})
 
   useEffect(() => {
     if (!leagueId) return
-    const fetch = async () => {
+    const doFetch = async () => {
       const { data } = await supabase
         .from('matches')
         .select(`
@@ -22,26 +23,28 @@ export function useMatches(leagueId: string) {
       setMatches((data ?? []) as Match[])
       setLoading(false)
     }
-    fetch()
+    fetchRef.current = doFetch
+    doFetch()
 
     const channel = supabase
       .channel(`matches-${leagueId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, fetch)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_notes' }, fetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, doFetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_notes' }, doFetch)
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
   }, [leagueId])
 
-  return { matches, loading }
+  return { matches, loading, refetch: () => fetchRef.current() }
 }
 
 export function useMatchNotes(leagueId: string) {
   const [notes, setNotes] = useState<MatchNote[]>([])
+  const fetchRef = useRef(async () => {})
 
   useEffect(() => {
     if (!leagueId) return
-    const fetch = async () => {
+    const doFetch = async () => {
       const { data: matchIds } = await supabase
         .from('matches')
         .select('id')
@@ -55,17 +58,18 @@ export function useMatchNotes(leagueId: string) {
         .order('note_date', { ascending: false })
       setNotes(data ?? [])
     }
-    fetch()
+    fetchRef.current = doFetch
+    doFetch()
 
     const channel = supabase
       .channel(`notes-${leagueId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_notes' }, fetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_notes' }, doFetch)
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
   }, [leagueId])
 
-  return notes
+  return { notes, refetch: () => fetchRef.current() }
 }
 
 export async function addMatch(

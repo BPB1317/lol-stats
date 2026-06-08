@@ -19,7 +19,7 @@ export function RankingTab({ league }: RankingTabProps) {
   const { teams, loading: teamsLoading } = useTeams(league.id)
   const baselines = useAllBaselines(league.id)
   const { matches, loading: matchesLoading } = useMatches(league.id)
-  const notes = useMatchNotes(league.id)
+  const { notes } = useMatchNotes(league.id)
 
   // Date de la dernière mise à jour des baselines pour cette ligue
   const lastBaselineDate = useMemo(() => {

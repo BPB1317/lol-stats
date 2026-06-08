@@ -18,12 +18,19 @@ function stagePriority(stage: string): number {
 
 export function MatchesTab({ league }: MatchesTabProps) {
   const { teams } = useTeams(league.id)
-  const { matches, loading } = useMatches(league.id)
-  const notes = useMatchNotes(league.id)
+  const { matches, loading, refetch: refetchMatches } = useMatches(league.id)
+  const { notes, refetch: refetchNotes } = useMatchNotes(league.id)
   const [showDialog, setShowDialog] = useState(false)
   const [showImport, setShowImport] = useState(false)
   const [editMatch, setEditMatch] = useState<(Match & { note?: MatchNote }) | undefined>()
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+
+  const handleDialogClose = () => {
+    refetchMatches()
+    refetchNotes()
+    setShowDialog(false)
+    setEditMatch(undefined)
+  }
 
   const matchesWithNotes = matches.map(m => ({
     ...m,
@@ -126,7 +133,7 @@ export function MatchesTab({ league }: MatchesTabProps) {
                     <td className="py-2.5 px-4 text-right">
                       <div className="flex justify-end gap-1">
                         <button
-                          onClick={() => { setEditMatch(m); setShowDialog(true) }}
+                          onClick={() => { setEditMatch(m as Match & { note?: MatchNote }); setShowDialog(true) }}
                           className="text-xs px-2 py-1 rounded hover:opacity-80"
                           style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}
                         >
@@ -135,7 +142,7 @@ export function MatchesTab({ league }: MatchesTabProps) {
                         {confirmDelete === m.id ? (
                           <>
                             <button
-                              onClick={async () => { await deleteMatch(m.id); setConfirmDelete(null) }}
+                              onClick={async () => { await deleteMatch(m.id); refetchMatches(); refetchNotes(); setConfirmDelete(null) }}
                               className="text-xs px-2 py-1 rounded"
                               style={{ background: 'hsl(0 72% 51%)', color: 'white' }}
                             >
@@ -173,7 +180,7 @@ export function MatchesTab({ league }: MatchesTabProps) {
           league={league}
           teams={teams}
           match={editMatch}
-          onClose={() => { setShowDialog(false); setEditMatch(undefined) }}
+          onClose={handleDialogClose}
         />
       )}
       {showImport && (

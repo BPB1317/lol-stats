@@ -17,7 +17,6 @@ interface ParsedSeries {
   date: string
   team1Id: string | null
   team2Id: string | null
-  winnerId: string | null
   games: number
 }
 
@@ -48,11 +47,10 @@ function parseLine(line: string, teamMap: Map<string, string>): ParsedSeries | n
   const score2 = parseInt(scoreParts[1], 10)
   if (isNaN(score1) || isNaN(score2) || score1 + score2 <= 0) return null
 
-  const team1Id  = teamMap.get(team1Name.toLowerCase()) ?? null
-  const team2Id  = teamMap.get(team2Name.toLowerCase()) ?? null
-  const winnerId = score1 > score2 ? team1Id : score2 > score1 ? team2Id : null
+  const team1Id = teamMap.get(team1Name.toLowerCase()) ?? null
+  const team2Id = teamMap.get(team2Name.toLowerCase()) ?? null
 
-  return { team1Name, team2Name, score1, score2, stage, date, team1Id, team2Id, winnerId, games: score1 + score2 }
+  return { team1Name, team2Name, score1, score2, stage, date, team1Id, team2Id, games: score1 + score2 }
 }
 
 export function CalendarImportDialog({ league, teams, onClose }: CalendarImportDialogProps) {
@@ -84,17 +82,27 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
     if (!valid.length) return
     setImporting(true)
 
-    const rows = valid.flatMap(series =>
-      Array.from({ length: series.games }, (_, i) => ({
+    // score1 games won by team1, score2 games won by team2 (team order unchanged)
+    const rows = valid.flatMap(series => [
+      ...Array.from({ length: series.score1 }, () => ({
         league_id:  league.id,
         team1_id:   series.team1Id!,
         team2_id:   series.team2Id!,
-        winner_id:  series.winnerId,
-        score:      `${series.score1}-${series.score2} G${i + 1}`,
+        winner_id:  series.team1Id!,
+        score:      `${series.score1}-${series.score2}`,
         stage:      series.stage,
         match_date: series.date,
-      }))
-    )
+      })),
+      ...Array.from({ length: series.score2 }, () => ({
+        league_id:  league.id,
+        team1_id:   series.team1Id!,
+        team2_id:   series.team2Id!,
+        winner_id:  series.team2Id!,
+        score:      `${series.score1}-${series.score2}`,
+        stage:      series.stage,
+        match_date: series.date,
+      })),
+    ])
 
     const { data, error } = await supabase.from('matches').insert(rows).select()
     setResult({
