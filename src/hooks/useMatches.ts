@@ -122,6 +122,31 @@ export async function updateMatch(
   return null
 }
 
+export async function upsertNote(
+  matchId: string,
+  noteId: string | undefined,
+  noteTeam1: number,
+  noteDate: string,
+  team1Id: string,
+  team2Id: string
+) {
+  if (noteId) {
+    const { error } = await supabase
+      .from('match_notes')
+      .update({ note_team1: noteTeam1, note_date: noteDate })
+      .eq('id', noteId)
+    return error
+  }
+  const { error } = await supabase.from('match_notes').insert({
+    match_id: matchId,
+    note_date: noteDate,
+    note_team1: noteTeam1,
+    team1_id: team1Id,
+    team2_id: team2Id,
+  })
+  return error
+}
+
 export async function deleteMatch(id: string) {
   const { error } = await supabase.from('matches').delete().eq('id', id)
   return error
