@@ -35,12 +35,22 @@ export function useTeamBaselines(teamId: string) {
 
   useEffect(() => {
     if (!teamId) return
-    supabase
-      .from('team_baselines')
-      .select('*')
-      .eq('team_id', teamId)
-      .order('effective_date', { ascending: false })
-      .then(({ data }) => setBaselines(data ?? []))
+    const fetch = () => {
+      supabase
+        .from('team_baselines')
+        .select('*')
+        .eq('team_id', teamId)
+        .order('effective_date', { ascending: false })
+        .then(({ data }) => setBaselines(data ?? []))
+    }
+    fetch()
+
+    const channel = supabase
+      .channel(`team-baselines-${teamId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_baselines' }, fetch)
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [teamId])
 
   return baselines

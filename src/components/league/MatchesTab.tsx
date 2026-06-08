@@ -4,6 +4,7 @@ import type { League, Match, MatchNote } from '@/types'
 import { useTeams } from '@/hooks/useTeams'
 import { useMatches, useMatchNotes, deleteMatch } from '@/hooks/useMatches'
 import { MatchDialog } from './MatchDialog'
+import { CalendarImportDialog } from './CalendarImportDialog'
 
 interface MatchesTabProps {
   league: League
@@ -20,6 +21,7 @@ export function MatchesTab({ league }: MatchesTabProps) {
   const { matches, loading } = useMatches(league.id)
   const notes = useMatchNotes(league.id)
   const [showDialog, setShowDialog] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [editMatch, setEditMatch] = useState<(Match & { note?: MatchNote }) | undefined>()
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
@@ -44,13 +46,22 @@ export function MatchesTab({ league }: MatchesTabProps) {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-sm font-semibold text-white">Matchs — {league.name}</h2>
-        <button
-          onClick={() => { setEditMatch(undefined); setShowDialog(true) }}
-          className="px-3 py-2 text-sm rounded-lg font-medium"
-          style={{ background: 'hsl(217 91% 60%)', color: 'hsl(222 47% 11%)' }}
-        >
-          + Ajouter un match
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowImport(true)}
+            className="px-3 py-2 text-sm rounded-lg font-medium"
+            style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 85%)' }}
+          >
+            Importer calendrier
+          </button>
+          <button
+            onClick={() => { setEditMatch(undefined); setShowDialog(true) }}
+            className="px-3 py-2 text-sm rounded-lg font-medium"
+            style={{ background: 'hsl(217 91% 60%)', color: 'hsl(222 47% 11%)' }}
+          >
+            + Ajouter un match
+          </button>
+        </div>
       </div>
 
       {stagesSorted.length === 0 && (
@@ -163,6 +174,13 @@ export function MatchesTab({ league }: MatchesTabProps) {
           teams={teams}
           match={editMatch}
           onClose={() => { setShowDialog(false); setEditMatch(undefined) }}
+        />
+      )}
+      {showImport && (
+        <CalendarImportDialog
+          league={league}
+          teams={teams}
+          onClose={() => setShowImport(false)}
         />
       )}
     </div>
