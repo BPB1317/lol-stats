@@ -11,32 +11,18 @@ import { TeamsTab } from '@/components/league/TeamsTab'
 
 type SubTab = 'ranking' | 'matches' | 'teams'
 
-function App() {
-  const [session, setSession] = useState<Session | null>(null)
-  const [authChecked, setAuthChecked] = useState(false)
+// Composant séparé : monté uniquement après authentification
+// → les hooks Supabase s'exécutent avec une session active, RLS OK
+function AuthenticatedApp({ session }: { session: Session }) {
   const [activeLeagueId, setActiveLeagueId] = useState<string>('')
   const [subTab, setSubTab] = useState<SubTab>('ranking')
   const { leagues, loading: leaguesLoading } = useLeagues()
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setAuthChecked(true)
-    })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-    return () => subscription.unsubscribe()
-  }, [])
 
   useEffect(() => {
     if (!activeLeagueId && leagues.length > 0) {
       setActiveLeagueId(leagues[0].id)
     }
   }, [leagues, activeLeagueId])
-
-  if (!authChecked) return null
-  if (!session) return <LoginForm />
 
   const activeLeague = leagues.find(l => l.id === activeLeagueId)
 
@@ -86,6 +72,26 @@ function App() {
       )}
     </Layout>
   )
+}
+
+function App() {
+  const [session, setSession] = useState<Session | null>(null)
+  const [authChecked, setAuthChecked] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+      setAuthChecked(true)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  if (!authChecked) return null
+  if (!session) return <LoginForm />
+  return <AuthenticatedApp session={session} />
 }
 
 export default App
