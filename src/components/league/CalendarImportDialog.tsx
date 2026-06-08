@@ -29,23 +29,41 @@ function buildTeamMap(teams: Team[]): Map<string, string> {
 }
 
 function parseLine(line: string, teamMap: Map<string, string>): ParsedSeries | null {
-  const cols = line.split('\t')
-  if (cols.length < 7) return null
+  const cols = line.split('\t').map(c => c.trim()).filter(Boolean)
+  if (cols.length < 3) return null
 
-  const team1Name = cols[1].trim()
-  const scoreStr  = cols[2].trim()
-  const team2Name = cols[3].trim()
-  const stage     = cols[4].trim().toUpperCase()
-  const date      = cols[6].trim()
+  // Detect date (YYYY-MM-DD)
+  const dateIdx = cols.findIndex(c => /^\d{4}-\d{2}-\d{2}$/.test(c))
+  if (dateIdx === -1) return null
+  const date = cols[dateIdx]
 
-  if (!team1Name || !team2Name || !stage || !date) return null
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null
-
-  const scoreParts = scoreStr.split(/\s*-\s*/)
-  if (scoreParts.length !== 2) return null
+  // Detect score (digits - digits)
+  const scoreIdx = cols.findIndex(c => /^\d+\s*-\s*\d+$/.test(c))
+  if (scoreIdx === -1) return null
+  const scoreParts = cols[scoreIdx].split(/\s*-\s*/)
   const score1 = parseInt(scoreParts[0], 10)
   const score2 = parseInt(scoreParts[1], 10)
   if (isNaN(score1) || isNaN(score2) || score1 + score2 <= 0) return null
+
+  // Ignore: date col, score col, version-like (16.10), matchup summaries (X vs Y)
+  const isNoise = (c: string, i: number) =>
+    i === dateIdx || i === scoreIdx ||
+    /^\d+\.\d+$/.test(c) ||         // version "16.10"
+    /\bvs\b/i.test(c)               // "AL vs BLG"
+
+  // Teams: string cols before and after score (excluding noise)
+  const before = cols.filter((c, i) => i < scoreIdx && !isNoise(c, i))
+  const after  = cols.filter((c, i) => i > scoreIdx && i < dateIdx && !isNoise(c, i))
+
+  if (!before.length || !after.length) return null
+
+  // Closest to score wins
+  const team1Name = before[before.length - 1]
+  const team2Name = after[0]
+
+  // Stage: optional — look for ROUND/WEEK/FINALS/PLAY-IN pattern
+  const stageMatch = cols.find(c => /^(ROUND\d*|WEEK\d*|FINALS|SEMIFINALS|PLAY[-_]IN|PLAYOFF|GROUPS?)$/i.test(c))
+  const stage = stageMatch ? stageMatch.toUpperCase().replace('-', '_') : ''
 
   const team1Id = teamMap.get(team1Name.toLowerCase()) ?? null
   const team2Id = teamMap.get(team2Name.toLowerCase()) ?? null
@@ -143,8 +161,7 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
 
         <div className="p-5 space-y-4">
           <p className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
-            Collez le calendrier (colonnes séparées par des tabulations) :<br />
-            <span className="font-mono opacity-60">Matchup ⇥ Team1 ⇥ Score ⇥ Team2 ⇥ Stage ⇥ Version ⇥ Date</span>
+            Collez le calendrier (copier-coller depuis le site). Seuls la date, les équipes et le score sont nécessaires.
           </p>
 
           <textarea
@@ -154,7 +171,7 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
             spellCheck={false}
             className="w-full rounded-lg px-3 py-2 text-xs font-mono resize-y"
             style={{ background: 'hsl(222 47% 11%)', border: '1px solid hsl(216 34% 22%)', color: 'hsl(215 20% 85%)', outline: 'none' }}
-            placeholder={'AL vs BLG\tAnyone s Legend\t0 - 3\tBilibili Gaming\tROUND3\t16.10\t2026-06-08'}
+            placeholder="Coller ici…"
           />
 
           {unknownTeams.length > 0 && (
@@ -188,7 +205,6 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
                           <td className="px-3 py-1.5 font-mono" style={{ color: 'hsl(215 20% 65%)' }}>
                             {p.score1}–{p.score2}
                           </td>
-                          <td className="px-3 py-1.5" style={{ color: 'hsl(217 91% 60%)' }}>{p.stage}</td>
                           <td className="px-3 py-1.5" style={{ color: 'hsl(215 20% 65%)' }}>{p.date}</td>
                           <td className="px-3 py-1.5 text-right" style={{ color: ok ? 'hsl(215 20% 65%)' : 'hsl(38 92% 70%)' }}>
                             {ok ? `${p.games} game${p.games > 1 ? 's' : ''}` : '⚠ inconnues'}
