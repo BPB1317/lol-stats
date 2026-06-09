@@ -37,7 +37,7 @@ function HistoryDots({ history }: { history: TeamRating['history'] }) {
           key={i}
           title={`${entry.opponentName}: ${Math.round(entry.performance)} ELO (note: ${(entry.note * 100).toFixed(0)}%)`}
           className="w-2 h-2 rounded-full cursor-default"
-          style={{ background: entry.won ? '#4ade80' : '#f87171' }}
+          style={{ background: entry.won === true ? '#4ade80' : entry.won === false ? '#f87171' : 'hsl(215 20% 40%)' }}
         />
       ))}
     </div>
@@ -81,11 +81,11 @@ function TeamDetail({ rating }: { rating: TeamRating }) {
                   <td className="py-0.5 pr-4 text-right font-mono" style={{ color: 'hsl(215 20% 65%)' }}>
                     {(entry.note * 100).toFixed(0)}%
                   </td>
-                  <td className="py-0.5 pr-4 text-right font-mono font-semibold" style={{ color: entry.won ? '#4ade80' : '#f87171' }}>
+                  <td className="py-0.5 pr-4 text-right font-mono font-semibold" style={{ color: entry.performance > rating.input ? '#4ade80' : entry.performance < rating.input ? '#f87171' : 'hsl(215 20% 65%)' }}>
                     {Math.round(entry.performance)}
                   </td>
-                  <td className="py-0.5 text-center font-bold text-xs" style={{ color: entry.won ? '#4ade80' : '#f87171' }}>
-                    {entry.won ? 'W' : 'L'}
+                  <td className="py-0.5 text-center font-bold text-xs" style={{ color: entry.won === true ? '#4ade80' : entry.won === false ? '#f87171' : 'hsl(215 20% 50%)' }}>
+                    {entry.won === true ? 'W' : entry.won === false ? 'L' : '—'}
                   </td>
                 </tr>
               ))}

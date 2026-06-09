@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import type { League, Team, TeamBaseline } from '@/types'
-import { addTeam, addBaseline, deleteBaseline } from '@/hooks/useTeams'
+import { addTeam, addBaseline, deleteBaseline, updateBaselineBoType } from '@/hooks/useTeams'
 
 interface AddTeamDialogProps {
   league: League
@@ -143,15 +143,27 @@ export function BaselineDialog({ team, baselines, onClose }: BaselineDialogProps
               <p className="text-xs text-center py-4" style={{ color: 'hsl(215 20% 65%)' }}>Aucune baseline (défaut: 1500 ELO)</p>
             )}
             {baselines.map(b => (
-              <div key={b.id} className="flex items-center gap-3 px-3 py-2 rounded-lg" style={{ background: 'hsl(222 47% 11%)' }}>
-                <span className="text-sm text-white font-mono">{Math.round(b.rating)} ELO</span>
-                {b.bo_type && (
-                  <span className="text-xs font-medium px-1.5 py-0.5 rounded" style={{ background: 'hsl(217 91% 60% / 0.15)', color: 'hsl(217 91% 70%)' }}>
-                    {b.bo_type}
-                  </span>
-                )}
+              <div key={b.id} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'hsl(222 47% 11%)' }}>
+                <span className="text-sm text-white font-mono shrink-0">{Math.round(b.rating)} ELO</span>
+                <div className="flex gap-0.5 shrink-0">
+                  {BO_TYPES.map(bo => (
+                    <button
+                      key={bo}
+                      type="button"
+                      onClick={() => updateBaselineBoType(b.id, bo)}
+                      className="px-1.5 py-0.5 rounded font-medium transition-colors"
+                      style={{
+                        fontSize: '0.65rem',
+                        background: b.bo_type === bo ? 'hsl(217 91% 60%)' : 'hsl(222 47% 18%)',
+                        color: b.bo_type === bo ? 'hsl(222 47% 11%)' : 'hsl(215 20% 50%)',
+                      }}
+                    >
+                      {bo}
+                    </button>
+                  ))}
+                </div>
                 <span className="text-xs flex-1" style={{ color: 'hsl(215 20% 65%)' }}>{format(new Date(b.effective_date + 'T00:00:00'), 'dd/MM/yyyy')}</span>
-                <button onClick={() => deleteBaseline(b.id)} className="text-xs text-red-400 hover:text-red-300">Suppr.</button>
+                <button onClick={() => deleteBaseline(b.id)} className="text-xs text-red-400 hover:text-red-300 shrink-0">Suppr.</button>
               </div>
             ))}
           </div>

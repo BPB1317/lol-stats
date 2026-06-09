@@ -107,3 +107,8 @@ export async function deleteBaseline(id: string) {
   const { error } = await supabase.from('team_baselines').delete().eq('id', id)
   return error
 }
+
+export async function updateBaselineBoType(id: string, bo_type: string) {
+  const { error } = await supabase.from('team_baselines').update({ bo_type }).eq('id', id)
+  return error
+}
