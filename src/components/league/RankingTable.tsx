@@ -28,21 +28,18 @@ function EloDisplay({ input, output }: { input: number; output: number }) {
   )
 }
 
-function HistoryDots({ history, input }: { history: TeamRating['history']; input: number }) {
+function HistoryDots({ history }: { history: TeamRating['history'] }) {
   const last8 = history.slice(0, 8)
   return (
     <div className="flex items-center gap-1">
-      {last8.map((entry, i) => {
-        const isWin = entry.performance > input
-        return (
-          <div
-            key={i}
-            title={`${entry.opponentName}: ${Math.round(entry.performance)} ELO (note: ${(entry.note * 100).toFixed(0)}%)`}
-            className="w-2 h-2 rounded-full cursor-default"
-            style={{ background: isWin ? '#4ade80' : '#f87171' }}
-          />
-        )
-      })}
+      {last8.map((entry, i) => (
+        <div
+          key={i}
+          title={`${entry.opponentName}: ${Math.round(entry.performance)} ELO (note: ${(entry.note * 100).toFixed(0)}%)`}
+          className="w-2 h-2 rounded-full cursor-default"
+          style={{ background: entry.won ? '#4ade80' : '#f87171' }}
+        />
+      ))}
     </div>
   )
 }
@@ -74,27 +71,24 @@ function TeamDetail({ rating }: { rating: TeamRating }) {
               </tr>
             </thead>
             <tbody>
-              {rating.history.map((entry, i) => {
-                const isWin = entry.performance > rating.input
-                return (
-                  <tr key={entry.matchId + i}>
-                    <td className="py-0.5 pr-3" style={{ color: 'hsl(215 20% 65%)' }}>{i + 1}</td>
-                    <td className="py-0.5 pr-4 font-mono" style={{ color: 'hsl(215 20% 65%)' }}>
-                      {format(new Date(entry.date + 'T00:00:00'), 'dd/MM/yy')}
-                    </td>
-                    <td className="py-0.5 pr-4 text-white">{entry.opponentName}</td>
-                    <td className="py-0.5 pr-4 text-right font-mono" style={{ color: 'hsl(215 20% 65%)' }}>
-                      {(entry.note * 100).toFixed(0)}%
-                    </td>
-                    <td className="py-0.5 pr-4 text-right font-mono font-semibold" style={{ color: isWin ? '#4ade80' : '#f87171' }}>
-                      {Math.round(entry.performance)}
-                    </td>
-                    <td className="py-0.5 text-center font-bold text-xs" style={{ color: isWin ? '#4ade80' : '#f87171' }}>
-                      {isWin ? 'W' : 'L'}
-                    </td>
-                  </tr>
-                )
-              })}
+              {rating.history.map((entry, i) => (
+                <tr key={entry.matchId + i}>
+                  <td className="py-0.5 pr-3" style={{ color: 'hsl(215 20% 65%)' }}>{i + 1}</td>
+                  <td className="py-0.5 pr-4 font-mono" style={{ color: 'hsl(215 20% 65%)' }}>
+                    {format(new Date(entry.date + 'T00:00:00'), 'dd/MM/yy')}
+                  </td>
+                  <td className="py-0.5 pr-4 text-white">{entry.opponentName}</td>
+                  <td className="py-0.5 pr-4 text-right font-mono" style={{ color: 'hsl(215 20% 65%)' }}>
+                    {(entry.note * 100).toFixed(0)}%
+                  </td>
+                  <td className="py-0.5 pr-4 text-right font-mono font-semibold" style={{ color: entry.won ? '#4ade80' : '#f87171' }}>
+                    {Math.round(entry.performance)}
+                  </td>
+                  <td className="py-0.5 text-center font-bold text-xs" style={{ color: entry.won ? '#4ade80' : '#f87171' }}>
+                    {entry.won ? 'W' : 'L'}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -179,7 +173,7 @@ export function RankingTable({ ratings }: RankingTableProps) {
                   </td>
                   <td className="py-3 px-4">
                     {r.nbGames > 0
-                      ? <HistoryDots history={r.history} input={r.input} />
+                      ? <HistoryDots history={r.history} />
                       : <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>—</span>
                     }
                   </td>

@@ -111,6 +111,7 @@ export function computeLeagueRatings(
       teamNotes.push({
         note: teamNote,
         performance,
+        won: match?.winner_id === team.id,
         date: note.note_date,
         matchId: note.match_id,
         opponentName: opponent?.name ?? '?',

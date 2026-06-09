@@ -53,6 +53,11 @@ export function RankingTab({ league }: RankingTabProps) {
     return computeLeagueRatings(teams, baselines, matches, notes, sinceDate, sensitivity)
   }, [teams, baselines, matches, notes, sinceDate, sensitivity])
 
+  const lastNoteDate = useMemo(() => {
+    const dates = notes.map(n => n.note_date).filter(Boolean)
+    return dates.length ? dates.sort().at(-1)! : null
+  }, [notes])
+
   if (teamsLoading || matchesLoading) {
     return <div className="py-16 text-center" style={{ color: 'hsl(215 20% 65%)' }}>Chargement…</div>
   }
@@ -69,13 +74,18 @@ export function RankingTab({ league }: RankingTabProps) {
         <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: 'hsl(216 34% 22%)' }}>
           <h2 className="text-sm font-semibold text-white">Classement — {league.name}</h2>
           <div className="flex items-center gap-4">
+            {lastNoteDate && (
+              <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+                Dernier match noté : <span className="text-white">{format(new Date(lastNoteDate + 'T00:00:00'), 'dd/MM/yyyy')}</span>
+              </span>
+            )}
             {lastBaselineDate && (
               <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
-                Last updated : {format(new Date(lastBaselineDate + 'T00:00:00'), 'dd/MM/yyyy')}
+                Baselines : {format(new Date(lastBaselineDate + 'T00:00:00'), 'dd/MM/yyyy')}
               </span>
             )}
             <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
-              Seuil notes : {(league.threshold * 100).toFixed(0)}%
+              Seuil : {(league.threshold * 100).toFixed(0)}%
             </span>
           </div>
         </div>
