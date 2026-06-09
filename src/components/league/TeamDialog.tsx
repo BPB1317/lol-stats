@@ -62,15 +62,19 @@ interface BaselineDialogProps {
   onClose: () => void
 }
 
+const BO_TYPES = ['BO1', 'BO3', 'BO5'] as const
+type BoType = typeof BO_TYPES[number]
+
 export function BaselineDialog({ team, baselines, onClose }: BaselineDialogProps) {
   const [rating, setRating] = useState(1500)
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [boType, setBoType] = useState<BoType>('BO3')
   const [loading, setLoading] = useState(false)
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    await addBaseline({ team_id: team.id, rating, effective_date: date })
+    await addBaseline({ team_id: team.id, rating, effective_date: date, bo_type: boType })
     setLoading(false)
   }
 
@@ -82,31 +86,56 @@ export function BaselineDialog({ team, baselines, onClose }: BaselineDialogProps
           <button onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
         </div>
         <div className="p-5 space-y-4">
-          <form onSubmit={handleAdd} className="flex gap-3 items-end">
-            <div className="flex-1">
-              <label className="block text-xs mb-1" style={{ color: 'hsl(215 20% 65%)' }}>ELO Input (ex: 1500)</label>
-              <input
-                type="number"
-                min="0" max="9999" step="1"
-                value={rating}
-                onChange={e => setRating(parseInt(e.target.value))}
-                className="w-full rounded-lg px-2 py-2 text-sm text-white outline-none"
-                style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)' }}
-              />
+          <form onSubmit={handleAdd} className="space-y-3">
+            <div className="flex gap-3 items-end">
+              <div className="flex-1">
+                <label className="block text-xs mb-1" style={{ color: 'hsl(215 20% 65%)' }}>ELO Input</label>
+                <input
+                  type="number"
+                  min="0" max="9999" step="1"
+                  value={rating}
+                  onChange={e => setRating(parseInt(e.target.value))}
+                  className="w-full rounded-lg px-2 py-2 text-sm text-white outline-none"
+                  style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)' }}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs mb-1" style={{ color: 'hsl(215 20% 65%)' }}>Date effective</label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={e => setDate(e.target.value)}
+                  className="w-full rounded-lg px-2 py-2 text-sm text-white outline-none"
+                  style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)', colorScheme: 'dark' }}
+                />
+              </div>
             </div>
-            <div className="flex-1">
-              <label className="block text-xs mb-1" style={{ color: 'hsl(215 20% 65%)' }}>Date effective</label>
-              <input
-                type="date"
-                value={date}
-                onChange={e => setDate(e.target.value)}
-                className="w-full rounded-lg px-2 py-2 text-sm text-white outline-none"
-                style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)', colorScheme: 'dark' }}
-              />
+            <div className="flex items-center gap-3">
+              <div>
+                <label className="block text-xs mb-1" style={{ color: 'hsl(215 20% 65%)' }}>Type de BO</label>
+                <div className="flex gap-1">
+                  {BO_TYPES.map(bo => (
+                    <button
+                      key={bo}
+                      type="button"
+                      onClick={() => setBoType(bo)}
+                      className="px-3 py-1.5 text-xs rounded-lg font-medium"
+                      style={boType === bo
+                        ? { background: 'hsl(217 91% 60%)', color: 'hsl(222 47% 11%)' }
+                        : { background: 'hsl(216 34% 18%)', color: 'hsl(215 20% 65%)', border: '1px solid hsl(216 34% 22%)' }
+                      }
+                    >
+                      {bo}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex-1 flex justify-end items-end">
+                <button type="submit" disabled={loading} className="px-3 py-2 text-sm rounded-lg font-medium disabled:opacity-50 whitespace-nowrap" style={{ background: 'hsl(217 91% 60%)', color: 'hsl(222 47% 11%)' }}>
+                  + Ajouter
+                </button>
+              </div>
             </div>
-            <button type="submit" disabled={loading} className="px-3 py-2 text-sm rounded-lg font-medium disabled:opacity-50 whitespace-nowrap" style={{ background: 'hsl(217 91% 60%)', color: 'hsl(222 47% 11%)' }}>
-              + Ajouter
-            </button>
           </form>
 
           <div className="space-y-1 max-h-60 overflow-y-auto">
@@ -114,9 +143,14 @@ export function BaselineDialog({ team, baselines, onClose }: BaselineDialogProps
               <p className="text-xs text-center py-4" style={{ color: 'hsl(215 20% 65%)' }}>Aucune baseline (défaut: 1500 ELO)</p>
             )}
             {baselines.map(b => (
-              <div key={b.id} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: 'hsl(222 47% 11%)' }}>
+              <div key={b.id} className="flex items-center gap-3 px-3 py-2 rounded-lg" style={{ background: 'hsl(222 47% 11%)' }}>
                 <span className="text-sm text-white font-mono">{Math.round(b.rating)} ELO</span>
-                <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>{format(new Date(b.effective_date + 'T00:00:00'), 'dd/MM/yyyy')}</span>
+                {b.bo_type && (
+                  <span className="text-xs font-medium px-1.5 py-0.5 rounded" style={{ background: 'hsl(217 91% 60% / 0.15)', color: 'hsl(217 91% 70%)' }}>
+                    {b.bo_type}
+                  </span>
+                )}
+                <span className="text-xs flex-1" style={{ color: 'hsl(215 20% 65%)' }}>{format(new Date(b.effective_date + 'T00:00:00'), 'dd/MM/yyyy')}</span>
                 <button onClick={() => deleteBaseline(b.id)} className="text-xs text-red-400 hover:text-red-300">Suppr.</button>
               </div>
             ))}

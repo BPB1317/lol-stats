@@ -155,9 +155,16 @@ export function RankingTable({ ratings }: RankingTableProps) {
                     </button>
                   </td>
                   <td className="py-3 px-4 text-right">
-                    <span className="font-mono text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
-                      {Math.round(r.input)}
-                    </span>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <span className="font-mono text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+                        {Math.round(r.input)}
+                      </span>
+                      {r.inputBoType && (
+                        <span className="font-medium rounded px-1 py-px" style={{ fontSize: '0.6rem', lineHeight: '1.3', background: 'hsl(217 91% 60% / 0.12)', color: 'hsl(217 91% 70%)' }}>
+                          {r.inputBoType}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="py-3 px-4 text-right">
                     <EloDisplay input={r.input} output={r.output} />

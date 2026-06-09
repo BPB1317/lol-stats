@@ -7,73 +7,81 @@ interface TeamsTabProps {
   league: League
 }
 
-function TeamRow({ team, onBaselines }: { team: Team; onBaselines: () => void }) {
+function TeamRow({ team }: { team: Team }) {
   const baselines = useTeamBaselines(team.id)
+  const [showBaselines, setShowBaselines] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const latest = baselines[0]
 
   return (
-    <tr className="border-b" style={{ borderColor: 'hsl(216 34% 22%)' }}>
-      <td className="py-3 px-4 font-medium text-white">{team.name}</td>
-      <td className="py-3 px-4 text-center">
-        <span className="font-mono text-sm" style={{ color: 'hsl(217 91% 60%)' }}>
-          {latest ? `${Math.round(latest.rating)} ELO` : '1500 ELO'}
-        </span>
-        {latest && (
-          <span className="ml-2 text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
-            (depuis {latest.effective_date})
+    <>
+      <tr className="border-b" style={{ borderColor: 'hsl(216 34% 22%)' }}>
+        <td className="py-3 px-4 font-medium text-white">{team.name}</td>
+        <td className="py-3 px-4 text-center">
+          <span className="font-mono text-sm" style={{ color: 'hsl(217 91% 60%)' }}>
+            {latest ? `${Math.round(latest.rating)} ELO` : '1500 ELO'}
           </span>
-        )}
-      </td>
-      <td className="py-3 px-4 text-center">
-        <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>{baselines.length}</span>
-      </td>
-      <td className="py-3 px-4 text-right">
-        <div className="flex justify-end gap-1">
-          <button
-            onClick={onBaselines}
-            className="text-xs px-2 py-1 rounded hover:opacity-80"
-            style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}
-          >
-            Baselines
-          </button>
-          {confirmDelete ? (
-            <>
-              <button
-                onClick={async () => { await deleteTeam(team.id); setConfirmDelete(false) }}
-                className="text-xs px-2 py-1 rounded"
-                style={{ background: 'hsl(0 72% 51%)', color: 'white' }}
-              >
-                Confirmer
-              </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                className="text-xs px-2 py-1 rounded"
-                style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}
-              >
-                Annuler
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="text-xs px-2 py-1 rounded hover:opacity-80"
-              style={{ background: 'hsl(216 34% 22%)', color: '#f87171' }}
-            >
-              Suppr.
-            </button>
+          {latest && (
+            <span className="ml-2 text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+              ({latest.bo_type} · {latest.effective_date})
+            </span>
           )}
-        </div>
-      </td>
-    </tr>
+        </td>
+        <td className="py-3 px-4 text-center">
+          <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>{baselines.length}</span>
+        </td>
+        <td className="py-3 px-4 text-right">
+          <div className="flex justify-end gap-1">
+            <button
+              onClick={() => setShowBaselines(true)}
+              className="text-xs px-2 py-1 rounded hover:opacity-80"
+              style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}
+            >
+              Baselines
+            </button>
+            {confirmDelete ? (
+              <>
+                <button
+                  onClick={async () => { await deleteTeam(team.id); setConfirmDelete(false) }}
+                  className="text-xs px-2 py-1 rounded"
+                  style={{ background: 'hsl(0 72% 51%)', color: 'white' }}
+                >
+                  Confirmer
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="text-xs px-2 py-1 rounded"
+                  style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}
+                >
+                  Annuler
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="text-xs px-2 py-1 rounded hover:opacity-80"
+                style={{ background: 'hsl(216 34% 22%)', color: '#f87171' }}
+              >
+                Suppr.
+              </button>
+            )}
+          </div>
+        </td>
+      </tr>
+      {showBaselines && (
+        <BaselineDialog
+          team={team}
+          baselines={baselines}
+          onClose={() => setShowBaselines(false)}
+        />
+      )}
+    </>
   )
 }
 
 export function TeamsTab({ league }: TeamsTabProps) {
   const { teams, loading } = useTeams(league.id)
   const [showAdd, setShowAdd] = useState(false)
-  const [baselineTeam, setBaselineTeam] = useState<Team | null>(null)
-  const baselines = useTeamBaselines(baselineTeam?.id ?? '')
 
   if (loading) {
     return <div className="py-16 text-center" style={{ color: 'hsl(215 20% 65%)' }}>Chargement…</div>
@@ -109,7 +117,7 @@ export function TeamsTab({ league }: TeamsTabProps) {
             </thead>
             <tbody>
               {teams.map(team => (
-                <TeamRow key={team.id} team={team} onBaselines={() => setBaselineTeam(team)} />
+                <TeamRow key={team.id} team={team} />
               ))}
             </tbody>
           </table>
@@ -117,13 +125,6 @@ export function TeamsTab({ league }: TeamsTabProps) {
       </div>
 
       {showAdd && <AddTeamDialog league={league} onClose={() => setShowAdd(false)} />}
-      {baselineTeam && (
-        <BaselineDialog
-          team={baselineTeam}
-          baselines={baselines}
-          onClose={() => setBaselineTeam(null)}
-        />
-      )}
     </div>
   )
 }

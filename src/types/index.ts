@@ -20,6 +20,7 @@ export interface TeamBaseline {
   team_id: string
   rating: number
   effective_date: string
+  bo_type: string
   created_at: string
 }
 
@@ -59,6 +60,7 @@ export interface RatingEntry {
 export interface TeamRating {
   team: Team
   input: number
+  inputBoType: string
   output: number
   delta: number
   nbGames: number
