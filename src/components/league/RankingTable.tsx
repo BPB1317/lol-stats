@@ -28,7 +28,7 @@ function EloDisplay({ input, output }: { input: number; output: number }) {
   )
 }
 
-function HistoryDots({ history }: { history: TeamRating['history'] }) {
+function HistoryDots({ history, input }: { history: TeamRating['history']; input: number }) {
   const last8 = history.slice(0, 8)
   return (
     <div className="flex items-center gap-1">
@@ -37,7 +37,7 @@ function HistoryDots({ history }: { history: TeamRating['history'] }) {
           key={i}
           title={`${entry.opponentName}: ${Math.round(entry.performance)} ELO (note: ${(entry.note * 100).toFixed(0)}%)`}
           className="w-2 h-2 rounded-full cursor-default"
-          style={{ background: entry.won === true ? '#4ade80' : entry.won === false ? '#f87171' : 'hsl(215 20% 40%)' }}
+          style={{ background: entry.performance > input ? '#4ade80' : '#f87171' }}
         />
       ))}
     </div>
@@ -173,7 +173,7 @@ export function RankingTable({ ratings }: RankingTableProps) {
                   </td>
                   <td className="py-3 px-4">
                     {r.nbGames > 0
-                      ? <HistoryDots history={r.history} />
+                      ? <HistoryDots history={r.history} input={r.input} />
                       : <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>—</span>
                     }
                   </td>
