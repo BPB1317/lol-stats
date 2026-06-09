@@ -29,8 +29,7 @@ export function noteToPerformance(note: number, opponentInput: number): number {
  * input        : ELO baseline de l'équipe pour la période
  * sensitivity  : variation max en ELO (ex: 100 points)
  *
- * Composante 1 – moyenne pondérée log des performances
- *   weight[i] = ln(max(1, n−i))  →  i=0 (récent): ln(n),  i=n-1 (ancien): 0
+ * Composante 1 – moyenne simple des performances
  * Composante 2 – win rate (performance > input = "victoire")
  *   (nb > input / n  −  0.5) × 2 × sensitivity
  * Output clamped dans [input−sensitivity, input+sensitivity]
@@ -43,13 +42,7 @@ export function computeRating(
   const n = performances.length
   if (n === 0) return { output: input, nbGames: 0, input }
 
-  const weights = performances.map((_, i) => Math.log(Math.max(1, n - i)))
-  const totalWeight = weights.reduce((s, w) => s + w, 0)
-
-  const weightedMean =
-    totalWeight > 0
-      ? weights.reduce((s, w, i) => s + w * performances[i], 0) / totalWeight
-      : input
+  const weightedMean = performances.reduce((s, p) => s + p, 0) / n
 
   const wins = performances.filter(p => p > input).length
   const winRateAdj = (wins / n - 0.5) * 2 * sensitivity
