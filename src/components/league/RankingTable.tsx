@@ -104,7 +104,7 @@ function TeamDetail({ rating }: { rating: TeamRating }) {
 }
 
 export function RankingTable({ ratings }: RankingTableProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const sorted = [...ratings].sort((a, b) => b.output - a.output)
 
   if (sorted.length === 0) {
@@ -131,7 +131,7 @@ export function RankingTable({ ratings }: RankingTableProps) {
         </thead>
         <tbody>
           {sorted.map((r, idx) => {
-            const isExpanded = expandedId === r.team.id
+            const isExpanded = expandedIds.has(r.team.id)
             const rowBg = idx % 2 === 0 ? 'transparent' : 'hsl(222 47% 13%)'
 
             return (
@@ -143,7 +143,11 @@ export function RankingTable({ ratings }: RankingTableProps) {
                   <td className="py-3 px-4" style={{ color: 'hsl(215 20% 65%)' }}>{idx + 1}</td>
                   <td className="py-3 px-4">
                     <button
-                      onClick={() => setExpandedId(isExpanded ? null : r.team.id)}
+                      onClick={() => setExpandedIds(prev => {
+                        const next = new Set(prev)
+                        isExpanded ? next.delete(r.team.id) : next.add(r.team.id)
+                        return next
+                      })}
                       className="font-medium text-white hover:text-blue-400 text-left transition-colors flex items-center gap-1"
                     >
                       <span className="text-xs" style={{ color: 'hsl(215 20% 65%)', transition: 'transform 0.15s', display: 'inline-block', transform: isExpanded ? 'rotate(90deg)' : 'none' }}>▶</span>
