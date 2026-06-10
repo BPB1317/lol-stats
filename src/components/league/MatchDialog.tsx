@@ -46,6 +46,7 @@ export function MatchDialog({ league, teams, match, onClose }: MatchDialogProps)
       score: score || null,
       stage,
       match_date: matchDate,
+      source: 'manual' as const,
     }
 
     const noteData = hasNote ? { note_team1: noteTeam1, note_date: noteDate } : undefined

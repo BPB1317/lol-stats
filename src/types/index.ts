@@ -33,6 +33,7 @@ export interface Match {
   score: string | null
   stage: string
   match_date: string
+  source: 'manual' | 'calendar'
   created_at: string
   team1?: Team
   team2?: Team

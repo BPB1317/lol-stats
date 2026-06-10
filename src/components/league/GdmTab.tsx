@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import type { League, Match } from '@/types'
 import { useTeams, useAllBaselines } from '@/hooks/useTeams'
-import { useMatches } from '@/hooks/useMatches'
+import { useCalendarMatches } from '@/hooks/useMatches'
 import { useGdmStats, deleteGdmStatsByStage } from '@/hooks/useGdmStats'
 import { computeGdmRatings } from '@/lib/gdmRating'
 import { GdmCalendarImport } from './GdmCalendarImport'
@@ -41,7 +41,7 @@ export function GdmTab({ league }: Props) {
     setSinceDate(mostRecent)
     defaultDateSet.current = true
   }, [baselines])
-  const { matches, loading: matchesLoading, refetch: refetchMatches } = useMatches(league.id)
+  const { matches, loading: matchesLoading, refetch: refetchMatches } = useCalendarMatches(league.id)
   const { stats: gdmStats, refetch: refetchStats } = useGdmStats(league.id)
 
   const ratings = useMemo(() => {

@@ -11,6 +11,7 @@ interface ParsedMatch {
   score: string
   stage: string
   match_date: string
+  source: 'calendar'
 }
 
 interface ParseError {
@@ -59,6 +60,7 @@ function parseLine(
     score: `${s1}-${s2}`,
     stage: stage.toUpperCase(),
     match_date: date,
+    source: 'calendar' as const,
   }
 }
 
@@ -80,11 +82,12 @@ export function GdmCalendarImport({ league, teams, onClose, onDone }: Props) {
     setLoading(true)
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
 
-    // Charger les matchs existants pour dédupliquer (sans tenir compte du stage pour éviter les doublons stage vide vs stage renseigné)
+    // Charger uniquement les matchs calendrier existants pour dédupliquer
     const { data: existing } = await supabase
       .from('matches')
       .select('id,team1_id,team2_id,match_date,stage')
       .eq('league_id', league.id)
+      .eq('source', 'calendar')
     // Clé sans stage : on considère qu'il ne peut y avoir qu'un match entre deux équipes à la même date
     const existingKeys = new Set(
       (existing ?? []).map(m => `${m.team1_id}|${m.team2_id}|${m.match_date}`)

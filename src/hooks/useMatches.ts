@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Match, MatchNote } from '@/types'
 
-export function useMatches(leagueId: string) {
+function useMatchesWithSource(leagueId: string, source: 'manual' | 'calendar') {
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
   const fetchRef = useRef(async () => {})
@@ -19,6 +19,7 @@ export function useMatches(leagueId: string) {
           winner:teams!matches_winner_id_fkey(id, name, league_id, created_at)
         `)
         .eq('league_id', leagueId)
+        .eq('source', source)
         .order('match_date', { ascending: false })
       setMatches((data ?? []) as Match[])
       setLoading(false)
@@ -27,15 +28,23 @@ export function useMatches(leagueId: string) {
     doFetch()
 
     const channel = supabase
-      .channel(`matches-${leagueId}`)
+      .channel(`matches-${source}-${leagueId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, doFetch)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'match_notes' }, doFetch)
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [leagueId])
+  }, [leagueId, source])
 
   return { matches, loading, refetch: () => fetchRef.current() }
+}
+
+export function useMatches(leagueId: string) {
+  return useMatchesWithSource(leagueId, 'manual')
+}
+
+export function useCalendarMatches(leagueId: string) {
+  return useMatchesWithSource(leagueId, 'calendar')
 }
 
 export function useMatchNotes(leagueId: string) {
