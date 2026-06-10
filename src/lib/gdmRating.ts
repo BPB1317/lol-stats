@@ -33,13 +33,13 @@ export function computeGdmRatings(
   sinceDate: string
 ): GdmTeamRating[] {
   // Résoudre l'Input ELO de chaque équipe
-  const inputMap: Record<string, number> = {}
+  const inputMap: Record<string, number | null> = {}
   const boTypeMap: Record<string, string> = {}
   for (const team of teams) {
     const sorted = baselines
       .filter(b => b.team_id === team.id && b.effective_date <= sinceDate)
       .sort((a, b) => b.effective_date.localeCompare(a.effective_date))
-    inputMap[team.id] = sorted[0]?.rating ?? 1500
+    inputMap[team.id] = sorted[0]?.rating ?? null
     boTypeMap[team.id] = sorted[0]?.bo_type ?? ''
   }
 
@@ -59,8 +59,8 @@ export function computeGdmRatings(
       .map(([stage]) => stage)
   )
 
-  return teams.map(team => {
-    const input = inputMap[team.id]
+  return teams.filter(team => inputMap[team.id] != null).map(team => {
+    const input = inputMap[team.id]!
 
     // Stats GDM pour les stages qualifiants (normalisation casse)
     const teamStats = gdmStats.filter(
@@ -93,7 +93,7 @@ export function computeGdmRatings(
 
     for (const m of teamMatches) {
       const oppId = m.team1_id === team.id ? m.team2_id : m.team1_id
-      const oppElo = inputMap[oppId] ?? 1500
+      const oppElo = inputMap[oppId] ?? 1500  // fallback si adversaire sans baseline
       const g = parseGames(m.score)
       weightedOppElo += oppElo * g
       totalOppGames += g

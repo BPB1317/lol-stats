@@ -140,7 +140,7 @@ export function BaselineDialog({ team, baselines, onClose }: BaselineDialogProps
 
           <div className="space-y-1 max-h-60 overflow-y-auto">
             {baselines.length === 0 && (
-              <p className="text-xs text-center py-4" style={{ color: 'hsl(215 20% 65%)' }}>Aucune baseline (défaut: 1500 ELO)</p>
+              <p className="text-xs text-center py-4" style={{ color: 'hsl(215 20% 65%)' }}>Aucune baseline — l'équipe n'apparaîtra pas dans le classement</p>
             )}
             {baselines.map(b => (
               <div key={b.id} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'hsl(222 47% 11%)' }}>

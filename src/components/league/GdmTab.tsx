@@ -36,7 +36,7 @@ export function GdmTab({ league }: Props) {
 
   const { teams, loading: teamsLoading } = useTeams(league.id)
   const baselines = useAllBaselines(league.id)
-  const { matches, loading: matchesLoading } = useMatches(league.id)
+  const { matches, loading: matchesLoading, refetch: refetchMatches } = useMatches(league.id)
   const { stats: gdmStats, refetch: refetchStats } = useGdmStats(league.id)
 
   const ratings = useMemo(() => {
@@ -194,6 +194,7 @@ export function GdmTab({ league }: Props) {
           league={league}
           teams={teams}
           onClose={() => setShowCalendar(false)}
+          onDone={refetchMatches}
         />
       )}
       {showStats && (
@@ -201,6 +202,7 @@ export function GdmTab({ league }: Props) {
           league={league}
           teams={teams}
           onClose={() => setShowStats(false)}
+          onDone={refetchStats}
         />
       )}
     </div>

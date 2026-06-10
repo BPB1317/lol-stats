@@ -70,18 +70,18 @@ export function computeLeagueRatings(
   sensitivity: number
 ): TeamRating[] {
   // 1ère passe : résoudre l'Input ELO de chaque équipe
-  const inputMap: Record<string, number> = {}
+  const inputMap: Record<string, number | null> = {}
   const boTypeMap: Record<string, string> = {}
   for (const team of teams) {
     const sorted = baselines
       .filter(b => b.team_id === team.id && b.effective_date <= sinceDate)
       .sort((a, b) => b.effective_date.localeCompare(a.effective_date))
-    inputMap[team.id] = sorted[0]?.rating ?? 1500
+    inputMap[team.id] = sorted[0]?.rating ?? null
     boTypeMap[team.id] = sorted[0]?.bo_type ?? ''
   }
 
-  return teams.map(team => {
-    const input = inputMap[team.id]
+  return teams.filter(team => inputMap[team.id] != null).map(team => {
+    const input = inputMap[team.id]!
     const teamNotes: RatingEntry[] = []
 
     for (const note of notes) {
@@ -100,7 +100,7 @@ export function computeLeagueRatings(
 
       if (teamNote === null || opponentId === null) continue
 
-      const opponentInput = inputMap[opponentId] ?? 1500
+      const opponentInput = inputMap[opponentId] ?? 1500  // fallback si adversaire sans baseline
       const performance = noteToPerformance(teamNote, opponentInput)
 
       const match = matches.find(m => m.id === note.match_id)

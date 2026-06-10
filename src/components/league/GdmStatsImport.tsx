@@ -51,9 +51,10 @@ interface Props {
   league: League
   teams: Team[]
   onClose: () => void
+  onDone?: () => void
 }
 
-export function GdmStatsImport({ league, teams, onClose }: Props) {
+export function GdmStatsImport({ league, teams, onClose, onDone }: Props) {
   const [text, setText] = useState('')
   const [stage, setStage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -85,6 +86,7 @@ export function GdmStatsImport({ league, teams, onClose }: Props) {
 
     setResult({ imported, unmatched })
     setLoading(false)
+    if (imported > 0) onDone?.()
   }
 
   return (

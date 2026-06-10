@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { League, Team } from '@/types'
+import { supabase } from '@/lib/supabase'
 import { addMatch } from '@/hooks/useMatches'
 
 interface ParsedMatch {
@@ -65,19 +66,37 @@ interface Props {
   league: League
   teams: Team[]
   onClose: () => void
+  onDone?: () => void
 }
 
-export function GdmCalendarImport({ league, teams, onClose }: Props) {
+export function GdmCalendarImport({ league, teams, onClose, onDone }: Props) {
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<{ imported: number; errors: ParseError[] } | null>(null)
+  const [result, setResult] = useState<{ imported: number; updated: number; skipped: number; errors: ParseError[] } | null>(null)
 
   const teamMap = new Map(teams.map(t => [t.name.toLowerCase(), t.id]))
 
   const handleImport = async () => {
     setLoading(true)
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
+
+    // Charger les matchs existants pour dédupliquer (sans tenir compte du stage pour éviter les doublons stage vide vs stage renseigné)
+    const { data: existing } = await supabase
+      .from('matches')
+      .select('id,team1_id,team2_id,match_date,stage')
+      .eq('league_id', league.id)
+    // Clé sans stage : on considère qu'il ne peut y avoir qu'un match entre deux équipes à la même date
+    const existingKeys = new Set(
+      (existing ?? []).map(m => `${m.team1_id}|${m.team2_id}|${m.match_date}`)
+    )
+    // Index des IDs des matchs sans stage pour mise à jour éventuelle
+    const noStageById = new Map(
+      (existing ?? []).filter(m => !m.stage).map(m => [`${m.team1_id}|${m.team2_id}|${m.match_date}`, m.id])
+    )
+
     let imported = 0
+    let updated = 0
+    let skipped = 0
     const errors: ParseError[] = []
 
     for (const line of lines) {
@@ -85,16 +104,31 @@ export function GdmCalendarImport({ league, teams, onClose }: Props) {
       if (parsed === null) continue
       if ('reason' in parsed) { errors.push(parsed); continue }
 
+      const key = `${parsed.team1_id}|${parsed.team2_id}|${parsed.match_date}`
+
+      // Si le match existe sans stage, on le met à jour avec le stage et le score corrects
+      if (noStageById.has(key)) {
+        const { error } = await supabase.from('matches')
+          .update({ stage: parsed.stage, score: parsed.score, winner_id: parsed.winner_id })
+          .eq('id', noStageById.get(key)!)
+        if (!error) { updated++; existingKeys.add(key) }
+        continue
+      }
+
+      if (existingKeys.has(key)) { skipped++; continue }
+
       const err = await addMatch(parsed)
       if (err) {
         errors.push({ line: line.slice(0, 60), reason: err.message })
       } else {
         imported++
+        existingKeys.add(key)
       }
     }
 
-    setResult({ imported, errors })
+    setResult({ imported, updated, skipped, errors })
     setLoading(false)
+    if (imported > 0) onDone?.()
   }
 
   return (
@@ -121,8 +155,11 @@ export function GdmCalendarImport({ league, teams, onClose }: Props) {
 
           {result && (
             <div className="space-y-2">
-              <p className="text-sm" style={{ color: result.imported > 0 ? '#4ade80' : 'hsl(215 20% 65%)' }}>
-                {result.imported} match{result.imported > 1 ? 's' : ''} importé{result.imported > 1 ? 's' : ''}.
+              <p className="text-sm" style={{ color: (result.imported > 0 || result.updated > 0) ? '#4ade80' : 'hsl(215 20% 65%)' }}>
+                {result.imported > 0 && <span>{result.imported} match{result.imported > 1 ? 's' : ''} importé{result.imported > 1 ? 's' : ''}. </span>}
+                {result.updated > 0 && <span style={{ color: 'hsl(217 91% 70%)' }}>{result.updated} mis à jour (stage ajouté). </span>}
+                {result.skipped > 0 && <span style={{ color: 'hsl(215 20% 50%)' }}>{result.skipped} ignoré{result.skipped > 1 ? 's' : ''} (déjà présent{result.skipped > 1 ? 's' : ''}).</span>}
+                {result.imported === 0 && result.updated === 0 && result.skipped === 0 && result.errors.length === 0 && <span>Aucun match à importer.</span>}
               </p>
               {result.errors.length > 0 && (
                 <div className="space-y-1 max-h-32 overflow-y-auto">
