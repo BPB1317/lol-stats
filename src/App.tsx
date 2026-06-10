@@ -8,8 +8,9 @@ import { useLeagues } from '@/hooks/useLeagues'
 import { RankingTab } from '@/components/league/RankingTab'
 import { MatchesTab } from '@/components/league/MatchesTab'
 import { TeamsTab } from '@/components/league/TeamsTab'
+import { GdmTab } from '@/components/league/GdmTab'
 
-type SubTab = 'ranking' | 'matches' | 'teams'
+type SubTab = 'ranking' | 'gdm' | 'matches' | 'teams'
 
 // Composant séparé : monté uniquement après authentification
 // → les hooks Supabase s'exécutent avec une session active, RLS OK
@@ -43,9 +44,10 @@ function AuthenticatedApp({ session }: { session: Session }) {
       ) : (
         <div className="flex flex-col flex-1 p-4 gap-4">
           <div className="flex gap-1">
-            {(['ranking', 'matches', 'teams'] as SubTab[]).map(tab => {
+            {(['ranking', 'gdm', 'matches', 'teams'] as SubTab[]).map(tab => {
               const labels: Record<SubTab, string> = {
                 ranking: 'Classement',
+                gdm: `${activeLeague.short_name} GDM`,
                 matches: 'Matchs',
                 teams: 'Équipes',
               }
@@ -66,6 +68,7 @@ function AuthenticatedApp({ session }: { session: Session }) {
           </div>
 
           {subTab === 'ranking' && <RankingTab league={activeLeague} />}
+          {subTab === 'gdm' && <GdmTab league={activeLeague} />}
           {subTab === 'matches' && <MatchesTab league={activeLeague} />}
           {subTab === 'teams' && <TeamsTab league={activeLeague} />}
         </div>

@@ -58,6 +58,29 @@ export interface RatingEntry {
   opponentName: string
 }
 
+export interface GdmStat {
+  id: string
+  league_id: string
+  team_id: string
+  stage: string
+  gdm: number
+  gd15: number | null
+  games: number
+  created_at: string
+}
+
+export interface GdmTeamRating {
+  team: Team
+  input: number
+  inputBoType: string
+  gdm: number | null
+  gd15: number | null
+  avgOpp: number | null
+  games: number
+  perf: number | null
+  output: number | null
+}
+
 export interface TeamRating {
   team: Team
   input: number
