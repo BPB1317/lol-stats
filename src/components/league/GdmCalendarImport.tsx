@@ -56,7 +56,7 @@ function parseLine(
     team2_id: team2Id,
     winner_id: s1 > s2 ? team1Id : s2 > s1 ? team2Id : null,
     score: `${s1}-${s2}`,
-    stage,
+    stage: stage.toUpperCase(),
     match_date: date,
   }
 }
