@@ -44,11 +44,13 @@ export function computeGdmRatings(
   }
 
   // Stages qualifiants : tous les matchs du stage ont match_date >= sinceDate
+  // On normalise en uppercase pour éviter les mismatches de casse
   const stageMinDate: Record<string, string> = {}
   for (const m of matches) {
     if (!m.stage) continue
-    if (!stageMinDate[m.stage] || m.match_date < stageMinDate[m.stage]) {
-      stageMinDate[m.stage] = m.match_date
+    const s = m.stage.toUpperCase()
+    if (!stageMinDate[s] || m.match_date < stageMinDate[s]) {
+      stageMinDate[s] = m.match_date
     }
   }
   const qualifyingStages = new Set(
@@ -60,9 +62,9 @@ export function computeGdmRatings(
   return teams.map(team => {
     const input = inputMap[team.id]
 
-    // Stats GDM pour les stages qualifiants
+    // Stats GDM pour les stages qualifiants (normalisation casse)
     const teamStats = gdmStats.filter(
-      s => s.team_id === team.id && qualifyingStages.has(s.stage)
+      s => s.team_id === team.id && qualifyingStages.has(s.stage.toUpperCase())
     )
     const totalStatGames = teamStats.reduce((sum, s) => sum + s.games, 0)
 
@@ -81,7 +83,7 @@ export function computeGdmRatings(
 
     // Avg.Opp pondéré par games, total games depuis le calendrier
     const teamMatches = matches.filter(
-      m => qualifyingStages.has(m.stage) &&
+      m => qualifyingStages.has(m.stage.toUpperCase()) &&
            (m.team1_id === team.id || m.team2_id === team.id)
     )
 

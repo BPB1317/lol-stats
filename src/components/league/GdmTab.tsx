@@ -17,8 +17,9 @@ function getStageInfo(matches: Match[]) {
   const stageMaxDate: Record<string, string> = {}
   for (const m of matches) {
     if (!m.stage) continue
-    if (!stageMinDate[m.stage] || m.match_date < stageMinDate[m.stage]) stageMinDate[m.stage] = m.match_date
-    if (!stageMaxDate[m.stage] || m.match_date > stageMaxDate[m.stage]) stageMaxDate[m.stage] = m.match_date
+    const s = m.stage.toUpperCase()
+    if (!stageMinDate[s] || m.match_date < stageMinDate[s]) stageMinDate[s] = m.match_date
+    if (!stageMaxDate[s] || m.match_date > stageMaxDate[s]) stageMaxDate[s] = m.match_date
   }
   return { stageMinDate, stageMaxDate }
 }
