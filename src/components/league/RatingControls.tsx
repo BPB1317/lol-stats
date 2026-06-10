@@ -22,7 +22,7 @@ export function RatingControls({
         <input
           type="date"
           value={sinceDate}
-          onChange={e => onSinceDateChange(e.target.value)}
+          onChange={e => { if (e.target.value) onSinceDateChange(e.target.value) }}
           className="rounded-lg px-2 py-1.5 text-sm text-white outline-none focus:ring-2"
           style={{
             background: 'hsl(216 34% 18%)',
@@ -60,9 +60,11 @@ export function RatingControls({
         />
       </div>
 
-      <div className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
-        Données depuis le {format(new Date(sinceDate + 'T00:00:00'), 'dd/MM/yyyy')}
-      </div>
+      {sinceDate && (
+        <div className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+          Données depuis le {format(new Date(sinceDate + 'T00:00:00'), 'dd/MM/yyyy')}
+        </div>
+      )}
     </div>
   )
 }

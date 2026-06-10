@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import type { League, Match } from '@/types'
 import { useTeams, useAllBaselines } from '@/hooks/useTeams'
 import { useMatches } from '@/hooks/useMatches'
@@ -7,10 +7,6 @@ import { computeGdmRatings } from '@/lib/gdmRating'
 import { GdmCalendarImport } from './GdmCalendarImport'
 import { GdmStatsImport } from './GdmStatsImport'
 import { GdmRankingTable } from './GdmRankingTable'
-
-function getDefaultSinceDate() {
-  return `${new Date().getFullYear()}-01-01`
-}
 
 function getStageInfo(matches: Match[]) {
   const stageMinDate: Record<string, string> = {}
@@ -29,13 +25,22 @@ interface Props {
 }
 
 export function GdmTab({ league }: Props) {
-  const [sinceDate, setSinceDate] = useState(getDefaultSinceDate())
+  const [sinceDate, setSinceDate] = useState(`${new Date().getFullYear()}-01-01`)
   const [showCalendar, setShowCalendar] = useState(false)
   const [showStats, setShowStats] = useState(false)
   const [confirmDeleteStage, setConfirmDeleteStage] = useState<string | null>(null)
+  const defaultDateSet = useRef(false)
 
   const { teams, loading: teamsLoading } = useTeams(league.id)
   const baselines = useAllBaselines(league.id)
+
+  // Initialise sinceDate à la baseline la plus récente dès que les baselines chargent
+  useEffect(() => {
+    if (defaultDateSet.current || baselines.length === 0) return
+    const mostRecent = [...baselines].sort((a, b) => b.effective_date.localeCompare(a.effective_date))[0].effective_date
+    setSinceDate(mostRecent)
+    defaultDateSet.current = true
+  }, [baselines])
   const { matches, loading: matchesLoading, refetch: refetchMatches } = useMatches(league.id)
   const { stats: gdmStats, refetch: refetchStats } = useGdmStats(league.id)
 
@@ -78,7 +83,7 @@ export function GdmTab({ league }: Props) {
           <input
             type="date"
             value={sinceDate}
-            onChange={e => setSinceDate(e.target.value)}
+            onChange={e => { if (e.target.value) setSinceDate(e.target.value) }}
             className="rounded-lg px-2 py-1.5 text-xs text-white outline-none"
             style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)', colorScheme: 'dark' }}
           />
