@@ -112,3 +112,8 @@ export async function updateBaselineBoType(id: string, bo_type: string) {
   const { error } = await supabase.from('team_baselines').update({ bo_type }).eq('id', id)
   return error
 }
+
+export async function updateBaselineDate(id: string, effective_date: string) {
+  const { error } = await supabase.from('team_baselines').update({ effective_date }).eq('id', id)
+  return error
+}

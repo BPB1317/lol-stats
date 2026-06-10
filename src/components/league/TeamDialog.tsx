@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import type { League, Team, TeamBaseline } from '@/types'
-import { addTeam, addBaseline, deleteBaseline, updateBaselineBoType } from '@/hooks/useTeams'
+import { addTeam, addBaseline, deleteBaseline, updateBaselineBoType, updateBaselineDate } from '@/hooks/useTeams'
 
 interface AddTeamDialogProps {
   league: League
@@ -70,6 +70,13 @@ export function BaselineDialog({ team, baselines, onClose }: BaselineDialogProps
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [boType, setBoType] = useState<BoType>('BO3')
   const [loading, setLoading] = useState(false)
+  const [editingDateId, setEditingDateId] = useState<string | null>(null)
+  const [editingDateValue, setEditingDateValue] = useState('')
+
+  const saveDate = async (id: string, value: string) => {
+    if (value) await updateBaselineDate(id, value)
+    setEditingDateId(null)
+  }
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -162,7 +169,30 @@ export function BaselineDialog({ team, baselines, onClose }: BaselineDialogProps
                     </button>
                   ))}
                 </div>
-                <span className="text-xs flex-1" style={{ color: 'hsl(215 20% 65%)' }}>{format(new Date(b.effective_date + 'T00:00:00'), 'dd/MM/yyyy')}</span>
+                {editingDateId === b.id ? (
+                  <input
+                    type="date"
+                    autoFocus
+                    value={editingDateValue}
+                    onChange={e => setEditingDateValue(e.target.value)}
+                    onBlur={() => saveDate(b.id, editingDateValue)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') saveDate(b.id, editingDateValue)
+                      if (e.key === 'Escape') setEditingDateId(null)
+                    }}
+                    className="flex-1 rounded px-1.5 py-0.5 text-xs text-white outline-none"
+                    style={{ background: 'hsl(216 34% 22%)', border: '1px solid hsl(217 91% 60%)', colorScheme: 'dark', minWidth: 0 }}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => { setEditingDateId(b.id); setEditingDateValue(b.effective_date) }}
+                    className="flex-1 text-left text-xs hover:text-white transition-colors"
+                    style={{ color: 'hsl(215 20% 65%)' }}
+                  >
+                    {format(new Date(b.effective_date + 'T00:00:00'), 'dd/MM/yyyy')}
+                  </button>
+                )}
                 <button onClick={() => deleteBaseline(b.id)} className="text-xs text-red-400 hover:text-red-300 shrink-0">Suppr.</button>
               </div>
             ))}
