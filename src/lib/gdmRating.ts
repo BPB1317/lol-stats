@@ -1,4 +1,4 @@
-import type { Team, TeamBaseline, Match, GdmStat, GdmTeamRating } from '@/types'
+import type { Team, TeamBaseline, Match, GdmStat, GdmTeamRating, GdmStageBreakdown } from '@/types'
 
 function parseGames(score: string | null): number {
   if (!score) return 1
@@ -111,6 +111,31 @@ export function computeGdmRatings(
       output = computeOutput(input, perf, games)
     }
 
+    // Breakdown par stage qualifiant
+    const stages: GdmStageBreakdown[] = [...qualifyingStages].sort().map(stage => {
+      const stat = teamStats.find(s => s.stage.toUpperCase() === stage)
+      const stageGdm = stat?.gdm ?? null
+      const stageGd15 = stat?.gd15 ?? null
+      const stageGames = stat?.games ?? 0
+
+      const stageMatches = matches.filter(
+        m => m.stage.toUpperCase() === stage &&
+             (m.team1_id === team.id || m.team2_id === team.id)
+      )
+      let wo = 0, tg = 0
+      for (const m of stageMatches) {
+        const oppId = m.team1_id === team.id ? m.team2_id : m.team1_id
+        const oppElo = inputMap[oppId] ?? 1500
+        const g = parseGames(m.score)
+        wo += oppElo * g
+        tg += g
+      }
+      const stageAvgOpp = tg > 0 ? wo / tg : null
+      const stagePerf = stageGdm != null && stageAvgOpp != null ? computePerf(stageGdm, stageAvgOpp) : null
+
+      return { stage, gdm: stageGdm, gd15: stageGd15, avgOpp: stageAvgOpp, games: stageGames, perf: stagePerf }
+    })
+
     return {
       team,
       input,
@@ -121,6 +146,7 @@ export function computeGdmRatings(
       games,
       perf,
       output,
+      stages,
     }
   })
 }
