@@ -70,6 +70,14 @@ export interface GdmStat {
   created_at: string
 }
 
+export interface GdmMatchDetail {
+  opponentName: string
+  opponentInput: number
+  score: string | null
+  games: number
+  date: string
+}
+
 export interface GdmStageBreakdown {
   stage: string
   gdm: number | null
@@ -77,6 +85,7 @@ export interface GdmStageBreakdown {
   avgOpp: number | null
   games: number
   perf: number | null
+  matches: GdmMatchDetail[]
 }
 
 export interface GdmTeamRating {

@@ -1,4 +1,4 @@
-import type { Team, TeamBaseline, Match, GdmStat, GdmTeamRating, GdmStageBreakdown } from '@/types'
+import type { Team, TeamBaseline, Match, GdmStat, GdmTeamRating, GdmStageBreakdown, GdmMatchDetail } from '@/types'
 
 function parseGames(score: string | null): number {
   if (!score) return 1
@@ -17,7 +17,7 @@ function computePerf(gdm: number, avgOpp: number): number {
 // si Perf > Input : ((base-k)*Input + Perf*k) / base
 // si Perf <= Input : (base*Input + Perf*k) / (base+k)
 function computeOutput(input: number, perf: number, games: number): number {
-  const k = 3.5 * games
+  const k = 2.3 * games
   const base = games < 9 ? 36 : 48
   if (perf > input) {
     return ((base - k) * input + perf * k) / base
@@ -133,7 +133,21 @@ export function computeGdmRatings(
       const stageAvgOpp = tg > 0 ? wo / tg : null
       const stagePerf = stageGdm != null && stageAvgOpp != null ? computePerf(stageGdm, stageAvgOpp) : null
 
-      return { stage, gdm: stageGdm, gd15: stageGd15, avgOpp: stageAvgOpp, games: stageGames, perf: stagePerf }
+      const matchDetails: GdmMatchDetail[] = stageMatches
+        .sort((a, b) => a.match_date.localeCompare(b.match_date))
+        .map(m => {
+          const oppId = m.team1_id === team.id ? m.team2_id : m.team1_id
+          const oppTeam = teams.find(t => t.id === oppId)
+          return {
+            opponentName: oppTeam?.name ?? '?',
+            opponentInput: inputMap[oppId] ?? 1500,
+            score: m.score,
+            games: parseGames(m.score),
+            date: m.match_date,
+          }
+        })
+
+      return { stage, gdm: stageGdm, gd15: stageGd15, avgOpp: stageAvgOpp, games: stageGames, perf: stagePerf, matches: matchDetails }
     })
 
     return {
