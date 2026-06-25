@@ -59,13 +59,14 @@ export function AddTeamDialog({ league, onClose }: AddTeamDialogProps) {
 interface BaselineDialogProps {
   team: Team
   baselines: TeamBaseline[]
+  onRefetch: () => void
   onClose: () => void
 }
 
 const BO_TYPES = ['BO1', 'BO3', 'BO5'] as const
 type BoType = typeof BO_TYPES[number]
 
-export function BaselineDialog({ team, baselines, onClose }: BaselineDialogProps) {
+export function BaselineDialog({ team, baselines, onRefetch, onClose }: BaselineDialogProps) {
   const [rating, setRating] = useState(1500)
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [boType, setBoType] = useState<BoType>('BO3')
@@ -74,7 +75,7 @@ export function BaselineDialog({ team, baselines, onClose }: BaselineDialogProps
   const [editingDateValue, setEditingDateValue] = useState('')
 
   const saveDate = async (id: string, value: string) => {
-    if (value) await updateBaselineDate(id, value)
+    if (value) { await updateBaselineDate(id, value); onRefetch() }
     setEditingDateId(null)
   }
 
@@ -82,6 +83,7 @@ export function BaselineDialog({ team, baselines, onClose }: BaselineDialogProps
     e.preventDefault()
     setLoading(true)
     await addBaseline({ team_id: team.id, rating, effective_date: date, bo_type: boType })
+    onRefetch()
     setLoading(false)
   }
 
@@ -157,7 +159,7 @@ export function BaselineDialog({ team, baselines, onClose }: BaselineDialogProps
                     <button
                       key={bo}
                       type="button"
-                      onClick={() => updateBaselineBoType(b.id, bo)}
+                      onClick={() => { updateBaselineBoType(b.id, bo); onRefetch() }}
                       className="px-1.5 py-0.5 rounded font-medium transition-colors"
                       style={{
                         fontSize: '0.65rem',
@@ -193,7 +195,7 @@ export function BaselineDialog({ team, baselines, onClose }: BaselineDialogProps
                     {format(new Date(b.effective_date + 'T00:00:00'), 'dd/MM/yyyy')}
                   </button>
                 )}
-                <button onClick={() => deleteBaseline(b.id)} className="text-xs text-red-400 hover:text-red-300 shrink-0">Suppr.</button>
+                <button onClick={() => { deleteBaseline(b.id); onRefetch() }} className="text-xs text-red-400 hover:text-red-300 shrink-0">Suppr.</button>
               </div>
             ))}
           </div>

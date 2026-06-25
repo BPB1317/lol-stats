@@ -17,7 +17,7 @@ export function RankingTab({ league }: RankingTabProps) {
   const [sensitivity, setSensitivity] = useState(100)
 
   const { teams, loading: teamsLoading } = useTeams(league.id)
-  const baselines = useAllBaselines(league.id)
+  const { baselines } = useAllBaselines(league.id)
   const { matches, loading: matchesLoading } = useMatches(league.id)
   const { notes } = useMatchNotes(league.id)
 

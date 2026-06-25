@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Team, TeamBaseline } from '@/types'
 
@@ -33,6 +33,8 @@ export function useTeams(leagueId: string) {
 export function useTeamBaselines(teamId: string) {
   const [baselines, setBaselines] = useState<TeamBaseline[]>([])
 
+  const fetchRef = useRef<() => void>(() => {})
+
   useEffect(() => {
     if (!teamId) return
     const fetch = () => {
@@ -43,6 +45,7 @@ export function useTeamBaselines(teamId: string) {
         .order('effective_date', { ascending: false })
         .then(({ data }) => setBaselines(data ?? []))
     }
+    fetchRef.current = fetch
     fetch()
 
     const channel = supabase
@@ -53,11 +56,12 @@ export function useTeamBaselines(teamId: string) {
     return () => { supabase.removeChannel(channel) }
   }, [teamId])
 
-  return baselines
+  return { baselines, refetch: () => fetchRef.current() }
 }
 
 export function useAllBaselines(leagueId: string) {
   const [baselines, setBaselines] = useState<TeamBaseline[]>([])
+  const fetchRef = useRef<() => void>(() => {})
 
   useEffect(() => {
     if (!leagueId) return
@@ -75,6 +79,7 @@ export function useAllBaselines(leagueId: string) {
         .order('effective_date', { ascending: false })
       setBaselines(data ?? [])
     }
+    fetchRef.current = fetch
     fetch()
 
     const channel = supabase
@@ -85,7 +90,7 @@ export function useAllBaselines(leagueId: string) {
     return () => { supabase.removeChannel(channel) }
   }, [leagueId])
 
-  return baselines
+  return { baselines, refetch: () => fetchRef.current() }
 }
 
 export async function addTeam(team: Omit<Team, 'id' | 'created_at'>) {

@@ -8,7 +8,7 @@ interface TeamsTabProps {
 }
 
 function TeamRow({ team }: { team: Team }) {
-  const baselines = useTeamBaselines(team.id)
+  const { baselines, refetch } = useTeamBaselines(team.id)
   const [showBaselines, setShowBaselines] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const latest = baselines[0]
@@ -72,6 +72,7 @@ function TeamRow({ team }: { team: Team }) {
         <BaselineDialog
           team={team}
           baselines={baselines}
+          onRefetch={refetch}
           onClose={() => setShowBaselines(false)}
         />
       )}

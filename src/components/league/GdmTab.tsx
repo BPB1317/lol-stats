@@ -32,7 +32,7 @@ export function GdmTab({ league }: Props) {
   const defaultDateSet = useRef(false)
 
   const { teams, loading: teamsLoading } = useTeams(league.id)
-  const baselines = useAllBaselines(league.id)
+  const { baselines } = useAllBaselines(league.id)
 
   // Initialise sinceDate à la baseline la plus récente dès que les baselines chargent
   useEffect(() => {
