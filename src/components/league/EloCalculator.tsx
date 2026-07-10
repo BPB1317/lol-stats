@@ -1,8 +1,12 @@
 import { useState, useMemo } from 'react'
-import type { TeamRating } from '@/types'
+
+interface CalcRating {
+  team: { id: string; name: string }
+  output: number
+}
 
 interface EloCalculatorProps {
-  ratings: TeamRating[]
+  ratings: CalcRating[]
 }
 
 // P(team1 wins) = 1 / (1 + 10^(-delta/400))  — formule ELO standard (inverse du log-odds)

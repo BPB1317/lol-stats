@@ -7,6 +7,7 @@ import { computeGdmRatings } from '@/lib/gdmRating'
 import { GdmCalendarImport } from './GdmCalendarImport'
 import { GdmStatsImport } from './GdmStatsImport'
 import { GdmRankingTable } from './GdmRankingTable'
+import { EloCalculator } from './EloCalculator'
 
 function getStageInfo(matches: Match[]) {
   const stageMinDate: Record<string, string> = {}
@@ -193,6 +194,11 @@ export function GdmTab({ league }: Props) {
           </div>
         </div>
       )}
+
+      {/* Calculateur de cotes GDM */}
+      <EloCalculator
+        ratings={ratings.map(r => ({ team: r.team, output: r.output ?? r.input }))}
+      />
 
       {showCalendar && (
         <GdmCalendarImport

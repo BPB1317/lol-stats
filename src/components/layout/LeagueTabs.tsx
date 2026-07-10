@@ -112,6 +112,7 @@ export function LeagueTabs({ leagues, activeId, onSelect }: LeagueTabsProps) {
   const [manageMode, setManageMode] = useState(false)
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(loadHidden)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState('')
 
   const toggleHide = (id: string) => {
     setHiddenIds(prev => {
@@ -128,7 +129,9 @@ export function LeagueTabs({ leagues, activeId, onSelect }: LeagueTabsProps) {
   }
 
   const handleDelete = async (id: string) => {
-    await deleteLeague(id)
+    setDeleteError('')
+    const err = await deleteLeague(id)
+    if (err) { setDeleteError(err.message); return }
     setConfirmDeleteId(null)
     if (id === activeId) {
       const next = leagues.find(l => l.id !== id && !hiddenIds.has(l.id))
@@ -245,6 +248,12 @@ export function LeagueTabs({ leagues, activeId, onSelect }: LeagueTabsProps) {
           </button>
         </div>
       </div>
+
+      {deleteError && (
+        <div className="px-4 py-1 text-xs text-red-400" style={{ background: 'hsl(222 47% 12%)' }}>
+          Erreur suppression : {deleteError}
+        </div>
+      )}
 
       {showAdd && (
         <AddLeagueDialog
