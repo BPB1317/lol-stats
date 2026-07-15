@@ -25,16 +25,17 @@ function parseLine(
   teamMap: Map<string, string>
 ): ParsedMatch | ParseError | null {
   const cols = raw.split('\t').map(c => c.trim())
-  if (cols.length < 7) return null
+  if (cols.length < 5) return null
 
   const team1Name = cols[1]
   const scoreStr = cols[2]
   const team2Name = cols[3]
   const stage = cols[4]
-  const date = cols[6]
+
+  // Date : cherche le premier champ au format YYYY-MM-DD (peu importe la colonne)
+  const date = cols.find(c => /^\d{4}-\d{2}-\d{2}$/.test(c)) ?? ''
 
   if (!team1Name || !team2Name || !stage || !date) return null
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null
 
   const team1Id = teamMap.get(team1Name.toLowerCase())
   const team2Id = teamMap.get(team2Name.toLowerCase())
@@ -46,6 +47,7 @@ function parseLine(
     }
   }
 
+  // Score optionnel : "2-0", "2 - 0" → parsé ; "-", "", absent → null
   const scoreMatch = scoreStr ? scoreStr.match(/(\d+)\s*[-–]\s*(\d+)/) : null
   const s1 = scoreMatch ? parseInt(scoreMatch[1]) : null
   const s2 = scoreMatch ? parseInt(scoreMatch[2]) : null
