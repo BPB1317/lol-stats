@@ -8,7 +8,7 @@ interface ParsedMatch {
   team1_id: string
   team2_id: string
   winner_id: string | null
-  score: string
+  score: string | null
   stage: string
   match_date: string
   source: 'calendar'
@@ -33,14 +33,8 @@ function parseLine(
   const stage = cols[4]
   const date = cols[6]
 
-  if (!team1Name || !scoreStr || !team2Name || !stage || !date) return null
+  if (!team1Name || !team2Name || !stage || !date) return null
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null
-
-  const scoreMatch = scoreStr.match(/(\d+)\s*[-–]\s*(\d+)/)
-  if (!scoreMatch) return null
-
-  const s1 = parseInt(scoreMatch[1])
-  const s2 = parseInt(scoreMatch[2])
 
   const team1Id = teamMap.get(team1Name.toLowerCase())
   const team2Id = teamMap.get(team2Name.toLowerCase())
@@ -52,12 +46,16 @@ function parseLine(
     }
   }
 
+  const scoreMatch = scoreStr ? scoreStr.match(/(\d+)\s*[-–]\s*(\d+)/) : null
+  const s1 = scoreMatch ? parseInt(scoreMatch[1]) : null
+  const s2 = scoreMatch ? parseInt(scoreMatch[2]) : null
+
   return {
     league_id: leagueId,
     team1_id: team1Id,
     team2_id: team2Id,
-    winner_id: s1 > s2 ? team1Id : s2 > s1 ? team2Id : null,
-    score: `${s1}-${s2}`,
+    winner_id: s1 != null && s2 != null ? (s1 > s2 ? team1Id : s2 > s1 ? team2Id : null) : null,
+    score: s1 != null && s2 != null ? `${s1}-${s2}` : null,
     stage: stage.toUpperCase(),
     match_date: date,
     source: 'calendar' as const,
@@ -131,7 +129,7 @@ export function GdmCalendarImport({ league, teams, onClose, onDone }: Props) {
 
     setResult({ imported, updated, skipped, errors })
     setLoading(false)
-    if (imported > 0) onDone?.()
+    if (imported > 0 || updated > 0) onDone?.()
   }
 
   return (
@@ -144,7 +142,7 @@ export function GdmCalendarImport({ league, teams, onClose, onDone }: Props) {
 
         <div className="p-5 space-y-4 overflow-y-auto">
           <p className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
-            Format attendu (tabulations) : <span className="font-mono text-white">label ⇥ Équipe1 ⇥ X - Y ⇥ Équipe2 ⇥ STAGE ⇥ patch ⇥ YYYY-MM-DD</span>
+            Format attendu (tabulations) : <span className="font-mono text-white">label ⇥ Équipe1 ⇥ X - Y ⇥ Équipe2 ⇥ STAGE ⇥ patch ⇥ YYYY-MM-DD</span> — le score est optionnel
           </p>
 
           <textarea
