@@ -11,8 +11,9 @@ interface CalendarImportDialogProps {
 interface ParsedSeries {
   team1Name: string
   team2Name: string
-  score1: number
-  score2: number
+  score1: number | null
+  score2: number | null
+  stage: string
   date: string
   team1Id: string | null
   team2Id: string | null
@@ -21,9 +22,7 @@ interface ParsedSeries {
 
 function buildTeamMap(teams: Team[]): Map<string, string> {
   const map = new Map<string, string>()
-  for (const t of teams) {
-    map.set(t.name.toLowerCase(), t.id)
-  }
+  for (const t of teams) map.set(t.name.toLowerCase(), t.id)
   return map
 }
 
@@ -31,59 +30,70 @@ function parseLine(line: string, teamMap: Map<string, string>): ParsedSeries | n
   const cols = line.split('\t').map(c => c.trim()).filter(Boolean)
   if (cols.length < 3) return null
 
-  // Detect date (YYYY-MM-DD)
+  // Date (YYYY-MM-DD) — obligatoire
   const dateIdx = cols.findIndex(c => /^\d{4}-\d{2}-\d{2}$/.test(c))
   if (dateIdx === -1) return null
   const date = cols[dateIdx]
 
-  // Detect score (digits - digits)
-  const scoreIdx = cols.findIndex(c => /^\d+\s*-\s*\d+$/.test(c))
-  if (scoreIdx === -1) return null
-  const scoreParts = cols[scoreIdx].split(/\s*-\s*/)
-  const score1 = parseInt(scoreParts[0], 10)
-  const score2 = parseInt(scoreParts[1], 10)
-  if (isNaN(score1) || isNaN(score2) || score1 + score2 <= 0) return null
+  // Score (optionnel) — ex: "2-0", "2 - 1"
+  const scoreIdx = cols.findIndex(c => /^\d+\s*[-–]\s*\d+$/.test(c))
 
-  // Ignore: date col, score col, version-like (16.10), matchup summaries (X vs Y)
   const isNoise = (c: string, i: number) =>
-    i === dateIdx || i === scoreIdx ||
-    /^\d+\.\d+$/.test(c) ||         // version "16.10"
-    /\bvs\b/i.test(c)               // "AL vs BLG"
+    i === dateIdx ||
+    (scoreIdx !== -1 && i === scoreIdx) ||
+    /^\d+\.\d+$/.test(c) ||   // version patch "16.10"
+    /\bvs\b/i.test(c)          // "AL vs BLG"
 
-  // Teams: string cols before and after score (excluding noise)
-  const before = cols.filter((c, i) => i < scoreIdx && !isNoise(c, i))
-  const after  = cols.filter((c, i) => i > scoreIdx && i < dateIdx && !isNoise(c, i))
+  let team1Name: string
+  let team2Name: string
+  let score1: number | null = null
+  let score2: number | null = null
+  let stage = ''
 
-  if (!before.length || !after.length) return null
+  if (scoreIdx !== -1) {
+    // Score trouvé → teams détectées relativement au score
+    const parts = cols[scoreIdx].split(/\s*[-–]\s*/)
+    score1 = parseInt(parts[0], 10)
+    score2 = parseInt(parts[1], 10)
+    if (isNaN(score1) || isNaN(score2)) return null
 
-  // Closest to score wins
-  const team1Name = before[before.length - 1]
-  const team2Name = after[0]
+    const before = cols.filter((c, i) => i < scoreIdx && !isNoise(c, i))
+    const after  = cols.filter((c, i) => i > scoreIdx && i < dateIdx && !isNoise(c, i))
+    if (!before.length || !after.length) return null
+
+    team1Name = before[before.length - 1]
+    team2Name = after[0]
+    // Stage = 2ème colonne non-bruit après le score (souvent WEEK1, GROUPSTAGE…)
+    stage = after[1] ?? ''
+  } else {
+    // Pas de score → format positionnel : label | team1 | - | team2 | stage | … | date
+    if (cols.length < 5) return null
+    team1Name = cols[1]
+    team2Name = cols[3]
+    stage = cols[4] ?? ''
+  }
 
   const team1Id = teamMap.get(team1Name.toLowerCase()) ?? null
   const team2Id = teamMap.get(team2Name.toLowerCase()) ?? null
+  const games   = score1 !== null && score2 !== null ? score1 + score2 : 1
 
-  return { team1Name, team2Name, score1, score2, date, team1Id, team2Id, games: score1 + score2 }
+  return { team1Name, team2Name, score1, score2, stage, date, team1Id, team2Id, games }
 }
 
 export function CalendarImportDialog({ league, teams, onClose }: CalendarImportDialogProps) {
-  const [text, setText]       = useState('')
+  const [text, setText]         = useState('')
   const [importing, setImporting] = useState(false)
-  const [result, setResult]   = useState<{ ok: number; skipped: number } | null>(null)
+  const [result, setResult]     = useState<{ ok: number; skipped: number } | null>(null)
 
   const teamMap = useMemo(() => buildTeamMap(teams), [teams])
 
   const parsed = useMemo(() =>
-    text.split('\n')
-      .map(l => l.trim())
-      .filter(Boolean)
-      .map(l => parseLine(l, teamMap))
-      .filter(Boolean) as ParsedSeries[]
+    text.split('\n').map(l => l.trim()).filter(Boolean)
+      .map(l => parseLine(l, teamMap)).filter(Boolean) as ParsedSeries[]
   , [text, teamMap])
 
-  const valid      = parsed.filter(p => p.team1Id && p.team2Id)
-  const totalGames = valid.reduce((s, p) => s + p.games, 0)
-
+  const valid       = parsed.filter(p => p.team1Id && p.team2Id)
+  const totalGames  = valid.reduce((s, p) => s + p.games, 0)
   const unknownTeams = [...new Set(
     parsed.flatMap(p => [
       p.team1Id ? null : p.team1Name,
@@ -95,31 +105,53 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
     if (!valid.length) return
     setImporting(true)
 
-    // score1 games won by team1, score2 games won by team2 (team order unchanged)
-    const rows = valid.flatMap(series => [
-      ...Array.from({ length: series.score1 }, () => ({
-        league_id:  league.id,
-        team1_id:   series.team1Id!,
-        team2_id:   series.team2Id!,
-        winner_id:  series.team1Id!,
-        score:      `${series.score1}-${series.score2}`,
-        stage:      '',
-        match_date: series.date,
-      })),
-      ...Array.from({ length: series.score2 }, () => ({
-        league_id:  league.id,
-        team1_id:   series.team1Id!,
-        team2_id:   series.team2Id!,
-        winner_id:  series.team2Id!,
-        score:      `${series.score1}-${series.score2}`,
-        stage:      '',
-        match_date: series.date,
-      })),
-    ])
+    type MatchRow = {
+      league_id: string; team1_id: string; team2_id: string
+      winner_id: string | null; score: string | null
+      stage: string; match_date: string; source: string
+    }
+    const rows: MatchRow[] = valid.flatMap((series): MatchRow[] => {
+      if (series.score1 === null || series.score2 === null) {
+        // Pas de score : 1 match placeholder
+        return [{
+          league_id:  league.id,
+          team1_id:   series.team1Id!,
+          team2_id:   series.team2Id!,
+          winner_id:  null,
+          score:      null,
+          stage:      series.stage.toUpperCase(),
+          match_date: series.date,
+          source:     'manual',
+        }]
+      }
+      // Avec score : un match par game
+      return [
+        ...Array.from({ length: series.score1 }, () => ({
+          league_id:  league.id,
+          team1_id:   series.team1Id!,
+          team2_id:   series.team2Id!,
+          winner_id:  series.team1Id!,
+          score:      `${series.score1}-${series.score2}`,
+          stage:      series.stage.toUpperCase(),
+          match_date: series.date,
+          source:     'manual',
+        })),
+        ...Array.from({ length: series.score2 }, () => ({
+          league_id:  league.id,
+          team1_id:   series.team1Id!,
+          team2_id:   series.team2Id!,
+          winner_id:  series.team2Id!,
+          score:      `${series.score1}-${series.score2}`,
+          stage:      series.stage.toUpperCase(),
+          match_date: series.date,
+          source:     'manual',
+        })),
+      ]
+    })
 
     const { data, error } = await supabase.from('matches').insert(rows).select()
     setResult({
-      ok: data?.length ?? 0,
+      ok:      data?.length ?? 0,
       skipped: error ? rows.length : rows.length - (data?.length ?? 0),
     })
     setImporting(false)
@@ -134,11 +166,7 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
             {result.ok} match{result.ok > 1 ? 's' : ''} créé{result.ok > 1 ? 's' : ''}
             {result.skipped > 0 ? `, ${result.skipped} erreur${result.skipped > 1 ? 's' : ''}` : ''}.
           </p>
-          <button
-            onClick={onClose}
-            className="w-full py-2 rounded-lg text-sm font-medium"
-            style={{ background: 'hsl(217 91% 60%)', color: 'hsl(222 47% 11%)' }}
-          >
+          <button onClick={onClose} className="w-full py-2 rounded-lg text-sm font-medium" style={{ background: 'hsl(217 91% 60%)', color: 'hsl(222 47% 11%)' }}>
             Fermer
           </button>
         </div>
@@ -156,7 +184,7 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
 
         <div className="p-5 space-y-4">
           <p className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
-            Collez le calendrier (copier-coller depuis le site). Seuls la date, les équipes et le score sont nécessaires.
+            Collez le calendrier (copier-coller depuis le site). La date et les équipes sont obligatoires — le score est optionnel.
           </p>
 
           <textarea
@@ -178,7 +206,7 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
           {parsed.length > 0 && (
             <div className="rounded-lg overflow-hidden" style={{ border: '1px solid hsl(216 34% 22%)' }}>
               <div className="px-3 py-2 text-xs" style={{ background: 'hsl(222 47% 16%)', color: 'hsl(215 20% 65%)' }}>
-                {valid.length} série{valid.length > 1 ? 's' : ''} valide{valid.length > 1 ? 's' : ''} — {totalGames} game{totalGames > 1 ? 's' : ''} à créer
+                {valid.length} série{valid.length > 1 ? 's' : ''} valide{valid.length > 1 ? 's' : ''} — {totalGames} match{totalGames > 1 ? 's' : ''} à créer
                 {parsed.length > valid.length && (
                   <span className="ml-2" style={{ color: 'hsl(38 92% 70%)' }}>
                     ({parsed.length - valid.length} ignorée{parsed.length - valid.length > 1 ? 's' : ''})
@@ -198,11 +226,12 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
                             {p.team2Name}
                           </td>
                           <td className="px-3 py-1.5 font-mono" style={{ color: 'hsl(215 20% 65%)' }}>
-                            {p.score1}–{p.score2}
+                            {p.score1 !== null && p.score2 !== null ? `${p.score1}–${p.score2}` : '—'}
                           </td>
+                          <td className="px-3 py-1.5" style={{ color: 'hsl(215 20% 50%)' }}>{p.stage}</td>
                           <td className="px-3 py-1.5" style={{ color: 'hsl(215 20% 65%)' }}>{p.date}</td>
                           <td className="px-3 py-1.5 text-right" style={{ color: ok ? 'hsl(215 20% 65%)' : 'hsl(38 92% 70%)' }}>
-                            {ok ? `${p.games} game${p.games > 1 ? 's' : ''}` : '⚠ inconnues'}
+                            {ok ? `${p.games} match${p.games > 1 ? 's' : ''}` : '⚠ inconnues'}
                           </td>
                         </tr>
                       )
@@ -214,11 +243,7 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
           )}
 
           <div className="flex justify-end gap-2 pt-1">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm rounded-lg"
-              style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}
-            >
+            <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg" style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}>
               Annuler
             </button>
             <button
@@ -227,7 +252,7 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
               className="px-4 py-2 text-sm rounded-lg font-medium disabled:opacity-40"
               style={{ background: 'hsl(217 91% 60%)', color: 'hsl(222 47% 11%)' }}
             >
-              {importing ? 'Import en cours…' : `Importer ${totalGames || ''} match${totalGames > 1 ? 's' : ''}`.trim()}
+              {importing ? 'Import en cours…' : `Importer ${totalGames || ''} match${totalGames !== 1 ? 's' : ''}`.trim()}
             </button>
           </div>
         </div>
