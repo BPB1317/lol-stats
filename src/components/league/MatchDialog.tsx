@@ -29,6 +29,16 @@ export function MatchDialog({ league, teams, match, onClose }: MatchDialogProps)
   const team2 = teams.find(t => t.id === team2Id)
   const noteTeam2 = parseFloat((1 - noteTeam1).toFixed(3))
 
+  const handleScoreChange = (value: string) => {
+    setScore(value)
+    const m = value.match(/(\d+)\s*[-–]\s*(\d+)/)
+    if (m && team1Id && team2Id) {
+      const s1 = parseInt(m[1]), s2 = parseInt(m[2])
+      if (s1 > s2) setWinnerId(team1Id)
+      else if (s2 > s1) setWinnerId(team2Id)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!team1Id || !team2Id || team1Id === team2Id) {
@@ -116,7 +126,7 @@ export function MatchDialog({ league, teams, match, onClose }: MatchDialogProps)
               <input
                 type="text"
                 value={score}
-                onChange={e => setScore(e.target.value)}
+                onChange={e => handleScoreChange(e.target.value)}
                 placeholder="3-0"
                 className="w-full rounded-lg px-2 py-2 text-sm text-white outline-none"
                 style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)' }}
