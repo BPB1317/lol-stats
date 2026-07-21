@@ -102,17 +102,35 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
   )]
 
   async function handleImport() {
-    if (!valid.length) return
+    if (!parsed.length) return
     setImporting(true)
+
+    // Créer les équipes manquantes avant d'importer
+    const allNames = [...new Set(parsed.flatMap(p => [p.team1Name, p.team2Name]))]
+    const missingNames = allNames.filter(name => !teamMap.get(name.toLowerCase()))
+    const extendedMap = new Map(teamMap)
+    if (missingNames.length > 0) {
+      const { data: created } = await supabase
+        .from('teams')
+        .insert(missingNames.map(name => ({ league_id: league.id, name })))
+        .select()
+      for (const t of created ?? []) extendedMap.set(t.name.toLowerCase(), t.id)
+    }
+
+    // Re-résoudre les IDs avec la map étendue
+    const resolved = parsed.map(p => ({
+      ...p,
+      team1Id: extendedMap.get(p.team1Name.toLowerCase()) ?? null,
+      team2Id: extendedMap.get(p.team2Name.toLowerCase()) ?? null,
+    })).filter(p => p.team1Id && p.team2Id)
 
     type MatchRow = {
       league_id: string; team1_id: string; team2_id: string
       winner_id: string | null; score: string | null
       stage: string; match_date: string; source: string
     }
-    const rows: MatchRow[] = valid.flatMap((series): MatchRow[] => {
+    const rows: MatchRow[] = resolved.flatMap((series): MatchRow[] => {
       if (series.score1 === null || series.score2 === null) {
-        // Pas de score : 1 match placeholder
         return [{
           league_id:  league.id,
           team1_id:   series.team1Id!,
@@ -124,7 +142,6 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
           source:     'manual',
         }]
       }
-      // Avec score : un match par game
       return [
         ...Array.from({ length: series.score1 }, () => ({
           league_id:  league.id,
@@ -198,8 +215,8 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
           />
 
           {unknownTeams.length > 0 && (
-            <div className="rounded-lg px-3 py-2 text-xs" style={{ background: 'hsl(38 92% 50% / 0.15)', border: '1px solid hsl(38 92% 50% / 0.4)', color: 'hsl(38 92% 70%)' }}>
-              Équipes non reconnues (lignes ignorées) : {unknownTeams.join(', ')}
+            <div className="rounded-lg px-3 py-2 text-xs" style={{ background: 'hsl(217 91% 60% / 0.1)', border: '1px solid hsl(217 91% 60% / 0.3)', color: 'hsl(217 91% 75%)' }}>
+              Équipes inconnues — seront créées automatiquement : {unknownTeams.join(', ')}
             </div>
           )}
 
@@ -230,8 +247,8 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
                           </td>
                           <td className="px-3 py-1.5" style={{ color: 'hsl(215 20% 50%)' }}>{p.stage}</td>
                           <td className="px-3 py-1.5" style={{ color: 'hsl(215 20% 65%)' }}>{p.date}</td>
-                          <td className="px-3 py-1.5 text-right" style={{ color: ok ? 'hsl(215 20% 65%)' : 'hsl(38 92% 70%)' }}>
-                            {ok ? `${p.games} match${p.games > 1 ? 's' : ''}` : '⚠ inconnues'}
+                          <td className="px-3 py-1.5 text-right" style={{ color: ok ? 'hsl(215 20% 65%)' : 'hsl(217 91% 70%)' }}>
+                            {ok ? `${p.games} match${p.games > 1 ? 's' : ''}` : '✚ équipes créées'}
                           </td>
                         </tr>
                       )
@@ -248,7 +265,7 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
             </button>
             <button
               onClick={handleImport}
-              disabled={importing || totalGames === 0}
+              disabled={importing || parsed.length === 0}
               className="px-4 py-2 text-sm rounded-lg font-medium disabled:opacity-40"
               style={{ background: 'hsl(217 91% 60%)', color: 'hsl(222 47% 11%)' }}
             >

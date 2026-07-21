@@ -82,6 +82,21 @@ export function GdmCalendarImport({ league, teams, onClose, onDone }: Props) {
     setLoading(true)
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
 
+    // Créer les équipes manquantes
+    const allNamesInText = new Set<string>()
+    for (const line of lines) {
+      const cols = line.split('\t').map(c => c.trim())
+      if (cols.length >= 4) { allNamesInText.add(cols[1]); allNamesInText.add(cols[3]) }
+    }
+    const missingNames = [...allNamesInText].filter(name => name && !teamMap.get(name.toLowerCase()))
+    if (missingNames.length > 0) {
+      const { data: created } = await supabase
+        .from('teams')
+        .insert(missingNames.map(name => ({ league_id: league.id, name })))
+        .select()
+      for (const t of created ?? []) teamMap.set(t.name.toLowerCase(), t.id)
+    }
+
     // Charger uniquement les matchs calendrier existants pour dédupliquer
     const { data: existing } = await supabase
       .from('matches')
