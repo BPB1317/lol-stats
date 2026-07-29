@@ -112,6 +112,7 @@ export async function deleteTeam(id: string) {
 export async function mergeTeams(sourceId: string, targetId: string) {
   await supabase.from('matches').update({ team1_id: targetId }).eq('team1_id', sourceId)
   await supabase.from('matches').update({ team2_id: targetId }).eq('team2_id', sourceId)
+  await supabase.from('matches').update({ winner_id: targetId }).eq('winner_id', sourceId)
   await supabase.from('match_notes').update({ team1_id: targetId }).eq('team1_id', sourceId)
   await supabase.from('match_notes').update({ team2_id: targetId }).eq('team2_id', sourceId)
   await supabase.from('team_baselines').delete().eq('team_id', sourceId)
