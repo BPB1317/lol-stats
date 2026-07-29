@@ -98,8 +98,24 @@ export async function addTeam(team: Omit<Team, 'id' | 'created_at'>) {
   return error
 }
 
+export async function renameTeam(id: string, name: string) {
+  const { error } = await supabase.from('teams').update({ name }).eq('id', id)
+  return error
+}
+
 export async function deleteTeam(id: string) {
+  await supabase.from('team_baselines').delete().eq('team_id', id)
   const { error } = await supabase.from('teams').delete().eq('id', id)
+  return error
+}
+
+export async function mergeTeams(sourceId: string, targetId: string) {
+  await supabase.from('matches').update({ team1_id: targetId }).eq('team1_id', sourceId)
+  await supabase.from('matches').update({ team2_id: targetId }).eq('team2_id', sourceId)
+  await supabase.from('match_notes').update({ team1_id: targetId }).eq('team1_id', sourceId)
+  await supabase.from('match_notes').update({ team2_id: targetId }).eq('team2_id', sourceId)
+  await supabase.from('team_baselines').delete().eq('team_id', sourceId)
+  const { error } = await supabase.from('teams').delete().eq('id', sourceId)
   return error
 }
 
