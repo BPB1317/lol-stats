@@ -160,3 +160,22 @@ export async function deleteMatch(id: string) {
   const { error } = await supabase.from('matches').delete().eq('id', id)
   return error
 }
+
+export async function deleteCalendarMatchesByStage(leagueId: string, stage: string) {
+  const { error } = await supabase
+    .from('matches')
+    .delete()
+    .eq('league_id', leagueId)
+    .eq('source', 'calendar')
+    .eq('stage', stage)
+  return error
+}
+
+export async function deleteAllCalendarMatches(leagueId: string) {
+  const { error } = await supabase
+    .from('matches')
+    .delete()
+    .eq('league_id', leagueId)
+    .eq('source', 'calendar')
+  return error
+}
