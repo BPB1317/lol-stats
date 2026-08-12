@@ -104,6 +104,13 @@ export async function renameTeam(id: string, name: string) {
 }
 
 export async function deleteTeam(id: string) {
+  const { data: m1 } = await supabase.from('matches').select('id').eq('team1_id', id)
+  const { data: m2 } = await supabase.from('matches').select('id').eq('team2_id', id)
+  const matchIds = [...new Set([...(m1 ?? []).map(m => m.id), ...(m2 ?? []).map(m => m.id)])]
+  if (matchIds.length > 0) {
+    await supabase.from('match_notes').delete().in('match_id', matchIds)
+    await supabase.from('matches').delete().in('id', matchIds)
+  }
   await supabase.from('team_baselines').delete().eq('team_id', id)
   const { error } = await supabase.from('teams').delete().eq('id', id)
   return error

@@ -6,6 +6,7 @@ interface CalendarImportDialogProps {
   league: League
   teams: Team[]
   onClose: () => void
+  onDone?: () => void
 }
 
 interface ParsedSeries {
@@ -80,7 +81,7 @@ function parseLine(line: string, teamMap: Map<string, string>): ParsedSeries | n
   return { team1Name, team2Name, score1, score2, stage, date, team1Id, team2Id, games }
 }
 
-export function CalendarImportDialog({ league, teams, onClose }: CalendarImportDialogProps) {
+export function CalendarImportDialog({ league, teams, onClose, onDone }: CalendarImportDialogProps) {
   const [text, setText]         = useState('')
   const [importing, setImporting] = useState(false)
   const [result, setResult]     = useState<{ ok: number; skipped: number } | null>(null)
@@ -167,9 +168,11 @@ export function CalendarImportDialog({ league, teams, onClose }: CalendarImportD
     })
 
     const { data, error } = await supabase.from('matches').insert(rows).select()
+    const ok = data?.length ?? 0
+    if (ok > 0) onDone?.()
     setResult({
-      ok:      data?.length ?? 0,
-      skipped: error ? rows.length : rows.length - (data?.length ?? 0),
+      ok,
+      skipped: error ? rows.length : rows.length - ok,
     })
     setImporting(false)
   }

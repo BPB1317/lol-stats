@@ -278,6 +278,7 @@ export function MatchesTab({ league }: MatchesTabProps) {
         <CalendarImportDialog
           league={league}
           teams={teams}
+          onDone={() => { refetchMatches(); refetchNotes() }}
           onClose={() => setShowImport(false)}
         />
       )}
