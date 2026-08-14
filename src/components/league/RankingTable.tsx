@@ -120,8 +120,8 @@ export function RankingTable({ ratings }: RankingTableProps) {
             <th className="py-3 px-4 text-right">Output</th>
             <th className="py-3 px-4 text-center">Évol.</th>
             <th className="py-3 px-4 text-center">Matchs</th>
-            <th className="py-3 px-4 text-right">Avg.Opp</th>
-            <th className="py-3 px-4 text-right">Note moy.</th>
+            <th className="py-3 px-4 text-center">Avg.Opp</th>
+            <th className="py-3 px-4 text-center">Note moy.</th>
             <th className="py-3 px-4 text-left">Historique</th>
           </tr>
         </thead>
@@ -173,10 +173,10 @@ export function RankingTable({ ratings }: RankingTableProps) {
                       {r.nbGames}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-right font-mono text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+                  <td className="py-3 px-4 text-center font-mono text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
                     {r.avgOpp != null ? Math.round(r.avgOpp) : '—'}
                   </td>
-                  <td className="py-3 px-4 text-right font-mono text-xs" style={{ color: r.avgNote != null ? (r.avgNote >= 0.5 ? '#4ade80' : '#f87171') : 'hsl(215 20% 65%)' }}>
+                  <td className="py-3 px-4 text-center font-mono text-xs" style={{ color: r.avgNote != null ? (r.avgNote >= 0.5 ? '#4ade80' : '#f87171') : 'hsl(215 20% 65%)' }}>
                     {r.avgNote != null ? `${(r.avgNote * 100).toFixed(0)}%` : '—'}
                   </td>
                   <td className="py-3 px-4">
