@@ -111,6 +111,7 @@ export function computeLeagueRatings(
       teamNotes.push({
         note: teamNote,
         performance,
+        opponentInput,
         won: match?.winner_id != null ? match.winner_id === team.id : null,
         date: note.note_date,
         matchId: note.match_id,
@@ -126,6 +127,13 @@ export function computeLeagueRatings(
       sensitivity
     )
 
+    const avgOpp = teamNotes.length > 0
+      ? teamNotes.reduce((s, e) => s + e.opponentInput, 0) / teamNotes.length
+      : null
+    const avgNote = teamNotes.length > 0
+      ? teamNotes.reduce((s, e) => s + e.note, 0) / teamNotes.length
+      : null
+
     return {
       team,
       input: result.input,
@@ -133,6 +141,8 @@ export function computeLeagueRatings(
       output: result.output,
       delta: result.output - result.input,
       nbGames: result.nbGames,
+      avgOpp,
+      avgNote,
       history: teamNotes,
     }
   })

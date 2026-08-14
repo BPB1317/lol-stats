@@ -48,7 +48,7 @@ function TeamDetail({ rating }: { rating: TeamRating }) {
   if (rating.history.length === 0) {
     return (
       <tr>
-        <td colSpan={7} className="px-8 py-3 text-xs" style={{ color: 'hsl(215 20% 65%)', background: 'hsl(222 47% 11%)' }}>
+        <td colSpan={9} className="px-8 py-3 text-xs" style={{ color: 'hsl(215 20% 65%)', background: 'hsl(222 47% 11%)' }}>
           Aucune performance enregistrée dans cette période.
         </td>
       </tr>
@@ -57,7 +57,7 @@ function TeamDetail({ rating }: { rating: TeamRating }) {
 
   return (
     <tr>
-      <td colSpan={7} style={{ background: 'hsl(222 47% 11%)', padding: 0 }}>
+      <td colSpan={9} style={{ background: 'hsl(222 47% 11%)', padding: 0 }}>
         <div className="px-8 py-3">
           <table className="w-full text-xs">
             <thead>
@@ -120,6 +120,8 @@ export function RankingTable({ ratings }: RankingTableProps) {
             <th className="py-3 px-4 text-right">Output</th>
             <th className="py-3 px-4 text-center">Évol.</th>
             <th className="py-3 px-4 text-center">Matchs</th>
+            <th className="py-3 px-4 text-right">Avg.Opp</th>
+            <th className="py-3 px-4 text-right">Note moy.</th>
             <th className="py-3 px-4 text-left">Historique</th>
           </tr>
         </thead>
@@ -170,6 +172,12 @@ export function RankingTable({ ratings }: RankingTableProps) {
                     <span className="text-xs font-mono" style={{ color: r.nbGames > 0 ? 'hsl(217 91% 60%)' : 'hsl(215 20% 65%)' }}>
                       {r.nbGames}
                     </span>
+                  </td>
+                  <td className="py-3 px-4 text-right font-mono text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+                    {r.avgOpp != null ? Math.round(r.avgOpp) : '—'}
+                  </td>
+                  <td className="py-3 px-4 text-right font-mono text-xs" style={{ color: r.avgNote != null ? (r.avgNote >= 0.5 ? '#4ade80' : '#f87171') : 'hsl(215 20% 65%)' }}>
+                    {r.avgNote != null ? `${(r.avgNote * 100).toFixed(0)}%` : '—'}
                   </td>
                   <td className="py-3 px-4">
                     {r.nbGames > 0

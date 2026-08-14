@@ -51,9 +51,10 @@ export interface MatchNote {
 }
 
 export interface RatingEntry {
-  note: number        // valeur 0-1 saisie par l'utilisateur
-  performance: number // ELO de la performance (opponent_input + adjusted_delta)
-  won: boolean | null // résultat réel (winner_id === team.id), null si winner_id absent
+  note: number          // valeur 0-1 saisie par l'utilisateur
+  performance: number   // ELO de la performance (opponent_input + adjusted_delta)
+  opponentInput: number // ELO input de l'adversaire
+  won: boolean | null   // résultat réel (winner_id === team.id), null si winner_id absent
   date: string
   matchId: string
   opponentName: string
@@ -108,5 +109,7 @@ export interface TeamRating {
   output: number
   delta: number
   nbGames: number
+  avgOpp: number | null   // moyenne ELO input des adversaires sur la période
+  avgNote: number | null  // moyenne note (0-1) sur la période
   history: RatingEntry[]
 }
