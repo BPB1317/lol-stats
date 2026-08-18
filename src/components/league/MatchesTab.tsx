@@ -16,6 +16,10 @@ function stagePriority(stage: string): number {
   return idx === -1 ? 99 : idx
 }
 
+function stageLatestDate(matches: { match_date: string }[]): string {
+  return matches.map(m => m.match_date).sort().at(-1) ?? ''
+}
+
 function InlineNote({
   match,
   note,
@@ -144,13 +148,13 @@ export function MatchesTab({ league }: MatchesTabProps) {
     acc[m.stage].push(m)
     return acc
   }, {})
+  // Tri : date la plus récente du stage en primaire (décroissant = stages récents en haut)
+  // stagePriority en secondaire (pour départager deux stages à même date, ex : FINALS vs WEEK6 même jour)
   const stagesSorted = Object.keys(grouped).sort((a, b) => {
-    const pa = stagePriority(a), pb = stagePriority(b)
-    if (pa !== pb) return pa - pb
-    // Stages inconnus : tri par date la plus récente du stage (décroissant)
-    const latestA = grouped[a].map(m => m.match_date).sort().at(-1) ?? ''
-    const latestB = grouped[b].map(m => m.match_date).sort().at(-1) ?? ''
-    return latestB.localeCompare(latestA)
+    const latestA = stageLatestDate(grouped[a])
+    const latestB = stageLatestDate(grouped[b])
+    if (latestA !== latestB) return latestB.localeCompare(latestA)
+    return stagePriority(a) - stagePriority(b)
   })
 
   if (loading) {
