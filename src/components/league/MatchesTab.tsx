@@ -144,7 +144,14 @@ export function MatchesTab({ league }: MatchesTabProps) {
     acc[m.stage].push(m)
     return acc
   }, {})
-  const stagesSorted = Object.keys(grouped).sort((a, b) => stagePriority(a) - stagePriority(b))
+  const stagesSorted = Object.keys(grouped).sort((a, b) => {
+    const pa = stagePriority(a), pb = stagePriority(b)
+    if (pa !== pb) return pa - pb
+    // Stages inconnus : tri par date la plus récente du stage (décroissant)
+    const latestA = grouped[a].map(m => m.match_date).sort().at(-1) ?? ''
+    const latestB = grouped[b].map(m => m.match_date).sort().at(-1) ?? ''
+    return latestB.localeCompare(latestA)
+  })
 
   if (loading) {
     return <div className="py-16 text-center" style={{ color: 'hsl(215 20% 65%)' }}>Chargement…</div>
@@ -279,7 +286,7 @@ export function MatchesTab({ league }: MatchesTabProps) {
           league={league}
           teams={teams}
           onDone={() => { refetchMatches(); refetchNotes() }}
-          onClose={() => setShowImport(false)}
+          onClose={() => { setShowImport(false); refetchMatches(); refetchNotes() }}
         />
       )}
     </div>

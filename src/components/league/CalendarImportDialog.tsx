@@ -31,9 +31,14 @@ function parseLine(line: string, teamMap: Map<string, string>): ParsedSeries | n
   const cols = line.split('\t').map(c => c.trim()).filter(Boolean)
   if (cols.length < 3) return null
 
-  // Date (YYYY-MM-DD) — obligatoire
-  const dateIdx = cols.findIndex(c => /^\d{4}-\d{2}-\d{2}$/.test(c))
-  if (dateIdx === -1) return null
+  // Date (YYYY-MM-DD) — obligatoire, on prend la DERNIÈRE occurrence
+  // (certains calendriers ont une date d'ajout en 1ère colonne + date du match en dernière)
+  const allDateIdxs = cols.reduce<number[]>((acc, c, i) => {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(c)) acc.push(i)
+    return acc
+  }, [])
+  if (allDateIdxs.length === 0) return null
+  const dateIdx = allDateIdxs[allDateIdxs.length - 1]
   const date = cols[dateIdx]
 
   // Score (optionnel) — ex: "2-0", "2 - 1"

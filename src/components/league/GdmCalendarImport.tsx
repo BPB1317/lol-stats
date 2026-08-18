@@ -32,8 +32,9 @@ function parseLine(
   const team2Name = cols[3]
   const stage = cols[4]
 
-  // Date : cherche le premier champ au format YYYY-MM-DD (peu importe la colonne)
-  const date = cols.find(c => /^\d{4}-\d{2}-\d{2}$/.test(c)) ?? ''
+  // Date : prend la DERNIÈRE colonne au format YYYY-MM-DD
+  // (certains calendriers ont une date d'ajout avant la date du match)
+  const date = [...cols].reverse().find(c => /^\d{4}-\d{2}-\d{2}$/.test(c)) ?? ''
 
   if (!team1Name || !team2Name || !stage || !date) return null
 
