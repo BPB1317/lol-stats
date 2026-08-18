@@ -18,7 +18,8 @@ function computePerf(gdm: number, avgOpp: number): number {
 // si Perf <= Input : (base*Input + Perf*k) / (base+k)
 function computeOutput(input: number, perf: number, games: number): number {
   const k = 2.3 * games
-  const base = Math.max(games < 9 ? 36 : 48, k)
+  const palier = games < 9 ? 32 : games < 18 ? 50 : 72
+  const base = Math.max(palier, k)
   if (perf > input) {
     return ((base - k) * input + perf * k) / base
   }
