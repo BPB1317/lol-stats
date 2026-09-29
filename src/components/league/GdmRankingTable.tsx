@@ -13,6 +13,20 @@ function fmtElo(n: number | null): string {
   return Math.round(n).toString()
 }
 
+// Stages triés par date du premier match (stages sans match à la fin), matchs triés par date
+function chronological(stages: GdmStageBreakdown[]): GdmStageBreakdown[] {
+  return stages
+    .map(s => ({ ...s, matches: [...s.matches].sort((a, b) => a.date.localeCompare(b.date)) }))
+    .sort((a, b) => {
+      const da = a.matches[0]?.date
+      const db = b.matches[0]?.date
+      if (da && db) return da.localeCompare(db)
+      if (da) return -1
+      if (db) return 1
+      return a.stage.localeCompare(b.stage)
+    })
+}
+
 function StageDetail({ stages, colSpan, teamId }: { stages: GdmStageBreakdown[]; colSpan: number; teamId: string }) {
   if (stages.length === 0) {
     return (
@@ -43,7 +57,7 @@ function StageDetail({ stages, colSpan, teamId }: { stages: GdmStageBreakdown[];
               </tr>
             </thead>
             <tbody>
-              {stages.map(s => {
+              {chronological(stages).map(s => {
                 const gdmColor = s.gdm == null ? 'hsl(215 20% 65%)' : s.gdm > 0 ? '#4ade80' : '#f87171'
                 const gd15Color = s.gd15 == null ? 'hsl(215 20% 65%)' : s.gd15 > 0 ? '#4ade80' : '#f87171'
                 // Une ligne par adversaire ; les stats du stage fusionnées sur toutes ses lignes
