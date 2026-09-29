@@ -7,6 +7,12 @@ function parseGames(score: string | null): number {
   return parseInt(m[1]) + parseInt(m[2])
 }
 
+// Score stocké côté team1 ("2-1") → inversé pour l'afficher du point de vue de team2 ("1-2")
+function flipScore(score: string | null): string | null {
+  if (!score) return score
+  return score.replace(/(\d+)(\s*[-–]\s*)(\d+)/, '$3$2$1')
+}
+
 // Perf = Avg.Opp + 280 si GDM > 400, sinon Avg.Opp + 0.7*GDM
 function computePerf(gdm: number, avgOpp: number): number {
   return gdm > 400 ? avgOpp + 280 : avgOpp + 0.7 * gdm
@@ -142,7 +148,7 @@ export function computeGdmRatings(
           return {
             opponentName: oppTeam?.name ?? '?',
             opponentInput: inputMap[oppId] ?? 1500,
-            score: m.score,
+            score: m.team2_id === team.id ? flipScore(m.score) : m.score,
             games: parseGames(m.score),
             date: m.match_date,
           }
