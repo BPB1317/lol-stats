@@ -150,6 +150,8 @@ export function computeGdmRatings(
 
       return { stage, gdm: stageGdm, gd15: stageGd15, avgOpp: stageAvgOpp, games: stageGames, perf: stagePerf, matches: matchDetails }
     })
+      // Masquer les stages où l'équipe n'a ni match ni stats (ex: bye)
+      .filter(s => s.matches.length > 0 || teamStats.some(st => st.stage.toUpperCase() === s.stage))
 
     return {
       team,
