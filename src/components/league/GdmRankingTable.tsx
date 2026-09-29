@@ -14,18 +14,6 @@ function fmtElo(n: number | null): string {
 }
 
 function StageDetail({ stages, colSpan, teamId }: { stages: GdmStageBreakdown[]; colSpan: number; teamId: string }) {
-  const [expandedStages, setExpandedStages] = useState<Set<string>>(
-    () => new Set(stages.filter(s => s.matches.length > 0).map(s => s.stage))
-  )
-
-  const toggleStage = (stage: string) => {
-    setExpandedStages(prev => {
-      const next = new Set(prev)
-      next.has(stage) ? next.delete(stage) : next.add(stage)
-      return next
-    })
-  }
-
   if (stages.length === 0) {
     return (
       <tr>
@@ -43,12 +31,14 @@ function StageDetail({ stages, colSpan, teamId }: { stages: GdmStageBreakdown[];
           <table className="w-full text-xs">
             <thead>
               <tr style={{ color: 'hsl(215 20% 50%)' }}>
-                <th className="text-left pb-1.5 font-normal w-4"></th>
                 <th className="text-left pb-1.5 font-normal">Stage</th>
+                <th className="text-left pb-1.5 font-normal">Date</th>
+                <th className="text-left pb-1.5 font-normal">Adversaire</th>
+                <th className="text-right pb-1.5 font-normal">Score</th>
+                <th className="text-right pb-1.5 font-normal">Elo adv.</th>
                 <th className="text-right pb-1.5 font-normal">GDM</th>
                 <th className="text-right pb-1.5 font-normal">GD@15</th>
                 <th className="text-right pb-1.5 font-normal">Games</th>
-                <th className="text-right pb-1.5 font-normal">Avg.Opp</th>
                 <th className="text-right pb-1.5 font-normal">Perf</th>
               </tr>
             </thead>
@@ -56,47 +46,32 @@ function StageDetail({ stages, colSpan, teamId }: { stages: GdmStageBreakdown[];
               {stages.map(s => {
                 const gdmColor = s.gdm == null ? 'hsl(215 20% 65%)' : s.gdm > 0 ? '#4ade80' : '#f87171'
                 const gd15Color = s.gd15 == null ? 'hsl(215 20% 65%)' : s.gd15 > 0 ? '#4ade80' : '#f87171'
-                const isStageExpanded = expandedStages.has(s.stage)
+                // Une ligne par adversaire ; les stats du stage fusionnées sur toutes ses lignes
+                const rows = s.matches.length > 0 ? s.matches : [null]
+                const span = rows.length
                 return (
                   <Fragment key={`${teamId}-${s.stage}`}>
-                    <tr className="border-t" style={{ borderColor: 'hsl(216 34% 20%)' }}>
-                      <td className="py-1 pr-2">
-                        {s.matches.length > 0 && (
-                          <button
-                            onClick={() => toggleStage(s.stage)}
-                            style={{ color: isStageExpanded ? 'hsl(217 91% 70%)' : 'hsl(215 20% 40%)', fontSize: '0.5rem' }}
-                          >
-                            {isStageExpanded ? '▼' : '▶'}
-                          </button>
+                    {rows.map((m, i) => (
+                      <tr key={i} className={i === 0 ? 'border-t' : ''} style={{ borderColor: 'hsl(216 34% 20%)' }}>
+                        {i === 0 && (
+                          <td rowSpan={span} className="py-1 pr-6 font-mono font-semibold text-white align-top">{s.stage}</td>
                         )}
-                      </td>
-                      <td className="py-1 pr-6">
-                        <button
-                          onClick={() => s.matches.length > 0 && toggleStage(s.stage)}
-                          className="font-mono font-semibold text-white"
-                          style={{ cursor: s.matches.length > 0 ? 'pointer' : 'default' }}
-                        >
-                          {s.stage}
-                        </button>
-                      </td>
-                      <td className="py-1 pr-4 text-right font-mono font-semibold" style={{ color: gdmColor }}>{fmt(s.gdm)}</td>
-                      <td className="py-1 pr-4 text-right font-mono font-semibold" style={{ color: gd15Color }}>{fmt(s.gd15)}</td>
-                      <td className="py-1 pr-4 text-right font-mono" style={{ color: s.games > 0 ? 'hsl(217 91% 60%)' : 'hsl(215 20% 65%)' }}>
-                        {s.games > 0 ? s.games : '—'}
-                      </td>
-                      <td className="py-1 pr-4 text-right font-mono" style={{ color: 'hsl(215 20% 65%)' }}>{fmtElo(s.avgOpp)}</td>
-                      <td className="py-1 text-right font-mono" style={{ color: 'hsl(215 20% 65%)' }}>{fmtElo(s.perf)}</td>
-                    </tr>
-                    {isStageExpanded && s.matches.map((m, i) => (
-                      <tr key={i} style={{ background: 'hsl(222 47% 13%)' }}>
-                        <td />
-                        <td className="py-1 pl-4 pr-2 font-mono text-white" style={{ color: 'hsl(215 20% 85%)' }}>
-                          {format(new Date(m.date + 'T00:00:00'), 'dd/MM')}
+                        <td className="py-1 pr-4 font-mono" style={{ color: 'hsl(215 20% 85%)' }}>
+                          {m ? format(new Date(m.date + 'T00:00:00'), 'dd/MM') : '—'}
                         </td>
-                        <td className="py-1 pr-4 text-white" colSpan={2}>{m.opponentName}</td>
-                        <td className="py-1 pr-4 text-right font-mono" style={{ color: 'hsl(217 91% 60%)' }}>{m.score ?? '—'}</td>
-                        <td className="py-1 pr-4 text-right font-mono" style={{ color: 'hsl(215 20% 50%)' }}>{m.opponentInput}</td>
-                        <td />
+                        <td className="py-1 pr-4 text-white">{m?.opponentName ?? '—'}</td>
+                        <td className="py-1 pr-4 text-right font-mono" style={{ color: 'hsl(217 91% 60%)' }}>{m?.score ?? '—'}</td>
+                        <td className="py-1 pr-4 text-right font-mono" style={{ color: 'hsl(215 20% 50%)' }}>{m ? m.opponentInput : fmtElo(s.avgOpp)}</td>
+                        {i === 0 && (
+                          <>
+                            <td rowSpan={span} className="py-1 pr-4 text-right font-mono font-semibold align-middle" style={{ color: gdmColor }}>{fmt(s.gdm)}</td>
+                            <td rowSpan={span} className="py-1 pr-4 text-right font-mono font-semibold align-middle" style={{ color: gd15Color }}>{fmt(s.gd15)}</td>
+                            <td rowSpan={span} className="py-1 pr-4 text-right font-mono align-middle" style={{ color: s.games > 0 ? 'hsl(217 91% 60%)' : 'hsl(215 20% 65%)' }}>
+                              {s.games > 0 ? s.games : '—'}
+                            </td>
+                            <td rowSpan={span} className="py-1 text-right font-mono align-middle" style={{ color: 'hsl(215 20% 65%)' }}>{fmtElo(s.perf)}</td>
+                          </>
+                        )}
                       </tr>
                     ))}
                   </Fragment>
