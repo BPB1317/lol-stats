@@ -14,7 +14,9 @@ function fmtElo(n: number | null): string {
 }
 
 function StageDetail({ stages, colSpan, teamId }: { stages: GdmStageBreakdown[]; colSpan: number; teamId: string }) {
-  const [expandedStages, setExpandedStages] = useState<Set<string>>(new Set())
+  const [expandedStages, setExpandedStages] = useState<Set<string>>(
+    () => new Set(stages.filter(s => s.matches.length > 0).map(s => s.stage))
+  )
 
   const toggleStage = (stage: string) => {
     setExpandedStages(prev => {
