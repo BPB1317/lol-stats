@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { League, Team } from '@/types'
+import { teamKey } from '@/lib/teamName'
 import { supabase } from '@/lib/supabase'
 import { addMatch } from '@/hooks/useMatches'
 
@@ -38,8 +39,8 @@ function parseLine(
 
   if (!team1Name || !team2Name || !stage || !date) return null
 
-  const team1Id = teamMap.get(team1Name.toLowerCase())
-  const team2Id = teamMap.get(team2Name.toLowerCase())
+  const team1Id = teamMap.get(teamKey(team1Name))
+  const team2Id = teamMap.get(teamKey(team2Name))
 
   if (!team1Id || !team2Id) {
     return {
@@ -77,7 +78,7 @@ export function GdmCalendarImport({ league, teams, onClose, onDone }: Props) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{ imported: number; updated: number; skipped: number; errors: ParseError[] } | null>(null)
 
-  const teamMap = new Map(teams.map(t => [t.name.toLowerCase(), t.id]))
+  const teamMap = new Map(teams.map(t => [teamKey(t.name), t.id]))
 
   const handleImport = async () => {
     setLoading(true)
@@ -89,13 +90,13 @@ export function GdmCalendarImport({ league, teams, onClose, onDone }: Props) {
       const cols = line.split('\t').map(c => c.trim())
       if (cols.length >= 4) { allNamesInText.add(cols[1]); allNamesInText.add(cols[3]) }
     }
-    const missingNames = [...allNamesInText].filter(name => name && !teamMap.get(name.toLowerCase()))
+    const missingNames = [...allNamesInText].filter(name => name && !teamMap.get(teamKey(name)))
     if (missingNames.length > 0) {
       const { data: created } = await supabase
         .from('teams')
         .insert(missingNames.map(name => ({ league_id: league.id, name })))
         .select()
-      for (const t of created ?? []) teamMap.set(t.name.toLowerCase(), t.id)
+      for (const t of created ?? []) teamMap.set(teamKey(t.name), t.id)
     }
 
     // Charger uniquement les matchs calendrier existants pour dédupliquer

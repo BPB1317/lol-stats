@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { League, Team } from '@/types'
+import { teamKey } from '@/lib/teamName'
 import { upsertGdmStat } from '@/hooks/useGdmStats'
 
 interface ParsedRow {
@@ -34,7 +35,7 @@ function parseStats(text: string, teamMap: Map<string, string>): {
     if (!name || isNaN(games) || isNaN(gdm)) continue
 
     const gd15 = gd15Raw === '-' || gd15Raw === '' ? null : parseFloat(gd15Raw)
-    const teamId = teamMap.get(name.toLowerCase())
+    const teamId = teamMap.get(teamKey(name))
 
     if (!teamId) {
       unmatched.push({ name })
@@ -63,7 +64,7 @@ export function GdmStatsImport({ league, teams, onClose, onDone }: Props) {
     unmatched: UnmatchedRow[]
   } | null>(null)
 
-  const teamMap = new Map(teams.map(t => [t.name.toLowerCase(), t.id]))
+  const teamMap = new Map(teams.map(t => [teamKey(t.name), t.id]))
 
   const handleImport = async () => {
     if (!stage.trim()) return

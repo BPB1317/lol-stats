@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import type { League, Team } from '@/types'
+import { teamKey } from '@/lib/teamName'
 import { supabase } from '@/lib/supabase'
 
 interface CalendarImportDialogProps {
@@ -23,7 +24,7 @@ interface ParsedSeries {
 
 function buildTeamMap(teams: Team[]): Map<string, string> {
   const map = new Map<string, string>()
-  for (const t of teams) map.set(t.name.toLowerCase(), t.id)
+  for (const t of teams) map.set(teamKey(t.name), t.id)
   return map
 }
 
@@ -79,8 +80,8 @@ function parseLine(line: string, teamMap: Map<string, string>): ParsedSeries | n
     stage = cols[4] ?? ''
   }
 
-  const team1Id = teamMap.get(team1Name.toLowerCase()) ?? null
-  const team2Id = teamMap.get(team2Name.toLowerCase()) ?? null
+  const team1Id = teamMap.get(teamKey(team1Name)) ?? null
+  const team2Id = teamMap.get(teamKey(team2Name)) ?? null
   const games   = score1 !== null && score2 !== null ? score1 + score2 : 1
 
   return { team1Name, team2Name, score1, score2, stage, date, team1Id, team2Id, games }
@@ -113,21 +114,21 @@ export function CalendarImportDialog({ league, teams, onClose, onDone }: Calenda
 
     // Créer les équipes manquantes avant d'importer
     const allNames = [...new Set(parsed.flatMap(p => [p.team1Name, p.team2Name]))]
-    const missingNames = allNames.filter(name => !teamMap.get(name.toLowerCase()))
+    const missingNames = allNames.filter(name => !teamMap.get(teamKey(name)))
     const extendedMap = new Map(teamMap)
     if (missingNames.length > 0) {
       const { data: created } = await supabase
         .from('teams')
         .insert(missingNames.map(name => ({ league_id: league.id, name })))
         .select()
-      for (const t of created ?? []) extendedMap.set(t.name.toLowerCase(), t.id)
+      for (const t of created ?? []) extendedMap.set(teamKey(t.name), t.id)
     }
 
     // Re-résoudre les IDs avec la map étendue
     const resolved = parsed.map(p => ({
       ...p,
-      team1Id: extendedMap.get(p.team1Name.toLowerCase()) ?? null,
-      team2Id: extendedMap.get(p.team2Name.toLowerCase()) ?? null,
+      team1Id: extendedMap.get(teamKey(p.team1Name)) ?? null,
+      team2Id: extendedMap.get(teamKey(p.team2Name)) ?? null,
     })).filter(p => p.team1Id && p.team2Id)
 
     type MatchRow = {
