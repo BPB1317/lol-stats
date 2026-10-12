@@ -1,4 +1,17 @@
 import { useState, useMemo } from 'react'
+import { seriesProbs, type SeriesProbs } from '@/lib/seriesOdds'
+
+// Lignes du tableau BO3/BO5 : chaque marché est affiché du point de vue de chaque équipe
+const SERIES_ROWS: { label: string; key: keyof SeriesProbs }[] = [
+  { label: 'BO3 Victoire', key: 'bo3Win' },
+  { label: 'BO3 −1.5', key: 'bo3M15' },
+  { label: 'BO3 +1.5', key: 'bo3P15' },
+  { label: 'BO5 Victoire', key: 'bo5Win' },
+  { label: 'BO5 −1.5', key: 'bo5M15' },
+  { label: 'BO5 +1.5', key: 'bo5P15' },
+  { label: 'BO5 −2.5', key: 'bo5M25' },
+  { label: 'BO5 +2.5', key: 'bo5P25' },
+]
 
 interface CalcRating {
   team: { id: string; name: string }
@@ -19,6 +32,8 @@ export function EloCalculator({ ratings }: EloCalculatorProps) {
   const [team2Id, setTeam2Id] = useState('')
   const [manualDelta, setManualDelta] = useState('')
   const [mode, setMode] = useState<'teams' | 'manual'>('teams')
+  const [sInput, setSInput] = useState('40')
+  const s = parseFloat(sInput)
 
   const sorted = [...ratings].sort((a, b) => b.output - a.output)
 
@@ -46,6 +61,11 @@ export function EloCalculator({ ratings }: EloCalculatorProps) {
       label2: mode === 'teams' && team2 ? team2.team.name : 'Équipe B',
     }
   }, [delta, mode, team1, team2])
+
+  const series = useMemo(() => {
+    if (!result || !(s > 0)) return null
+    return { a: seriesProbs(result.p1, s), b: seriesProbs(result.p2, s) }
+  }, [result, s])
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ background: 'hsl(222 47% 14%)', border: '1px solid hsl(216 34% 22%)' }}>
@@ -157,6 +177,51 @@ export function EloCalculator({ ratings }: EloCalculatorProps) {
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {/* BO3 / BO5 + handicaps, dérivés de la proba BO1 */}
+        {result && (
+          <div className="rounded-lg overflow-hidden" style={{ background: 'hsl(222 47% 11%)', border: '1px solid hsl(216 34% 22%)' }}>
+            <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'hsl(216 34% 22%)' }}>
+              <span className="text-xs font-semibold text-white">BO3 / BO5 & handicaps</span>
+              <label className="flex items-center gap-2 text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+                s
+                <input
+                  type="number"
+                  value={sInput}
+                  onChange={e => setSInput(e.target.value)}
+                  className="w-16 rounded px-2 py-1 text-xs text-white outline-none text-center font-mono"
+                  style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)' }}
+                />
+              </label>
+            </div>
+            {series ? (
+              <table className="w-full text-xs">
+                <thead>
+                  <tr style={{ color: 'hsl(215 20% 50%)' }}>
+                    <th className="text-left font-normal px-3 py-1.5">Marché</th>
+                    <th className="text-right font-normal px-3 py-1.5 truncate max-w-0 w-[35%]">{result.label1}</th>
+                    <th className="text-right font-normal px-3 py-1.5 truncate max-w-0 w-[35%]">{result.label2}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {SERIES_ROWS.map(row => (
+                    <tr key={row.key} className="border-t" style={{ borderColor: 'hsl(216 34% 18%)' }}>
+                      <td className="px-3 py-1.5 font-mono" style={{ color: 'hsl(215 20% 85%)' }}>{row.label}</td>
+                      {[series.a[row.key], series.b[row.key]].map((p, i) => (
+                        <td key={i} className="px-3 py-1.5 text-right font-mono whitespace-nowrap">
+                          <span style={{ color: 'hsl(215 20% 55%)' }}>{(p * 100).toFixed(1)}%</span>
+                          <span className="ml-3 font-semibold text-white">{(1 / p).toFixed(2)}</span>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="px-3 py-2 text-xs" style={{ color: 'hsl(215 20% 65%)' }}>s doit être &gt; 0.</div>
+            )}
           </div>
         )}
 
