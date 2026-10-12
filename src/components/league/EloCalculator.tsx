@@ -1,17 +1,47 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, Fragment } from 'react'
 import { seriesProbs, type SeriesProbs } from '@/lib/seriesOdds'
 
-// Lignes du tableau BO3/BO5 : chaque marché est affiché du point de vue de chaque équipe
-const SERIES_ROWS: { label: string; key: keyof SeriesProbs }[] = [
-  { label: 'BO3 Victoire', key: 'bo3Win' },
-  { label: 'BO3 −1.5', key: 'bo3M15' },
-  { label: 'BO3 +1.5', key: 'bo3P15' },
-  { label: 'BO5 Victoire', key: 'bo5Win' },
-  { label: 'BO5 −1.5', key: 'bo5M15' },
-  { label: 'BO5 +1.5', key: 'bo5P15' },
-  { label: 'BO5 −2.5', key: 'bo5M25' },
-  { label: 'BO5 +2.5', key: 'bo5P25' },
+// Marchés affichés par format, du point de vue de chaque équipe
+const SERIES_BLOCKS: { title: string; rows: { label: string; key: keyof SeriesProbs }[] }[] = [
+  {
+    title: 'BO3',
+    rows: [
+      { label: 'Victoire', key: 'bo3Win' },
+      { label: '−1.5', key: 'bo3M15' },
+      { label: '+1.5', key: 'bo3P15' },
+    ],
+  },
+  {
+    title: 'BO5',
+    rows: [
+      { label: 'Victoire', key: 'bo5Win' },
+      { label: '−1.5', key: 'bo5M15' },
+      { label: '+1.5', key: 'bo5P15' },
+      { label: '−2.5', key: 'bo5M25' },
+      { label: '+2.5', key: 'bo5P25' },
+    ],
+  },
 ]
+
+function OddsCell({ p }: { p: number }) {
+  const isFav = p >= 0.5
+  return (
+    <div
+      className="rounded-lg px-3 py-2 text-center"
+      style={{
+        background: isFav ? 'hsl(142 70% 45% / 0.12)' : 'hsl(216 34% 16%)',
+        border: `1px solid ${isFav ? 'hsl(142 70% 45% / 0.35)' : 'hsl(216 34% 22%)'}`,
+      }}
+    >
+      <div className="text-xl font-bold font-mono leading-tight" style={{ color: isFav ? '#4ade80' : 'white' }}>
+        {(1 / p).toFixed(2)}
+      </div>
+      <div className="text-xs font-mono mt-0.5" style={{ color: 'hsl(215 20% 60%)' }}>
+        {(p * 100).toFixed(1)}%
+      </div>
+    </div>
+  )
+}
 
 interface CalcRating {
   team: { id: string; name: string }
@@ -182,45 +212,45 @@ export function EloCalculator({ ratings }: EloCalculatorProps) {
 
         {/* BO3 / BO5 + handicaps, dérivés de la proba BO1 */}
         {result && (
-          <div className="rounded-lg overflow-hidden" style={{ background: 'hsl(222 47% 11%)', border: '1px solid hsl(216 34% 22%)' }}>
-            <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'hsl(216 34% 22%)' }}>
-              <span className="text-xs font-semibold text-white">BO3 / BO5 & handicaps</span>
-              <label className="flex items-center gap-2 text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
-                s
+          <div className="space-y-3 pt-1">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-white">Séries & handicaps</h3>
+              <label className="flex items-center gap-2 text-sm" style={{ color: 'hsl(215 20% 65%)' }}>
+                s =
                 <input
                   type="number"
                   value={sInput}
                   onChange={e => setSInput(e.target.value)}
-                  className="w-16 rounded px-2 py-1 text-xs text-white outline-none text-center font-mono"
+                  className="w-20 rounded-lg px-2 py-1.5 text-sm text-white outline-none text-center font-mono"
                   style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)' }}
                 />
               </label>
             </div>
             {series ? (
-              <table className="w-full text-xs">
-                <thead>
-                  <tr style={{ color: 'hsl(215 20% 50%)' }}>
-                    <th className="text-left font-normal px-3 py-1.5">Marché</th>
-                    <th className="text-right font-normal px-3 py-1.5 truncate max-w-0 w-[35%]">{result.label1}</th>
-                    <th className="text-right font-normal px-3 py-1.5 truncate max-w-0 w-[35%]">{result.label2}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {SERIES_ROWS.map(row => (
-                    <tr key={row.key} className="border-t" style={{ borderColor: 'hsl(216 34% 18%)' }}>
-                      <td className="px-3 py-1.5 font-mono" style={{ color: 'hsl(215 20% 85%)' }}>{row.label}</td>
-                      {[series.a[row.key], series.b[row.key]].map((p, i) => (
-                        <td key={i} className="px-3 py-1.5 text-right font-mono whitespace-nowrap">
-                          <span style={{ color: 'hsl(215 20% 55%)' }}>{(p * 100).toFixed(1)}%</span>
-                          <span className="ml-3 font-semibold text-white">{(1 / p).toFixed(2)}</span>
-                        </td>
+              <div className="grid gap-3 lg:grid-cols-2">
+                {SERIES_BLOCKS.map(block => (
+                  <div
+                    key={block.title}
+                    className="rounded-lg p-3"
+                    style={{ background: 'hsl(222 47% 11%)', border: '1px solid hsl(216 34% 22%)' }}
+                  >
+                    <div className="grid grid-cols-[4.5rem_1fr_1fr] gap-2 items-center">
+                      <div className="text-base font-bold" style={{ color: 'hsl(217 91% 70%)' }}>{block.title}</div>
+                      <div className="text-sm font-semibold text-white text-center truncate">{result.label1}</div>
+                      <div className="text-sm font-semibold text-white text-center truncate">{result.label2}</div>
+                      {block.rows.map(row => (
+                        <Fragment key={row.key}>
+                          <div className="text-sm font-semibold font-mono" style={{ color: 'hsl(215 20% 80%)' }}>{row.label}</div>
+                          <OddsCell p={series.a[row.key]} />
+                          <OddsCell p={series.b[row.key]} />
+                        </Fragment>
                       ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <div className="px-3 py-2 text-xs" style={{ color: 'hsl(215 20% 65%)' }}>s doit être &gt; 0.</div>
+              <div className="text-sm" style={{ color: 'hsl(215 20% 65%)' }}>s doit être &gt; 0.</div>
             )}
           </div>
         )}
