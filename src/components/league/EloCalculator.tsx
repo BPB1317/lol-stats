@@ -1,43 +1,47 @@
 import { useState, useMemo, Fragment } from 'react'
 import { seriesProbs, type SeriesProbs } from '@/lib/seriesOdds'
 
-// Marchés affichés par format, du point de vue de chaque équipe
-const SERIES_BLOCKS: { title: string; rows: { label: string; key: keyof SeriesProbs }[] }[] = [
+// Marchés affichés comme sur les books : chaque ligne = un marché, A à gauche, B à droite (somme = 100 %)
+type Side = { key: keyof SeriesProbs; hdp?: string }
+const SERIES_BLOCKS: { title: string; rows: { label: string; a: Side; b: Side }[] }[] = [
   {
     title: 'BO3',
     rows: [
-      { label: 'Victoire', key: 'bo3Win' },
-      { label: '−1.5', key: 'bo3M15' },
-      { label: '+1.5', key: 'bo3P15' },
+      { label: 'Vainqueur', a: { key: 'bo3Win' }, b: { key: 'bo3Win' } },
+      { label: 'Hdp 1.5', a: { key: 'bo3M15', hdp: '−1.5' }, b: { key: 'bo3P15', hdp: '+1.5' } },
+      { label: 'Hdp 1.5', a: { key: 'bo3P15', hdp: '+1.5' }, b: { key: 'bo3M15', hdp: '−1.5' } },
     ],
   },
   {
     title: 'BO5',
     rows: [
-      { label: 'Victoire', key: 'bo5Win' },
-      { label: '−1.5', key: 'bo5M15' },
-      { label: '+1.5', key: 'bo5P15' },
-      { label: '−2.5', key: 'bo5M25' },
-      { label: '+2.5', key: 'bo5P25' },
+      { label: 'Vainqueur', a: { key: 'bo5Win' }, b: { key: 'bo5Win' } },
+      { label: 'Hdp 1.5', a: { key: 'bo5M15', hdp: '−1.5' }, b: { key: 'bo5P15', hdp: '+1.5' } },
+      { label: 'Hdp 1.5', a: { key: 'bo5P15', hdp: '+1.5' }, b: { key: 'bo5M15', hdp: '−1.5' } },
+      { label: 'Hdp 2.5', a: { key: 'bo5M25', hdp: '−2.5' }, b: { key: 'bo5P25', hdp: '+2.5' } },
+      { label: 'Hdp 2.5', a: { key: 'bo5P25', hdp: '+2.5' }, b: { key: 'bo5M25', hdp: '−2.5' } },
     ],
   },
 ]
 
-function OddsCell({ p }: { p: number }) {
+function OddsCell({ p, hdp }: { p: number; hdp?: string }) {
   const isFav = p >= 0.5
   return (
     <div
-      className="rounded-lg px-3 py-2 text-center"
+      className="rounded-lg px-3 py-2 flex items-center justify-between gap-2"
       style={{
         background: isFav ? 'hsl(142 70% 45% / 0.12)' : 'hsl(216 34% 16%)',
         border: `1px solid ${isFav ? 'hsl(142 70% 45% / 0.35)' : 'hsl(216 34% 22%)'}`,
       }}
     >
-      <div className="text-xl font-bold font-mono leading-tight" style={{ color: isFav ? '#4ade80' : 'white' }}>
-        {(1 / p).toFixed(2)}
-      </div>
-      <div className="text-xs font-mono mt-0.5" style={{ color: 'hsl(215 20% 60%)' }}>
-        {(p * 100).toFixed(1)}%
+      <span className="text-sm font-semibold font-mono" style={{ color: 'hsl(217 91% 75%)' }}>{hdp ?? ''}</span>
+      <div className="text-right">
+        <div className="text-xl font-bold font-mono leading-tight" style={{ color: isFav ? '#4ade80' : 'white' }}>
+          {(1 / p).toFixed(2)}
+        </div>
+        <div className="text-xs font-mono" style={{ color: 'hsl(215 20% 60%)' }}>
+          {(p * 100).toFixed(1)}%
+        </div>
       </div>
     </div>
   )
@@ -238,11 +242,11 @@ export function EloCalculator({ ratings }: EloCalculatorProps) {
                       <div className="text-base font-bold" style={{ color: 'hsl(217 91% 70%)' }}>{block.title}</div>
                       <div className="text-sm font-semibold text-white text-center truncate">{result.label1}</div>
                       <div className="text-sm font-semibold text-white text-center truncate">{result.label2}</div>
-                      {block.rows.map(row => (
-                        <Fragment key={row.key}>
-                          <div className="text-sm font-semibold font-mono" style={{ color: 'hsl(215 20% 80%)' }}>{row.label}</div>
-                          <OddsCell p={series.a[row.key]} />
-                          <OddsCell p={series.b[row.key]} />
+                      {block.rows.map((row, i) => (
+                        <Fragment key={i}>
+                          <div className="text-sm font-semibold" style={{ color: 'hsl(215 20% 80%)' }}>{row.label}</div>
+                          <OddsCell p={series.a[row.a.key]} hdp={row.a.hdp} />
+                          <OddsCell p={series.b[row.b.key]} hdp={row.b.hdp} />
                         </Fragment>
                       ))}
                     </div>
