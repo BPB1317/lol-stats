@@ -50,6 +50,7 @@ function TeamRow({ team, allTeams }: { team: Team; allTeams: Team[] }) {
   }
 
   async function handleDelete() {
+    setDeleteError('')
     const err = await deleteTeam(team.id)
     if (err) { setDeleteError(err.message); setConfirmDelete(false) }
   }
