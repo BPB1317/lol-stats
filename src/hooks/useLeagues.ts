@@ -88,3 +88,39 @@ export async function copyTeams(fromLeagueId: string, toLeagueId: string, baseli
   }
   return { count: created.length, error: null }
 }
+
+/**
+ * Dernière activité de chaque ligue : la plus récente parmi sa création, l'ajout d'un match ou d'un calendrier,
+ * l'import de stats GDM et la saisie d'un Elo. Sert à afficher les ligues « dernière mise à jour en premier ».
+ */
+export function useLeagueActivity(leagues: League[]) {
+  const [activity, setActivity] = useState<Record<string, string>>({})
+  useEffect(() => {
+    if (!leagues.length) return
+    let alive = true
+    ;(async () => {
+      const [m, g, b] = await Promise.all([
+        supabase.from('matches').select('league_id,created_at').order('created_at', { ascending: false }).limit(1000),
+        supabase.from('gdm_stats').select('league_id,created_at').order('created_at', { ascending: false }).limit(1000),
+        supabase.from('team_baselines').select('created_at,teams(league_id)').order('created_at', { ascending: false }).limit(1000),
+      ])
+      const out: Record<string, string> = {}
+      const bump = (id: string | undefined, at: string | null | undefined) => { if (id && at && (!out[id] || at > out[id])) out[id] = at }
+      for (const l of leagues) bump(l.id, l.created_at)
+      for (const r of m.data ?? []) bump(r.league_id, r.created_at)
+      for (const r of g.data ?? []) bump(r.league_id, r.created_at)
+      for (const r of (b.data ?? []) as { created_at: string; teams: { league_id: string } | { league_id: string }[] | null }[]) {
+        const t = Array.isArray(r.teams) ? r.teams[0] : r.teams
+        bump(t?.league_id, r.created_at)
+      }
+      if (alive) setActivity(out)
+    })()
+    return () => { alive = false }
+  }, [leagues])
+  return activity
+}
+
+/** Ligues triées par dernière activité (les plus récemment mises à jour en premier). */
+export function sortByActivity(leagues: League[], activity: Record<string, string>) {
+  return [...leagues].sort((a, b) => (activity[b.id] ?? b.created_at).localeCompare(activity[a.id] ?? a.created_at) || b.sort_order - a.sort_order)
+}

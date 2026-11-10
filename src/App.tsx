@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import type { League } from '@/types'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { AppShell } from '@/components/layout/AppShell'
-import { useLeagues } from '@/hooks/useLeagues'
+import { useLeagues, useLeagueActivity, sortByActivity } from '@/hooks/useLeagues'
 import { ModelsPage } from '@/pages/ModelsPage'
 import { JournalPage } from '@/pages/JournalPage'
 import { VuPasPrisPage } from '@/pages/VuPasPrisPage'
@@ -35,7 +35,10 @@ function ModelsTitle({ leagues }: { leagues: League[] }) {
 
 // Composant monté uniquement après authentification → les hooks Supabase s'exécutent avec une session active (RLS)
 function AuthenticatedApp({ session }: { session: Session }) {
-  const { leagues, loading } = useLeagues()
+  const { leagues: rawLeagues, loading } = useLeagues()
+  // Ligues « dernière mise à jour en premier » : menu et ligue ouverte par défaut
+  const activity = useLeagueActivity(rawLeagues)
+  const leagues = sortByActivity(rawLeagues, activity)
   const { bets, loading: betsLoading } = useBets()
   const person = useProfile(session.user.id)
   const { pathname } = useLocation()
