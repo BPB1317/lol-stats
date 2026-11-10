@@ -14,7 +14,7 @@ export function RatingControls({
   onSensitivityChange,
 }: RatingControlsProps) {
   return (
-    <div className="flex flex-wrap items-center gap-6 px-4 py-3 rounded-xl" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-line)' }}>
+    <div className="flex flex-wrap items-center gap-6 px-4 py-3 panel">
       <div className="flex items-center gap-3">
         <label className="text-xs font-medium whitespace-nowrap" style={{ color: 'var(--color-muted)' }}>
           Since

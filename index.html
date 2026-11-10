@@ -4,11 +4,14 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <script>
-      // Thème choisi (ou celui du système) appliqué avant l'affichage : pas de flash
-      try {
-        var t = localStorage.getItem('bpb-theme')
-        document.documentElement.dataset.theme = t || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
-      } catch (e) { document.documentElement.dataset.theme = 'dark' }
+      // Style (suisse | terminal) et mode (clair | sombre) appliqués avant l'affichage : pas de flash.
+      // Mode par défaut : celui du système. Les choix sont ensuite mémorisés (navigateur + profil).
+      (function () {
+        var d = document.documentElement, st = null, md = null
+        try { st = localStorage.getItem('sk-style'); md = localStorage.getItem('sk-mode') } catch (e) {}
+        d.dataset.style = st === 'terminal' ? 'terminal' : 'suisse'
+        d.dataset.mode = md === 'clair' || md === 'sombre' ? md : (matchMedia('(prefers-color-scheme: dark)').matches ? 'sombre' : 'clair')
+      })()
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Squawo x Kelicful</title>

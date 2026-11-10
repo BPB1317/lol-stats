@@ -120,7 +120,7 @@ export function GdmTab({ league }: Props) {
       </div>
 
       {/* Classement */}
-      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-line)' }}>
+      <div className="panel overflow-hidden">
         <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--color-line)' }}>
           <h2 className="text-sm font-semibold text-ink">{league.name} GDM</h2>
         </div>
@@ -129,7 +129,7 @@ export function GdmTab({ league }: Props) {
 
       {/* Diagnostic + stages importés */}
       {hasAnyData && (
-        <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-line)' }}>
+        <div className="panel overflow-hidden">
           <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: 'var(--color-line)' }}>
             <h3 className="text-xs font-semibold" style={{ color: 'var(--color-muted)' }}>
               Stages — {qualifyingCalendarStages.size} actif{qualifyingCalendarStages.size > 1 ? 's' : ''} sur {calendarStages.length} calendrier

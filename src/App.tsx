@@ -1,8 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
-import { HashRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
+import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
-import type { League } from '@/types'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { AppShell } from '@/components/layout/AppShell'
 import { useLeagues, useLeagueActivity, sortByActivity } from '@/hooks/useLeagues'
@@ -21,18 +20,6 @@ import { SessionContext } from '@/lib/session'
 // Drafts de DA (données fictives) : chargés à la demande, hors du bundle principal
 const DraftsPage = lazy(() => import('@/drafts/DraftsPage'))
 
-const TITLES: Record<string, string> = {
-  '/paris/journal': 'Journal', '/paris/bilan': 'Bilan commun', '/paris/partage': 'Partage & compta', '/paris/vu-pas-pris': 'Vu pas pris',
-  '/kelicful/bilan': 'Bilan Kelicful', '/kelicful/atp': 'Elo Tennis ATP', '/kelicful/wta': 'Elo Tennis WTA',
-  '/reglages': 'Réglages', '/modeles/calculateurs': 'Calculateurs',
-}
-
-function ModelsTitle({ leagues }: { leagues: League[] }) {
-  const { leagueId } = useParams()
-  const l = leagues.find(x => x.id === leagueId)
-  return l ? <>Modèles <span className="text-faint">·</span> {l.name}</> : <>Modèles</>
-}
-
 // Composant monté uniquement après authentification → les hooks Supabase s'exécutent avec une session active (RLS)
 function AuthenticatedApp({ session }: { session: Session }) {
   const { leagues: rawLeagues, loading } = useLeagues()
@@ -41,14 +28,10 @@ function AuthenticatedApp({ session }: { session: Session }) {
   const leagues = sortByActivity(rawLeagues, activity)
   const { bets, loading: betsLoading } = useBets()
   const person = useProfile(session.user.id)
-  const { pathname } = useLocation()
-  const title = TITLES[pathname] ?? (pathname.startsWith('/modeles')
-    ? <Routes><Route path="/modeles/:leagueId/*" element={<ModelsTitle leagues={leagues} />} /><Route path="*" element={<>Modèles</>} /></Routes>
-    : null)
 
   return (
     <SessionContext.Provider value={{ userId: session.user.id, email: session.user.email, person }}>
-    <AppShell leagues={leagues} email={person ?? session.user.email} title={title}>
+    <AppShell leagues={leagues} bets={bets} userId={session.user.id} who={person ?? session.user.email}>
       <Routes>
         <Route path="/" element={<Navigate to="/modeles" replace />} />
         <Route path="/modeles/calculateurs" element={<CalculatorsPage />} />

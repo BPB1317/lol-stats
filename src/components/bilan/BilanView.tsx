@@ -4,7 +4,7 @@
 import { useState, type ReactNode } from 'react'
 import type { Bet, BetResult, Market, MoneyMove, Portfolio } from '@/types/betting'
 import { RESULTS } from '@/types/betting'
-import { summarize, groupSummaries, cumulative, visible, formatEur, formatPct, isSettled, type Summary } from '@/lib/betStats'
+import { summarize, groupSummaries, cumulative, visible, formatEur, formatPct, isSettled, resultProfit, type Summary } from '@/lib/betStats'
 import { CumulativeChart, MonthlyBars } from '@/components/charts/Charts'
 import { BetTable, Signed } from '@/components/bets/BetTable'
 
@@ -20,15 +20,20 @@ interface Props {
   sportFirst?: boolean          // espace Kelicful : filtre Sport mis en avant
 }
 
-function Kpi({ label, value, sub, note }: { label: string; value: ReactNode; sub?: ReactNode; note?: ReactNode }) {
-  return (
-    <div className="bg-surface px-4 py-3.5">
-      <div className="text-xs text-muted">{label}</div>
-      <div className="mt-1 text-[22px] font-semibold leading-tight md:text-[26px]">{value}</div>
-      {sub && <div className="text-[11px] text-muted">{sub}</div>}
-      {note && <div className="mt-0.5 text-[11px] text-faint">{note}</div>}
-    </div>
-  )
+/** Adversaire déduit du match (« A vs B » ou « A - B ») : l'autre côté que la position. */
+function opponentOf(b: Bet) {
+  if (!b.game) return ''
+  const sides = b.game.split(/\s+(?:vs\.?|v|-|–)\s+/i)
+  if (sides.length !== 2) return b.game
+  const team = b.selection.replace(/\s*[+\-−]\s?\d+([.,]\d+)?\s*$/, '').trim().toLowerCase()
+  const other = sides.find(x => !x.toLowerCase().startsWith(team) && !team.startsWith(x.toLowerCase().trim()))
+  return other ? `vs ${other.replace(/\s+\d+-\d+.*$/, '')}` : b.game
+}
+
+/** Bénéfice d'un pari sans « € », signe toujours affiché (couleur gain / perte du thème). */
+function BetResultAmount({ b }: { b: Bet }) {
+  const p = Math.round(resultProfit(b) * 100) / 100
+  return <span className={`font-mono font-semibold ${p > 0 ? 'text-win' : p < 0 ? 'text-loss' : 'text-muted'}`}>{p > 0 ? '+' : p < 0 ? '−' : ''}{Math.abs(p).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
 }
 
 function Panel({ title, sub, right, children, flush }: { title: string; sub?: string; right?: ReactNode; children: ReactNode; flush?: boolean }) {
@@ -124,6 +129,16 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
   const bestYear = [...yearRows].sort((a, b) => b.profit - a.profit)[0]
   const months = groupSummaries(filtered, filteredMoves, d => d.slice(0, 7)).map(g => ({ month: g.key, pl: g.profit, staked: g.staked, n: g.count, roi: g.roi ?? 0 }))
   const curve = cumulative(filtered, filteredMoves)
+  // Courbe « fin de mois » : un point par mois (dernier cumul du mois)
+  const monthEnd = Object.values(curve.reduce<Record<string, { date: string; value: number }>>((acc, p) => { acc[p.date.slice(0, 7)] = p; return acc }, {}))
+  const betCount = filtered.length
+  const heroRounded = Math.round(s.profit)
+  const heroSign = heroRounded > 0 ? '+' : heroRounded < 0 ? '−' : ''
+  const heroInt = Math.abs(heroRounded).toLocaleString('fr-FR').replace(/\u202f/g, '\u00a0')
+  const sortedDates = filtered.map(b => b.bet_date).sort()
+  const monthName = (d: string) => `${MONTHS[+d.slice(5, 7) - 1]} ${d.slice(0, 4)}`
+  const periodLabel = `${portfolio === 'kelicful' ? 'Bilan Kelicful' : 'Bilan commun'}${sortedDates.length ? `, ${monthName(sortedDates[0])} – ${monthName(sortedDates[sortedDates.length - 1])}` : ''}`
+  const lastBets = [...filtered].filter(b => isSettled(b.result)).sort((a, b) => b.bet_date.localeCompare(a.bet_date) || b.created_at.localeCompare(a.created_at)).slice(0, 5)
 
   const yearScoped = base.filter(b => inYear(b.bet_date))
   const marketRows: Row[] = groupSummaries(yearScoped.filter(b => sport === 'Tous' || b.sport === sport), [], (_d, b) => b?.market ?? 'Autre').map(g => ({ ...g, label: g.key })).sort((a, b) => b.count - a.count)
@@ -161,40 +176,76 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
         <div className="text-xs text-muted">Tout est affiché. <button onClick={() => setShowAll(false)} className="text-ink underline underline-offset-2">Réappliquer le masquage</button></div>
       )}
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         {sportFirst && sportSelect}
         <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 md:mx-0 md:px-0">
-          {['Toutes', ...years].map(y => <button key={y} data-on={year === y} onClick={() => setYear(y)} className="pill shrink-0 px-3 py-1.5 font-mono text-xs">{y}</button>)}
+          {['Toutes', ...years].map(y => <button key={y} data-on={year === y} onClick={() => setYear(y)} className="pill shrink-0 px-3 py-1 font-mono text-xs">{y}</button>)}
         </div>
         {!sportFirst && sportSelect}
         {market && <div className="text-xs text-muted">Marché : <span className="text-ink">{market}</span> <button onClick={() => setMarket(null)} className="ml-1 underline underline-offset-2">retirer</button></div>}
       </div>
 
-      {s.count > 0 ? (
-        <p className="max-w-4xl text-sm text-muted">
-          {since}{filterLabel ? ` (${filterLabel})` : ''}, <span className="text-ink">{s.count} paris</span> ont rapporté <Signed v={s.profit} decimals={0} /> pour <span className="font-mono text-ink">{eur0(s.staked)}</span> misés, soit un ROI de <span className="font-mono text-ink">{formatPct(s.roi, { signed: true })}</span>.
-          {year === 'Toutes' && bestYear && yearRows.length > 1 && <> La meilleure année est {bestYear.key} (<Signed v={bestYear.profit} decimals={0} />).</>}
-          {s.adjustments !== 0 && <> Dont <span className="font-mono">{eur0(s.adjustments, true)}</span> d'ajustements.</>}
-        </p>
-      ) : (
-        <p className="text-sm text-muted">Aucun pari réglé sur cette période.</p>
-      )}
+      {/* Héros : le bénéfice en gros chiffre, les indicateurs en grille à filets */}
+      <section className="grid gap-x-10 gap-y-6 pt-2 lg:grid-cols-[1fr_300px]">
+        <div className="min-w-0">
+          <div className="label">{periodLabel}</div>
+          <div className="hero-num mt-3 whitespace-nowrap text-[clamp(60px,12vw,156px)]">
+            {heroSign}{heroInt}<span className="ml-[0.08em] text-[0.32em] text-muted" style={{ letterSpacing: 0 }}>€</span>
+          </div>
+          {s.count > 0 ? (
+            <p className="mt-4 max-w-3xl text-sm text-muted">
+              {since}{filterLabel ? ` (${filterLabel})` : ''}, {s.count} paris réglés ont rapporté <Signed v={s.profit} decimals={0} /> pour <span className="font-mono text-ink">{eur0(s.staked)}</span> misés.
+              {year === 'Toutes' && bestYear && yearRows.length > 1 && <> Meilleure année : {bestYear.key} (<Signed v={bestYear.profit} decimals={0} />).</>}
+              {s.adjustments !== 0 && <> Dont <span className="font-mono">{eur0(s.adjustments, true)}</span> d'ajustements.</>}
+            </p>
+          ) : <p className="mt-4 text-sm text-muted">Aucun pari réglé sur cette période.</p>}
+        </div>
+        <dl className="grid grid-cols-2 self-start border-t border-ink">
+          {([
+            ['ROI', <span className={s.roi == null ? '' : s.roi >= 0 ? 'text-win' : 'text-loss'}>{formatPct(s.roi, { signed: true })}</span>, `${eur0(s.staked)} misés`],
+            ['Réussite', formatPct(s.hitRate), `${s.wins} / ${s.count} réglés`],
+            ['CLV moyen', <span className="text-accent">{formatPct(s.clvAvg, { signed: true })}</span>, s.clvMixed ? 'méthodes mélangées avant 2026' : s.clvCount ? `${formatPct(s.clvPositiveShare, { decimals: 0 })} à CLV positif` : 'aucune clôture'],
+            ['Paris', String(betCount), `${s.refunded} remb. · ${s.pending} en cours`],
+          ] as [string, ReactNode, string][]).map(([l, v, sub], i) => (
+            <div key={l} className={`border-b border-line py-3 ${i % 2 ? 'pl-4' : 'pr-4'}`}>
+              <dt className="label">{l}</dt>
+              <dd className="mt-1 font-mono text-[26px] font-semibold leading-none">{v}</dd>
+              <dd className="mt-1.5 text-[11px] text-faint">{sub}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
 
-      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line xl:grid-cols-4">
-        <Kpi label="Bénéfice" value={<Signed v={s.profit} decimals={0} />} sub={s.adjustments ? `dont ${eur0(s.adjustments, true)} d'ajustements` : 'paris réglés'} />
-        <Kpi label="ROI" value={<span className="font-mono">{formatPct(s.roi, { signed: true })}</span>} sub={`${eur0(s.staked)} misés`} />
-        <Kpi label="Taux de réussite" value={<span className="font-mono">{formatPct(s.hitRate)}</span>} sub={`${s.wins} gagnants sur ${s.count} réglés`} />
-        <Kpi label="CLV moyen" value={<span className="font-mono">{formatPct(s.clvAvg, { signed: true })}</span>}
-          sub={s.clvCount ? `${formatPct(s.clvPositiveShare, { decimals: 0 })} de paris à CLV positif` : 'aucune cote de clôture'}
-          note={s.clvMixed ? 'Méthodes mélangées : cote/(clôture×1,05)−1 avant 2026, cote/clôture−1 ensuite' : undefined} />
+      <section className="border-t border-line pt-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="label">Bénéfice cumulé, fin de mois</span>
+          <span className="flex items-center gap-3">
+            {year === 'Toutes' && years.length > 1 && (['continu', 'superpose'] as const).map(m => (
+              <button key={m} onClick={() => setMode(m)} className={`text-xs ${mode === m ? 'text-ink underline underline-offset-4' : 'text-muted hover:text-ink'}`}>{m === 'continu' ? 'Continu' : 'Années superposées'}</button>
+            ))}
+            <span className="font-mono text-xs text-accent">{heroInt}</span>
+          </span>
+        </div>
+        {monthEnd.length ? <CumulativeChart points={monthEnd} mode={year === 'Toutes' ? mode : 'continu'} height={260} endLabel={false} /> : <div className="py-10 text-center text-sm text-muted">Pas encore de données.</div>}
+      </section>
+
+      <section className="border-t border-line pt-3">
+        <h2 className="text-sm font-semibold">Derniers paris</h2>
+        <ul className="mt-1">
+          {lastBets.map(b => (
+            <li key={b.id} className="grid grid-cols-[3rem_1fr_auto_auto] items-baseline gap-x-4 border-b border-line py-2 text-[13px] sm:grid-cols-[3.5rem_1fr_1fr_5rem_4.5rem_6rem]">
+              <span className="font-mono text-muted">{b.bet_date.slice(8, 10)}.{b.bet_date.slice(5, 7)}</span>
+              <span className="truncate">{b.selection}</span>
+              <span className="hidden truncate text-muted sm:block">{opponentOf(b)}</span>
+              <span className="hidden text-right font-mono sm:block">{eur0(Number(b.stake))}</span>
+              <span className="text-right font-mono">{Number(b.odds).toLocaleString('fr-FR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</span>
+              <span className="text-right"><BetResultAmount b={b} /></span>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <div className="grid gap-4">
-        <Panel title="Bénéfice cumulé" right={year === 'Toutes' && years.length > 1 && (
-          <div className="flex gap-1">{(['continu', 'superpose'] as const).map(m => <button key={m} data-on={mode === m} onClick={() => setMode(m)} className="pill px-2.5 py-1 text-xs">{m === 'continu' ? 'Continu' : 'Années superposées'}</button>)}</div>
-        )}>
-          {curve.length ? <CumulativeChart points={curve} mode={year === 'Toutes' ? mode : 'continu'} height={250} /> : <div className="py-10 text-center text-sm text-muted">Pas encore de données.</div>}
-        </Panel>
         <Panel title="Année par année" sub="Cliquez une ligne pour sélectionner l'année." flush>
           <SummaryTable rows={yearRows} total={{ ...allYears, key: 'total', label: 'Total' }} columns={['n', 'staked', 'avgStake', 'avgOdds', 'hit', 'profit', 'roi', 'clv']}
             selected={year} onPick={k => setYear(year === k ? 'Toutes' : k)} />

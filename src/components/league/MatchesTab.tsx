@@ -190,7 +190,7 @@ export function MatchesTab({ league }: MatchesTabProps) {
       )}
 
       {stagesSorted.map(stage => (
-        <div key={stage} className="rounded-xl overflow-hidden" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-line)' }}>
+        <div key={stage} className="panel overflow-hidden">
           {stage && (
             <div className="px-4 py-2 border-b" style={{ borderColor: 'var(--color-line)', background: 'var(--color-raised)' }}>
               <span className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'var(--color-muted)' }}>

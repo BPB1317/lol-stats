@@ -33,8 +33,7 @@ export function ModelsPage({ leagues, loading }: { leagues: League[]; loading: b
       <div className="flex flex-wrap items-center gap-1.5">
         {TABS.map(t => (
           <NavLink key={t.key} end to={t.key === 'classement' ? `/modeles/${league.id}` : `/modeles/${league.id}/${t.key}`}
-            className="pill px-3 py-1.5 text-xs"
-            style={({ isActive }) => isActive ? { borderColor: 'var(--color-accent)', color: 'var(--color-accent)', background: 'color-mix(in srgb, var(--color-accent) 8%, transparent)' } : undefined}>
+            className={({ isActive }) => `pill px-3 py-1.5 text-xs ${isActive ? 'border-ink bg-ink text-bg' : ''}`}>
             {t.key === 'gdm' ? `${league.short_name} GDM` : t.label}
           </NavLink>
         ))}

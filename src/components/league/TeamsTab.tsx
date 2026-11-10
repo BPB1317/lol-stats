@@ -206,7 +206,7 @@ export function TeamsTab({ league }: TeamsTabProps) {
         </button>
       </div>
 
-      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-line)' }}>
+      <div className="panel overflow-hidden">
         {teams.length === 0 ? (
           <div className="text-center py-16" style={{ color: 'var(--color-muted)' }}>
             Aucune équipe. Cliquez sur "Ajouter une équipe".

@@ -1,111 +1,107 @@
-// Coque de l'application (DA « Back-office ») : menu latéral sur ordinateur, tiroir sur mobile,
-// bouton « + Pari » toujours accessible.
-import { useState, type ReactNode } from 'react'
+// Coque « Hybride » : en-tête (sections, Style Suisse | Terminal, Mode clair | sombre, Pari +),
+// bandeau des derniers paris en style Terminal, sous-navigation de la section, contenu sur une grille commune.
+// Ni le style ni le mode ne changent la mise en page.
+import type { ReactNode } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import type { League } from '@/types'
+import type { Bet } from '@/types/betting'
+import { useAppearance } from '@/lib/appearance'
+import { resultProfit, isSettled } from '@/lib/betStats'
 import { LeagueNav } from './LeagueNav'
-import { ThemeToggle } from './ThemeToggle'
 import { Toaster } from './Toaster'
 
-const SECTIONS: { title: string; base: string; items: { label: string; to: string }[] }[] = [
-  { title: 'Paris', base: '/paris', items: [
-    { label: 'Journal', to: '/paris/journal' },
-    { label: 'Bilan', to: '/paris/bilan' },
-    { label: 'Partage & compta', to: '/paris/partage' },
-    { label: 'Vu pas pris', to: '/paris/vu-pas-pris' },
-  ] },
-  { title: 'Kelicful', base: '/kelicful', items: [
-    { label: 'Bilan perso', to: '/kelicful/bilan' },
-    { label: 'Elo ATP', to: '/kelicful/atp' },
-    { label: 'Elo WTA', to: '/kelicful/wta' },
-  ] },
+const SECTIONS = [
+  { label: 'Paris', base: '/paris', to: '/paris/bilan' },
+  { label: 'Modèles', base: '/modeles', to: '/modeles' },
+  { label: 'Kelicful', base: '/kelicful', to: '/kelicful/bilan' },
+  { label: 'Réglages', base: '/reglages', to: '/reglages' },
 ]
+const SUB: Record<string, { label: string; to: string }[]> = {
+  '/paris': [{ label: 'Bilan', to: '/paris/bilan' }, { label: 'Journal', to: '/paris/journal' }, { label: 'Partage & compta', to: '/paris/partage' }, { label: 'Vu pas pris', to: '/paris/vu-pas-pris' }],
+  '/kelicful': [{ label: 'Bilan perso', to: '/kelicful/bilan' }, { label: 'Elo ATP', to: '/kelicful/atp' }, { label: 'Elo WTA', to: '/kelicful/wta' }],
+}
 
-function NavItem({ to, children, onNavigate }: { to: string; children: ReactNode; onNavigate?: () => void }) {
+function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { v: T; content: ReactNode; title: string }[]; onChange: (v: T) => void; label: string }) {
   return (
-    <NavLink
-      to={to}
-      onClick={onNavigate}
-      className={({ isActive }) => `block rounded-md px-3 py-1.5 text-[13px] ${isActive ? 'bg-raised text-ink shadow-[inset_2px_0_0_var(--color-accent)]' : 'text-muted hover:text-ink'}`}
-    >
-      {children}
-    </NavLink>
+    <div role="group" aria-label={label} className="flex border border-ink">
+      {options.map((o, i) => (
+        <button key={o.v} onClick={() => onChange(o.v)} title={o.title} aria-pressed={value === o.v}
+          className={`flex h-8 items-center justify-center px-2.5 text-[13px] font-semibold ${i ? 'border-l border-ink' : ''} ${value === o.v ? 'bg-ink text-bg' : 'text-ink hover:bg-raised'}`}>
+          {o.content}
+        </button>
+      ))}
+    </div>
   )
 }
 
-function SectionTitle({ children }: { children: ReactNode }) {
-  return <div className="mb-1 px-3 text-[11px] uppercase tracking-[0.1em] text-faint">{children}</div>
-}
+const Sun = () => <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden><g fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="4" /><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4" /></g></svg>
+const Moon = () => <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
 
-function Sidebar({ leagues, email, onNavigate }: { leagues: League[]; email?: string; onNavigate?: () => void }) {
+/** Bandeau défilant des derniers paris réglés (style Terminal uniquement). */
+function Ticker({ bets }: { bets: Bet[] }) {
+  const last = bets.filter(b => b.status === 'Pris' && isSettled(b.result))
+    .sort((a, b) => b.bet_date.localeCompare(a.bet_date) || b.created_at.localeCompare(a.created_at)).slice(0, 14)
+  if (!last.length) return null
   return (
-    <div className="flex h-full flex-col gap-5 px-3 py-5">
-      <Link to="/modeles" onClick={onNavigate} className="px-3 text-lg font-semibold tracking-tight">Squawo <span className="font-normal text-muted">x</span> Kelicful</Link>
-      <nav className="flex-1 space-y-5 overflow-y-auto">
-        <div>
-          <SectionTitle>Paris</SectionTitle>
-          {SECTIONS[0].items.map(i => <NavItem key={i.to} to={i.to} onNavigate={onNavigate}>{i.label}</NavItem>)}
-        </div>
-        <div>
-          <SectionTitle>Modèles</SectionTitle>
-          <LeagueNav leagues={leagues} onNavigate={onNavigate} />
-          <NavItem to="/modeles/calculateurs" onNavigate={onNavigate}>Calculateurs</NavItem>
-        </div>
-        <div>
-          <SectionTitle>Kelicful</SectionTitle>
-          {SECTIONS[1].items.map(i => <NavItem key={i.to} to={i.to} onNavigate={onNavigate}>{i.label}</NavItem>)}
-        </div>
-        <div>
-          <NavItem to="/reglages" onNavigate={onNavigate}>Réglages</NavItem>
-        </div>
-      </nav>
-      <div className="flex items-center gap-2 px-3 text-xs">
-        <span className="min-w-0 flex-1 truncate text-muted">{email}</span>
-        <button onClick={() => supabase.auth.signOut()} className="btn-ghost px-2.5 py-1">Déconnexion</button>
+    <div className="ticker border-b border-line py-2 font-mono text-[12px]" aria-label="Derniers paris">
+      <div className="ticker-track">
+        {last.map(b => {
+          const p = resultProfit(b)
+          return (
+            <span key={b.id} className={p >= 0 ? 'text-win' : 'text-loss'}>
+              {p >= 0 ? '▲' : '▼'} {b.selection.toUpperCase()} @{Number(b.odds).toFixed(3)} {p >= 0 ? '+' : '−'}{Math.abs(p).toFixed(2)}
+            </span>
+          )
+        })}
       </div>
     </div>
   )
 }
 
-function PlusIcon({ size = 16 }: { size?: number }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-}
-
-export function AppShell({ leagues, email, title, children }: { leagues: League[]; email?: string; title?: ReactNode; children: ReactNode }) {
-  const [drawer, setDrawer] = useState(false)
-  const location = useLocation()
-  const newBetHref = `${location.pathname}?pari=nouveau`
+export function AppShell({ leagues, bets, userId, who, children }: { leagues: League[]; bets: Bet[]; userId: string; who?: string | null; children: ReactNode }) {
+  const { pathname } = useLocation()
+  const { style, mode, setStyle, setMode } = useAppearance(userId)
+  const section = SECTIONS.find(s => pathname.startsWith(s.base))?.base ?? '/paris'
+  const newBetHref = `${pathname}?pari=nouveau`
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="sticky top-0 hidden h-screen w-56 shrink-0 border-r border-line md:block">
-        <Sidebar leagues={leagues} email={email} />
-      </aside>
-
-      {drawer && (
-        <div className="fixed inset-0 z-40 md:hidden" onClick={() => setDrawer(false)} style={{ background: 'rgb(5 8 15 / 0.6)' }}>
-          <aside className="h-full w-64 border-r border-line bg-bg" onClick={e => e.stopPropagation()}>
-            <Sidebar leagues={leagues} email={email} onNavigate={() => setDrawer(false)} />
-          </aside>
-        </div>
-      )}
-
-      <div className="min-w-0 flex-1 pb-24 md:pb-8">
-        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-bg px-4 py-3 md:px-6">
-          <button className="md:hidden" aria-label="Ouvrir le menu" onClick={() => setDrawer(true)}>
-            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
-          </button>
-          <div className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight md:text-xl">{title}</div>
-          <Link to={newBetHref} className="btn-primary hidden items-center gap-1.5 px-3 py-2 text-sm md:flex"><PlusIcon size={15} /> Pari</Link>
-          <ThemeToggle />
+    <div className="min-h-screen">
+      <div className="mx-auto max-w-[1240px] px-4 md:px-8">
+        <header className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b-2 border-ink py-3">
+          <nav className="-mx-1 flex overflow-x-auto" aria-label="Sections">
+            {SECTIONS.map(s => (
+              <NavLink key={s.base} to={s.to} className={`shrink-0 px-2 py-1 text-[15px] ${section === s.base ? 'text-accent' : 'text-ink hover:text-accent'}`}>{s.label}</NavLink>
+            ))}
+          </nav>
+          <div className="ml-auto flex items-center gap-2">
+            <Segmented label="Style" value={style} onChange={setStyle} options={[{ v: 'suisse', content: 'Suisse', title: 'Style Suisse' }, { v: 'terminal', content: 'Terminal', title: 'Style Terminal' }]} />
+            <Segmented label="Mode" value={mode} onChange={setMode} options={[{ v: 'clair', content: <Sun />, title: 'Mode clair' }, { v: 'sombre', content: <Moon />, title: 'Mode sombre' }]} />
+            <Link to={newBetHref} className="btn-primary hidden h-8 items-center px-3.5 text-[13px] md:flex">Pari +</Link>
+          </div>
         </header>
-        {children}
+
+        {style === 'terminal' && <Ticker bets={bets} />}
+
+        {(SUB[section] || section === '/modeles') && (
+          <nav className="flex items-center gap-x-5 gap-y-1 overflow-x-auto border-b border-line py-2 text-[13px]" aria-label="Sous-sections">
+            {section === '/modeles'
+              ? <LeagueNav leagues={leagues} />
+              : SUB[section].map(s => (
+                <NavLink key={s.to} to={s.to} className={({ isActive }) => `shrink-0 py-1 ${isActive ? 'font-semibold text-ink' : 'text-muted hover:text-ink'}`}>{s.label}</NavLink>
+              ))}
+          </nav>
+        )}
+
+        <div className="shell-main pb-24 md:pb-12">{children}</div>
+
+        <footer className="flex items-center justify-between border-t border-line py-4 text-xs text-muted">
+          <span>Squawo x Kelicful{who ? ` · ${who}` : ''}</span>
+          <button onClick={() => supabase.auth.signOut()} className="hover:text-ink">Déconnexion</button>
+        </footer>
       </div>
 
-      <Link to={newBetHref} aria-label="Nouveau pari" className="btn-primary fixed bottom-5 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full md:hidden" style={{ borderRadius: 999 }}>
-        <PlusIcon size={22} />
-      </Link>
+      <Link to={newBetHref} aria-label="Nouveau pari" className="btn-primary fixed bottom-5 right-4 z-30 flex h-12 items-center px-4 text-sm md:hidden">Pari +</Link>
       <Toaster />
     </div>
   )

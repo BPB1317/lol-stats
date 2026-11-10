@@ -182,6 +182,8 @@ CREATE TABLE IF NOT EXISTS user_prefs (
   hidden_seasons INT[] NOT NULL DEFAULT '{}',
   last_sport TEXT,
   last_portfolio TEXT CHECK (last_portfolio IS NULL OR last_portfolio IN ('commun', 'kelicful', 'squawo')),
+  ui_style TEXT CHECK (ui_style IS NULL OR ui_style IN ('suisse', 'terminal')),   -- apparence (migration 05)
+  ui_mode TEXT CHECK (ui_mode IS NULL OR ui_mode IN ('clair', 'sombre')),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

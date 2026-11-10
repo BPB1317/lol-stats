@@ -45,7 +45,7 @@ function Tooltip({ x, y, width, children }: { x: number; y: number; width: numbe
 
 type Pt = { date: string; value: number }
 
-export function CumulativeChart({ points, height = 240, mode = 'continu' }: { points: Pt[]; height?: number; mode?: 'continu' | 'superpose' }) {
+export function CumulativeChart({ points, height = 240, mode = 'continu', endLabel = true }: { points: Pt[]; height?: number; mode?: 'continu' | 'superpose'; endLabel?: boolean }) {
   const [ref, width] = useWidth<HTMLDivElement>()
   const [hover, setHover] = useState<{ x: number; y: number; label: string; value: number } | null>(null)
   const pad = { l: 52, r: 44, t: 12, b: 24 }
@@ -73,9 +73,8 @@ export function CumulativeChart({ points, height = 240, mode = 'continu' }: { po
   const sy = (v: number) => pad.t + ih - ((v - yLo) / (yHi - yLo || 1)) * ih
   const lastKey = series[series.length - 1].key
 
-  const years = mode === 'continu'
-    ? [...new Set(points.map(p => p.date.slice(0, 4)))].slice(1).map(y => ({ y, x: sx(t(`${y}-01-01`)) }))
-    : []
+  const allYears = [...new Set(points.map(p => p.date.slice(0, 4)))]
+  const years = mode === 'continu' ? allYears.slice(1).map(y => ({ y, x: sx(t(`${y}-01-01`)) })) : []
 
   function onMove(e: React.PointerEvent<SVGRectElement>) {
     const rect = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect()
@@ -94,14 +93,15 @@ export function CumulativeChart({ points, height = 240, mode = 'continu' }: { po
         <svg width={width} height={height} className="block overflow-visible" style={{ fontFamily: 'var(--d-font-num, var(--font-mono))' }}>
           {ticks.map(v => (
             <g key={v}>
-              <line x1={pad.l} x2={pad.l + iw} y1={sy(v)} y2={sy(v)} stroke="var(--d-grid, var(--color-line))" strokeWidth={v === 0 ? 1.5 : 1} strokeDasharray={v === 0 ? undefined : '2 4'} />
+              <line x1={pad.l} x2={pad.l + iw} y1={sy(v)} y2={sy(v)} stroke="var(--d-grid, var(--color-line))" strokeWidth={1} strokeDasharray={v === 0 ? '4 3' : '2 4'} opacity={v === 0 ? 1 : 0.6} />
               <text x={pad.l - 8} y={sy(v)} dy="0.32em" textAnchor="end" fontSize={11} fill="var(--d-muted, var(--color-muted))">{v === 0 ? '0' : `${v > 0 ? '+' : '−'}${Math.abs(v / 1000).toLocaleString('fr-FR')}k`}</text>
             </g>
           ))}
+          {mode === 'continu' && allYears.length > 0 && <text x={pad.l} y={height - 6} fontSize={11} fill="var(--d-muted, var(--color-muted))">{allYears[0]}</text>}
           {years.map(m => (
             <g key={m.y}>
               <line x1={m.x} x2={m.x} y1={pad.t} y2={pad.t + ih} stroke="var(--d-muted, var(--color-muted))" strokeWidth={1} opacity={0.5} />
-              <text x={m.x + 4} y={pad.t + 10} fontSize={11} fill="var(--d-muted, var(--color-muted))">{m.y}</text>
+              <text x={m.x + 4} y={height - 6} fontSize={11} fill="var(--d-muted, var(--color-muted))">{m.y}</text>
             </g>
           ))}
           {mode === 'superpose' && ['01', '04', '07', '10'].map(mm => (
@@ -113,21 +113,21 @@ export function CumulativeChart({ points, height = 240, mode = 'continu' }: { po
             const end = s.pts[s.pts.length - 1]
             return (
               <g key={s.key}>
-                <path d={d} fill="none" stroke={isLast ? 'var(--d-line-series, var(--color-ink))' : 'var(--d-muted, var(--color-muted))'} strokeWidth={isLast ? 2 : 1.25} strokeLinejoin="round" opacity={isLast ? 1 : 0.7} />
+                <path d={d} fill="none" stroke={isLast ? 'var(--d-line-series, var(--color-series, var(--color-ink)))' : 'var(--d-muted, var(--color-muted))'} strokeWidth={isLast ? 2 : 1.25} strokeLinejoin="round" opacity={isLast ? 1 : 0.7} />
                 {mode === 'superpose' && (
                   <text x={sx(end.x) + 6} y={sy(end.value)} dy="0.32em" fontSize={11} fill={isLast ? 'var(--d-ink, var(--color-ink))' : 'var(--d-muted, var(--color-muted))'} fontWeight={isLast ? 700 : 400}>{s.key}</text>
                 )}
               </g>
             )
           })}
-          {mode === 'continu' && (() => {
+          {mode === 'continu' && endLabel && (() => {
             const s = series[0].pts, end = s[s.length - 1]
             return <text x={sx(end.x) + 6} y={sy(end.value)} dy="0.32em" fontSize={12} fontWeight={700} fill="var(--d-ink, var(--color-ink))">{`${end.value >= 0 ? '+' : '−'}${Math.abs(Math.round(end.value / 100) / 10).toLocaleString('fr-FR')}k`}</text>
           })()}
           {hover && (
             <g>
               <line x1={hover.x} x2={hover.x} y1={pad.t} y2={pad.t + ih} stroke="var(--d-ink, var(--color-ink))" strokeWidth={1} opacity={0.35} />
-              <circle cx={hover.x} cy={hover.y} r={4.5} fill="var(--d-line-series, var(--color-ink))" stroke="var(--d-surface, var(--color-surface))" strokeWidth={2} />
+              <circle cx={hover.x} cy={hover.y} r={4.5} fill="var(--d-line-series, var(--color-series, var(--color-ink)))" stroke="var(--d-surface, var(--color-surface))" strokeWidth={2} />
             </g>
           )}
           <rect x={pad.l} y={0} width={iw} height={height} fill="transparent" onPointerMove={onMove} onPointerDown={onMove} onPointerLeave={() => setHover(null)} style={{ touchAction: 'pan-y' }} />

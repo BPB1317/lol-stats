@@ -1,56 +1,89 @@
 @import "tailwindcss";
 
-/* DA « Back-office » (draft B) — tokens reliés au thème Tailwind 4.
-   Règle : l'accent ambre ne sert qu'à la sélection ; gain / perte toujours accompagnés du signe. */
+/* DA « Hybride » : deux réglages indépendants posés sur <html>
+   data-style = suisse | terminal (polices, gros chiffre, bandeau)   data-mode = clair | sombre (couleurs)
+   Squelette commun : filets de 1 px au lieu des cartes, pas d'ombres, coins droits, grille stricte, chiffres tabulaires.
+   Aucun des deux réglages ne change la mise en page. */
+
 @theme {
-  --color-bg: #0c1220;
-  --color-surface: #121a2b;
-  --color-stripe: #0f1626;
-  --color-raised: #18223a;
-  --color-line: #222c44;
-  --color-ink: #e4e8f1;
-  --color-muted: #8a93a8;
-  --color-faint: #5d6680;
-  --color-accent: #e9b949;
-  --color-accent-ink: #0c1220;
-  --color-win: #4fd08f;
-  --color-loss: #f2756b;
-  --color-danger: #e5534b;
-  --color-warn: #e9a23b;
+  /* Rôles de couleur (valeurs par défaut = Suisse clair, remplacées par les combinaisons ci-dessous) */
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-stripe: #f7f7f7;
+  --color-raised: #f0f0f0;
+  --color-line: #e4e4e4;
+  --color-ink: #111111;
+  --color-muted: #6b6b6b;
+  --color-faint: #9b9b9b;
+  --color-accent: #d7001f;
+  --color-accent-ink: #ffffff;
+  --color-win: #111111;
+  --color-loss: #d7001f;
+  --color-danger: #d7001f;
+  --color-warn: #d7001f;
 
-  --font-sans: 'Instrument Sans', system-ui, sans-serif;
-  --font-mono: 'Spline Sans Mono', ui-monospace, monospace;
+  --font-sans: 'Archivo', system-ui, sans-serif;
+  --font-mono: 'Archivo', system-ui, sans-serif;
 
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 8px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
 }
 
-/* Thème clair : mêmes rôles, valeurs claires. Le thème est posé sur <html data-theme> (voir index.html). */
-:root[data-theme='light'] {
-  --color-bg: #f4f5f8;
-  --color-surface: #ffffff;
-  --color-stripe: #f7f8fb;
-  --color-raised: #eceff5;
-  --color-line: #dce1e9;
-  --color-ink: #131a2a;
-  --color-muted: #5a6377;
-  --color-faint: #8a92a5;
-  --color-accent: #9c6508;
-  --color-accent-ink: #ffffff;
-  --color-win: #15803d;
-  --color-loss: #c2362b;
-  --color-danger: #c9372c;
-  --color-warn: #a35f00;
-  color-scheme: light;
+/* ── Couleurs : ordre fond / texte / gris / filets / accent / gain / perte ── */
+:root[data-style='suisse'][data-mode='clair'] {
+  --c-bg: #ffffff; --c-text: #111111; --c-gray: #6b6b6b; --c-rule: #e4e4e4; --c-accent: #d7001f; --c-gain: #111111; --c-loss: #d7001f;
+}
+:root[data-style='suisse'][data-mode='sombre'] {
+  --c-bg: #121212; --c-text: #f5f5f5; --c-gray: #a3a3a3; --c-rule: #2e2e2e; --c-accent: #ff4d5e; --c-gain: #f5f5f5; --c-loss: #ff4d5e;
+}
+:root[data-style='terminal'][data-mode='clair'] {
+  --c-bg: #f3efe3; --c-text: #1c1a14; --c-gray: #6a6455; --c-rule: #ddd6c3; --c-accent: #9a5b00; --c-gain: #1f7a3a; --c-loss: #b3261e;
+}
+:root[data-style='terminal'][data-mode='sombre'] {
+  --c-bg: #0b0b0a; --c-text: #e8e4d8; --c-gray: #a39e90; --c-rule: #2a2822; --c-accent: #ffb000; --c-gain: #7fd18b; --c-loss: #ff6b5e;
+}
+/* Les rôles utilisés par le site dérivent des 7 couleurs de la combinaison */
+:root[data-style][data-mode] {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-bg);
+  --color-stripe: color-mix(in srgb, var(--c-text) 3%, var(--c-bg));
+  --color-raised: color-mix(in srgb, var(--c-text) 7%, var(--c-bg));
+  --color-line: var(--c-rule);
+  --color-ink: var(--c-text);
+  --color-muted: var(--c-gray);
+  --color-faint: color-mix(in srgb, var(--c-gray) 65%, var(--c-bg));
+  --color-accent: var(--c-accent);
+  --color-accent-ink: var(--c-bg);
+  --color-win: var(--c-gain);
+  --color-loss: var(--c-loss);
+  --color-danger: var(--c-loss);
+  --color-warn: var(--c-accent);
+}
+:root[data-mode='clair'] { color-scheme: light; }
+:root[data-mode='sombre'] { color-scheme: dark; }
+
+/* ── Style : polices, gros chiffre, couleur de la courbe ── */
+:root[data-style='suisse'] {
+  --font-mono: 'Archivo', system-ui, sans-serif;     /* tout en Archivo, chiffres tabulaires */
+  --hero-font: 'Archivo', system-ui, sans-serif;
+  --hero-weight: 800;
+  --hero-track: -0.055em;                              /* très serré */
+  --color-series: var(--c-text);
+}
+:root[data-style='terminal'] {
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;  /* chiffres et tableaux en IBM Plex Mono */
+  --hero-font: 'IBM Plex Mono', ui-monospace, monospace;
+  --hero-weight: 500;
+  --hero-track: -0.02em;
+  --color-series: var(--c-accent);
 }
 
 @layer base {
-  :root { color-scheme: dark; }
-  :root[data-theme='light'] { color-scheme: light; }
-
   * { box-sizing: border-box; border-color: var(--color-line); }
+  /* Coins droits et pas d'ombres, partout */
+  *, *::before, *::after { border-radius: 0 !important; box-shadow: none !important; }
 
   body {
     margin: 0;
@@ -60,25 +93,40 @@
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
   }
-
   #root { min-height: 100vh; }
 
-  /* Tous les chiffres en mono sont tabulaires */
   .font-mono { font-variant-numeric: tabular-nums; }
+  table { font-variant-numeric: tabular-nums; }
 
   input, select, textarea { font: inherit; }
   :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--color-accent) !important; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--color-ink) !important; }
   input[type='range'] { accent-color: var(--color-accent); }
 }
 
 @layer components {
-  /* Champs et panneaux communs */
-  .field { background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-md); color: var(--color-ink); }
-  .panel { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-lg); }
-  .pill { border: 1px solid var(--color-line); border-radius: var(--radius-md); color: var(--color-muted); }
-  .pill[data-on='true'] { border-color: var(--color-accent); color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
-  .btn-primary { background: var(--color-ink); color: var(--color-bg); border-radius: var(--radius-md); font-weight: 600; }
-  .btn-ghost { border: 1px solid var(--color-line); color: var(--color-ink); border-radius: var(--radius-md); }
-  .btn-ghost:hover { background: var(--color-raised); }
+  /* Filet de section au lieu d'une carte */
+  .panel { background: transparent; border-top: 1px solid var(--color-line); }
+  .field { background: transparent; border: 1px solid var(--color-line); color: var(--color-ink); }
+  /* Sélection en pilule carrée : choisi = inversé (texte sur fond d'encre) */
+  .pill { border: 1px solid var(--color-line); color: var(--color-muted); }
+  .pill[data-on='true'] { border-color: var(--color-ink); background: var(--color-ink); color: var(--color-bg); }
+  .btn-primary { background: var(--color-ink); color: var(--color-bg); font-weight: 700; }
+  .btn-ghost { border: 1px solid var(--color-line); color: var(--color-ink); }
+  .btn-ghost:hover { border-color: var(--color-ink); }
+
+  /* Gros chiffre du bilan */
+  .hero-num { font-family: var(--hero-font); font-weight: var(--hero-weight); letter-spacing: var(--hero-track); font-variant-numeric: tabular-nums; line-height: 0.9; }
+  .label { font-size: 12px; color: var(--color-muted); }
+
+  /* Bandeau défilant (style Terminal) */
+  .ticker { overflow: hidden; white-space: nowrap; }
+  .ticker-track { display: inline-flex; gap: 2.5rem; padding-left: 100%; animation: ticker 45s linear infinite; }
+  .ticker:hover .ticker-track { animation-play-state: paused; }
+  @media (prefers-reduced-motion: reduce) { .ticker-track { animation: none; padding-left: 0; } }
 }
+
+@keyframes ticker { to { transform: translateX(-100%); } }
+
+/* Les écrans s'alignent sur la grille de la coque (pas de marge latérale propre) */
+.shell-main > main { padding-left: 0 !important; padding-right: 0 !important; }

@@ -65,7 +65,7 @@ export function RankingTab({ league }: RankingTabProps) {
         onSinceDateChange={setSinceDate}
         onSensitivityChange={setSensitivity}
       />
-      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-line)' }}>
+      <div className="panel overflow-hidden">
         <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: 'var(--color-line)' }}>
           <h2 className="text-sm font-semibold text-ink">Classement — {league.name}</h2>
           <div className="flex items-center gap-4">
