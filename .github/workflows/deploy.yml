@@ -31,6 +31,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # Clé publique Supabase (sb_publishable_…) : faite pour être exposée, la RLS protège les données
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_78X88jyH7d0fzEvNUNfIlQ_t2RMs9Sa
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
