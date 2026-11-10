@@ -181,11 +181,12 @@ export function beneficiary(b: Pick<Bet, 'portfolio'>): Person | null {
 }
 
 /**
- * Solde entre nous, positif = Kelicful doit à Squawo.
+ * Solde entre nous, positif = Kelicful doit à Squawo (même logique que l'onglet « Compta Kévin »).
+ * Un règlement (mouvement « Règlement », person = celui qui paie) réduit la dette de celui qui paie.
  * Un pari placé par l'un pour le portefeuille perso de l'autre : celui qui a placé a avancé la mise et touché le retour.
  * Le bénéficiaire lui doit donc le bénéfice (négatif si perte : c'est le placeur qui doit).
  */
-export function interPersonBalance(bets: Bet[], legacyBalance: number) {
+export function interPersonBalance(bets: Bet[], legacyBalance: number, moves: MoneyMove[] = []) {
   const concerned = bets.filter(b => b.status === 'Pris' && b.placed_by && beneficiary(b) && b.placed_by !== beneficiary(b) && isSettled(b.result))
   let balance = legacyBalance
   for (const b of concerned) {
@@ -193,7 +194,9 @@ export function interPersonBalance(bets: Bet[], legacyBalance: number) {
     // Le placeur détient le résultat ; il le doit au bénéficiaire
     balance += b.placed_by === 'Kelicful' ? p : -p
   }
-  return { balance, concerned }
+  const settlements = moves.filter(m => m.kind === 'Règlement')
+  for (const m of settlements) balance += m.person === 'Kelicful' ? -Number(m.amount) : Number(m.amount)
+  return { balance, concerned, settlements }
 }
 
 // ── Déductions automatiques à la saisie ────────────────────────────

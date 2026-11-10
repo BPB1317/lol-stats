@@ -40,6 +40,32 @@ function MoveForm() {
   )
 }
 
+function SettleForm({ payer, amount, onDone }: { payer: Person; amount: number; onDone: () => void }) {
+  const [who, setWho] = useState<Person>(payer)
+  const [value, setValue] = useState(amount.toFixed(2))
+  const [date, setDate] = useState(today())
+  const [note, setNote] = useState('')
+  const to = who === 'Squawo' ? 'Kelicful' : 'Squawo'
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    const a = parseFloat(value.replace(',', '.'))
+    if (!(a > 0)) return
+    const err = await addMoneyMove({ move_date: date, kind: 'Règlement', person: who, amount: a, portfolio: 'commun', note: note.trim() || null })
+    if (!err) onDone()
+  }
+  return (
+    <form onSubmit={submit} className="mt-3 flex flex-wrap items-end gap-2 rounded-md border border-line bg-stripe p-3">
+      <div className="flex gap-1">{(['Kelicful', 'Squawo'] as const).map(p => <button key={p} type="button" data-on={who === p} onClick={() => setWho(p)} className="pill px-3 py-2 text-xs">{p} paie</button>)}</div>
+      <span className="pb-2 text-xs text-muted">à {to}</span>
+      <input value={value} onChange={e => setValue(e.target.value)} inputMode="decimal" className="field w-28 px-2 py-2 font-mono text-sm" aria-label="Montant du règlement" />
+      <input type="date" value={date} onChange={e => setDate(e.target.value)} className="field px-2 py-2 font-mono text-sm" aria-label="Date" />
+      <input value={note} onChange={e => setNote(e.target.value)} placeholder="Note (virement, espèces…)" className="field min-w-0 flex-1 px-2 py-2 text-sm" />
+      <button type="submit" className="btn-primary px-3 py-2 text-sm">Enregistrer le règlement</button>
+      <button type="button" onClick={onDone} className="px-2 py-2 text-xs text-muted hover:text-ink">Annuler</button>
+    </form>
+  )
+}
+
 export function PartagePage({ bets, loading }: { bets: Bet[]; loading: boolean }) {
   const { moves, loading: movesLoading } = useMoneyMoves()
   const { rows: legacy } = useComptaLegacy()
@@ -47,6 +73,7 @@ export function PartagePage({ bets, loading }: { bets: Bet[]; loading: boolean }
   const [year, setYear] = useState('Toutes')
   const [showLegacy, setShowLegacy] = useState(false)
   const [confirmDel, setConfirmDel] = useState<string | null>(null)
+  const [settling, setSettling] = useState(false)
 
   if (loading || movesLoading) return <div className="py-16 text-center text-muted">Chargement…</div>
 
@@ -66,7 +93,7 @@ export function PartagePage({ bets, loading }: { bets: Bet[]; loading: boolean }
   const curveS: { date: string; value: number }[] = [], curveK: { date: string; value: number }[] = []
   for (const e of events) { cs += e.s; ck += e.k; curveS.push({ date: e.date, value: cs }); curveK.push({ date: e.date, value: ck }) }
 
-  const compta = interPersonBalance(bets, settings.compta_legacy_balance)
+  const compta = interPersonBalance(bets, settings.compta_legacy_balance, moves)
   const owed = Math.abs(compta.balance)
   const legacySum = legacy.reduce((s, r) => s + Number(r.pl ?? 0) * (r.paid_by === 'Squawo' ? -1 : 1), 0)
 
@@ -103,7 +130,10 @@ export function PartagePage({ bets, loading }: { bets: Bet[]; loading: boolean }
       <p className="text-xs text-muted">Bénéfice attribué = Σ bénéfice de chaque pari commun × part de chacun (part du pari si elle est renseignée, sinon {formatPct(share / 100, { decimals: 0 })} pour Squawo), ajustements compris. Reste dû = bénéfice attribué − retraits + dépôts.</p>
 
       <section className="panel p-4">
-        <h2 className="text-sm font-semibold">Compta entre nous</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold">Compta entre nous</h2>
+          {owed >= 0.005 && !settling && <button onClick={() => setSettling(true)} className="btn-ghost px-3 py-1.5 text-xs">Régler</button>}
+        </div>
         <p className="mt-2 text-xl font-semibold">
           {owed < 0.005 ? 'Vous êtes quittes.' : compta.balance > 0
             ? <>Kelicful doit <span className="font-mono">{formatEur(owed)}</span> à Squawo</>
@@ -111,9 +141,11 @@ export function PartagePage({ bets, loading }: { bets: Bet[]; loading: boolean }
         </p>
         <p className="mt-1 text-xs text-muted">
           Solde de l'onglet « Compta Kévin » : <span className="font-mono">{formatEur(settings.compta_legacy_balance)}</span> en faveur de Squawo
-          {compta.concerned.length > 0 && <>, puis {compta.concerned.length} pari{compta.concerned.length > 1 ? 's' : ''} placé{compta.concerned.length > 1 ? 's' : ''} par l'un pour l'autre</>}.
+          {compta.concerned.length > 0 && <>, puis {compta.concerned.length} pari{compta.concerned.length > 1 ? 's' : ''} placé{compta.concerned.length > 1 ? 's' : ''} par l'un pour l'autre</>}
+          {compta.settlements.length > 0 && <> et {compta.settlements.length} règlement{compta.settlements.length > 1 ? 's' : ''}</>}.
           Un pari placé pour l'autre : s'il perd, le bénéficiaire doit la perte à celui qui a misé ; s'il gagne, celui qui a misé doit le gain.
         </p>
+        {settling && <SettleForm payer={compta.balance > 0 ? 'Kelicful' : 'Squawo'} amount={owed} onDone={() => setSettling(false)} />}
         {compta.concerned.length > 0 && (
           <div className="mt-3 overflow-x-auto">
             <table className="w-full min-w-[560px] text-[13px]">
@@ -155,15 +187,15 @@ export function PartagePage({ bets, loading }: { bets: Bet[]; loading: boolean }
       </section>
 
       <section className="panel p-4">
-        <h2 className="mb-3 text-sm font-semibold">Retraits et dépôts</h2>
+        <h2 className="mb-3 text-sm font-semibold">Retraits, dépôts et règlements</h2>
         <MoveForm />
         <ul className="mt-3 divide-y divide-line border-t border-line text-[13px]">
           {movesList.map((m: MoneyMove) => (
             <li key={m.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
               <span className="w-20 font-mono text-muted">{fmtDate(m.move_date)}</span>
               <span className={m.kind === 'Ajustement' ? 'text-muted' : ''}>{m.kind}</span>
-              <span>{m.person}</span>
-              <span className="font-mono">{m.kind === 'Retrait' ? '−' : m.kind === 'Dépôt' ? '+' : Number(m.amount) >= 0 ? '+' : '−'}{formatEur(Math.abs(Number(m.amount)))}</span>
+              <span>{m.kind === 'Règlement' ? `${m.person} → ${m.person === 'Squawo' ? 'Kelicful' : 'Squawo'}` : m.person}</span>
+              <span className="font-mono">{m.kind === 'Retrait' ? '−' : m.kind === 'Dépôt' ? '+' : m.kind === 'Règlement' ? '' : Number(m.amount) >= 0 ? '+' : '−'}{formatEur(Math.abs(Number(m.amount)))}</span>
               {m.note && <span className="text-muted">{m.note}</span>}
               <span className="ml-auto">
                 {m.source === 'import_excel' ? <span className="text-xs text-faint">importé</span> : confirmDel === m.id ? (

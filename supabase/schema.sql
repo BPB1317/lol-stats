@@ -128,7 +128,7 @@ CREATE INDEX IF NOT EXISTS bets_status_result_idx ON bets (status, result);
 CREATE TABLE IF NOT EXISTS money_moves (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   move_date DATE NOT NULL DEFAULT CURRENT_DATE,
-  kind TEXT NOT NULL CHECK (kind IN ('Retrait', 'Dépôt', 'Ajustement')),
+  kind TEXT NOT NULL CHECK (kind IN ('Retrait', 'Dépôt', 'Ajustement', 'Règlement')),  -- Règlement : migration 03
   person TEXT NOT NULL CHECK (person IN ('Squawo', 'Kelicful', 'Les deux')),
   amount NUMERIC(12, 2) NOT NULL,
   portfolio TEXT NOT NULL DEFAULT 'commun' CHECK (portfolio IN ('commun', 'kelicful', 'squawo')),

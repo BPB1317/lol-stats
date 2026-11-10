@@ -46,7 +46,7 @@ export type BetInput = Omit<Bet, 'id' | 'created_by' | 'created_at' | 'updated_a
 export interface MoneyMove {
   id: string
   move_date: string
-  kind: 'Retrait' | 'Dépôt' | 'Ajustement'
+  kind: 'Retrait' | 'Dépôt' | 'Ajustement' | 'Règlement'
   person: Person | 'Les deux'
   amount: number
   portfolio: Portfolio

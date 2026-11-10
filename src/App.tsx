@@ -7,13 +7,13 @@ import { LoginForm } from '@/components/auth/LoginForm'
 import { AppShell } from '@/components/layout/AppShell'
 import { useLeagues } from '@/hooks/useLeagues'
 import { ModelsPage } from '@/pages/ModelsPage'
-import { ComingSoon } from '@/pages/ComingSoon'
 import { EloCalculator } from '@/components/league/EloCalculator'
 import { JournalPage } from '@/pages/JournalPage'
 import { VuPasPrisPage } from '@/pages/VuPasPrisPage'
 import { BilanPage } from '@/pages/BilanPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { PartagePage } from '@/pages/PartagePage'
+import { TennisEloPage } from '@/pages/TennisEloPage'
 import { BetFormHost } from '@/components/bets/BetFormHost'
 import { useBets, useProfile } from '@/hooks/useBetting'
 import { SessionContext } from '@/lib/session'
@@ -55,7 +55,9 @@ function AuthenticatedApp({ session }: { session: Session }) {
         <Route path="/paris/bilan" element={<BilanPage portfolio="commun" bets={bets} loading={betsLoading} />} />
         <Route path="/paris/partage" element={<PartagePage bets={bets} loading={betsLoading} />} />
         <Route path="/paris/vu-pas-pris" element={<VuPasPrisPage bets={bets} loading={betsLoading} />} />
-        <Route path="/kelicful/:tab" element={<ComingSoon what="Espace Kelicful" step="7" />} />
+        <Route path="/kelicful/bilan" element={<BilanPage portfolio="kelicful" bets={bets} loading={betsLoading} sportFirst />} />
+        <Route path="/kelicful/atp" element={<TennisEloPage key="ATP" tour="ATP" />} />
+        <Route path="/kelicful/wta" element={<TennisEloPage key="WTA" tour="WTA" />} />
         <Route path="/reglages" element={<SettingsPage bets={bets} />} />
         <Route path="*" element={<Navigate to="/modeles" replace />} />
       </Routes>

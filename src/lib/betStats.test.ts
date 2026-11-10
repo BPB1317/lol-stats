@@ -118,6 +118,13 @@ describe('partage', () => {
     expect(r.balance).toBeCloseTo(1584.48 + 20 - 27)
     expect(r.concerned.length).toBe(2)
   })
+  it('règlement : Kelicful paie 500 € à Squawo → la dette baisse de 500 ; bilans et bankroll inchangés', () => {
+    const pay = move({ kind: 'Règlement', person: 'Kelicful', amount: 500 })
+    expect(interPersonBalance([], 1584.48, [pay]).balance).toBeCloseTo(1084.48)
+    expect(interPersonBalance([], 100, [move({ kind: 'Règlement', person: 'Squawo', amount: 30 })]).balance).toBeCloseTo(130)
+    expect(summarize([], [pay]).profit).toBe(0)
+    expect(whoHasWhat([], [pay], 50).kelicful.remaining).toBe(0)
+  })
 })
 
 describe('déductions à la saisie', () => {
