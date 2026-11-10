@@ -34,15 +34,11 @@ function OddsCell({ p, hdp, href }: { p: number; hdp?: string; href?: string }) 
     <Tag
       to={href ?? ''}
       title={href ? 'Prendre ce pari' : undefined}
-      className={`rounded-lg px-3 py-2 flex items-center justify-between gap-2 ${href ? 'hover:brightness-125' : ''}`}
-      style={{
-        background: isFav ? 'color-mix(in srgb, var(--color-win) 12%, transparent)' : 'var(--color-line)',
-        border: `1px solid ${isFav ? 'color-mix(in srgb, var(--color-win) 35%, transparent)' : 'var(--color-line)'}`,
-      }}
+      className={`flex items-center justify-between gap-2 border-b border-line px-1 py-2 ${href ? 'hover:bg-raised' : ''}`}
     >
       <span className="text-sm font-semibold font-mono" style={{ color: 'var(--color-muted)' }}>{hdp ?? ''}</span>
       <div className="text-right">
-        <div className="text-xl font-bold font-mono leading-tight" style={{ color: isFav ? 'var(--color-win)' : 'var(--color-ink)' }}>
+        <div className={`font-mono text-xl leading-tight ${isFav ? 'font-bold text-win' : 'font-semibold text-ink'}`}>
           {(1 / p).toFixed(2)}
         </div>
         <div className="text-xs font-mono" style={{ color: 'var(--color-muted)' }}>
@@ -203,8 +199,7 @@ export function EloCalculator({ ratings, defaultMode = 'teams', leagueName }: El
               return (
                 <div
                   key={i}
-                  className="rounded-lg p-3 space-y-2"
-                  style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
+                  className="space-y-2 border-t border-ink pt-3"
                 >
                   <div className="text-xs font-medium text-ink truncate">{side.label}</div>
                   <div className="flex items-end justify-between">
@@ -251,8 +246,7 @@ export function EloCalculator({ ratings, defaultMode = 'teams', leagueName }: El
                 {SERIES_BLOCKS.map(block => (
                   <div
                     key={block.title}
-                    className="rounded-lg p-3"
-                    style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
+                    className="border-t border-ink pt-3"
                   >
                     <div className="grid grid-cols-[4.5rem_1fr_1fr] gap-2 items-center">
                       <div className="text-base font-bold" style={{ color: 'var(--color-ink)' }}>{block.title}</div>

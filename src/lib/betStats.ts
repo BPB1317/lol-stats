@@ -230,7 +230,12 @@ export function inferSport(game: string, selection: string, teamKeys: Set<string
 
 // ── Formats ────────────────────────────────────────────────────────
 
-const fr = (n: number, d: number) => n.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/\u202f/g, '\u00a0')
+/** Nombre affiché : point décimal, espace insécable entre les milliers (ex. 17 603.25). */
+export function formatNum(n: number, d: number) {
+  const [int, dec] = Math.abs(n).toFixed(d).split('.')
+  return `${n < 0 ? '-' : ''}${int.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')}${dec ? `.${dec}` : ''}`
+}
+const fr = formatNum
 const sign = (n: number) => (n > 0 ? '+' : n < 0 ? '−' : '')
 
 /** Montant en euros ; avec `signed`, le signe est toujours affiché (lisible sans la couleur). */

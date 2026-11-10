@@ -4,7 +4,7 @@
 import { useState, type ReactNode } from 'react'
 import type { Bet, BetResult, Market, MoneyMove, Portfolio } from '@/types/betting'
 import { RESULTS } from '@/types/betting'
-import { summarize, groupSummaries, cumulative, visible, formatEur, formatPct, isSettled, resultProfit, type Summary } from '@/lib/betStats'
+import { summarize, groupSummaries, cumulative, visible, formatEur, formatPct, formatNum, isSettled, resultProfit, type Summary } from '@/lib/betStats'
 import { CumulativeChart, MonthlyBars } from '@/components/charts/Charts'
 import { BetTable, Signed } from '@/components/bets/BetTable'
 
@@ -33,7 +33,7 @@ function opponentOf(b: Bet) {
 /** Bénéfice d'un pari sans « € », signe toujours affiché (couleur gain / perte du thème). */
 function BetResultAmount({ b }: { b: Bet }) {
   const p = Math.round(resultProfit(b) * 100) / 100
-  return <span className={`font-mono font-semibold ${p > 0 ? 'text-win' : p < 0 ? 'text-loss' : 'text-muted'}`}>{p > 0 ? '+' : p < 0 ? '−' : ''}{Math.abs(p).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+  return <span className={`font-mono font-semibold ${p > 0 ? 'text-win' : p < 0 ? 'text-loss' : 'text-muted'}`}>{p > 0 ? '+' : p < 0 ? '−' : ''}{formatNum(Math.abs(p), 2)}</span>
 }
 
 function Panel({ title, sub, right, children, flush }: { title: string; sub?: string; right?: ReactNode; children: ReactNode; flush?: boolean }) {
@@ -134,7 +134,7 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
   const betCount = filtered.length
   const heroRounded = Math.round(s.profit)
   const heroSign = heroRounded > 0 ? '+' : heroRounded < 0 ? '−' : ''
-  const heroInt = Math.abs(heroRounded).toLocaleString('fr-FR').replace(/\u202f/g, '\u00a0')
+  const heroInt = formatNum(Math.abs(heroRounded), 0)
   const sortedDates = filtered.map(b => b.bet_date).sort()
   const monthName = (d: string) => `${MONTHS[+d.slice(5, 7) - 1]} ${d.slice(0, 4)}`
   const periodLabel = `${portfolio === 'kelicful' ? 'Bilan Kelicful' : 'Bilan commun'}${sortedDates.length ? `, ${monthName(sortedDates[0])} – ${monthName(sortedDates[sortedDates.length - 1])}` : ''}`
@@ -238,7 +238,7 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
               <span className="truncate">{b.selection}</span>
               <span className="hidden truncate text-muted sm:block">{opponentOf(b)}</span>
               <span className="hidden text-right font-mono sm:block">{eur0(Number(b.stake))}</span>
-              <span className="text-right font-mono">{Number(b.odds).toLocaleString('fr-FR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</span>
+              <span className="text-right font-mono">{formatNum(Number(b.odds), 3)}</span>
               <span className="text-right"><BetResultAmount b={b} /></span>
             </li>
           ))}

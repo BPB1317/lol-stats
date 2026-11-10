@@ -69,6 +69,7 @@ export function AppShell({ leagues, bets, userId, who, children }: { leagues: Le
     <div className="min-h-screen">
       <div className="mx-auto max-w-[1240px] px-4 md:px-8">
         <header className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b-2 border-ink py-3">
+          <Link to="/paris/bilan" className="shrink-0 text-[15px] font-bold tracking-tight">Squawo &amp; Kelicful</Link>
           <nav className="-mx-1 flex overflow-x-auto" aria-label="Sections">
             {SECTIONS.map(s => (
               <NavLink key={s.base} to={s.to} className={`shrink-0 px-2 py-1 text-[15px] ${section === s.base ? 'text-accent' : 'text-ink hover:text-accent'}`}>{s.label}</NavLink>
@@ -96,7 +97,7 @@ export function AppShell({ leagues, bets, userId, who, children }: { leagues: Le
         <div className="shell-main pb-24 md:pb-12">{children}</div>
 
         <footer className="flex items-center justify-between border-t border-line py-4 text-xs text-muted">
-          <span>Squawo x Kelicful{who ? ` · ${who}` : ''}</span>
+          <span>Squawo &amp; Kelicful{who ? ` · ${who}` : ''}</span>
           <button onClick={() => supabase.auth.signOut()} className="hover:text-ink">Déconnexion</button>
         </footer>
       </div>

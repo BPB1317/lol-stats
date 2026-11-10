@@ -94,7 +94,7 @@ export function CumulativeChart({ points, height = 240, mode = 'continu', endLab
           {ticks.map(v => (
             <g key={v}>
               <line x1={pad.l} x2={pad.l + iw} y1={sy(v)} y2={sy(v)} stroke="var(--d-grid, var(--color-line))" strokeWidth={1} strokeDasharray={v === 0 ? '4 3' : '2 4'} opacity={v === 0 ? 1 : 0.6} />
-              <text x={pad.l - 8} y={sy(v)} dy="0.32em" textAnchor="end" fontSize={11} fill="var(--d-muted, var(--color-muted))">{v === 0 ? '0' : `${v > 0 ? '+' : '−'}${Math.abs(v / 1000).toLocaleString('fr-FR')}k`}</text>
+              <text x={pad.l - 8} y={sy(v)} dy="0.32em" textAnchor="end" fontSize={11} fill="var(--d-muted, var(--color-muted))">{v === 0 ? '0' : `${v > 0 ? '+' : '−'}${Math.abs(v / 1000).toString()}k`}</text>
             </g>
           ))}
           {mode === 'continu' && allYears.length > 0 && <text x={pad.l} y={height - 6} fontSize={11} fill="var(--d-muted, var(--color-muted))">{allYears[0]}</text>}
@@ -122,7 +122,7 @@ export function CumulativeChart({ points, height = 240, mode = 'continu', endLab
           })}
           {mode === 'continu' && endLabel && (() => {
             const s = series[0].pts, end = s[s.length - 1]
-            return <text x={sx(end.x) + 6} y={sy(end.value)} dy="0.32em" fontSize={12} fontWeight={700} fill="var(--d-ink, var(--color-ink))">{`${end.value >= 0 ? '+' : '−'}${Math.abs(Math.round(end.value / 100) / 10).toLocaleString('fr-FR')}k`}</text>
+            return <text x={sx(end.x) + 6} y={sy(end.value)} dy="0.32em" fontSize={12} fontWeight={700} fill="var(--d-ink, var(--color-ink))">{`${end.value >= 0 ? '+' : '−'}${Math.abs(Math.round(end.value / 100) / 10).toString()}k`}</text>
           })()}
           {hover && (
             <g>
@@ -177,7 +177,7 @@ export function MonthlyBars({ months, height = 200 }: { months: Month[]; height?
           {ticks.map(v => (
             <g key={v}>
               <line x1={pad.l} x2={pad.l + iw} y1={sy(v)} y2={sy(v)} stroke="var(--d-grid, var(--color-line))" strokeDasharray={v === 0 ? undefined : '2 4'} strokeWidth={v === 0 ? 1.5 : 1} />
-              <text x={pad.l - 8} y={sy(v)} dy="0.32em" textAnchor="end" fontSize={11} fill="var(--d-muted, var(--color-muted))">{v === 0 ? '0' : `${v > 0 ? '+' : '−'}${Math.abs(v / 1000).toLocaleString('fr-FR')}k`}</text>
+              <text x={pad.l - 8} y={sy(v)} dy="0.32em" textAnchor="end" fontSize={11} fill="var(--d-muted, var(--color-muted))">{v === 0 ? '0' : `${v > 0 ? '+' : '−'}${Math.abs(v / 1000).toString()}k`}</text>
             </g>
           ))}
           {months.map((m, i) => {

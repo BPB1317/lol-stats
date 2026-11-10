@@ -1,4 +1,4 @@
-# Squawo x Kelicful — modèles LoL et suivi des paris
+# Squawo & Kelicful — modèles LoL et suivi des paris
 
 Site privé de notre duo de parieurs (Squawo et Kelicful) : modèles Elo LoL, journal de paris commun,
 bilans, partage des bénéfices et compta entre nous, espace perso de Kelicful (bilan, Elo tennis), calculateurs.

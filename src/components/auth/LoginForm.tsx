@@ -20,7 +20,7 @@ export function LoginForm() {
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)' }}>
       <div className="w-full max-w-sm rounded-xl p-8" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-line)' }}>
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">Squawo <span className="font-normal text-muted">x</span> Kelicful</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">Squawo <span className="font-normal text-muted">&amp;</span> Kelicful</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--color-muted)' }}>Connexion requise</p>
         </div>
 
