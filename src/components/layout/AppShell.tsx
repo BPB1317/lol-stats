@@ -38,14 +38,14 @@ function Segmented<T extends string>({ value, options, onChange, label }: { valu
 const Sun = () => <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden><g fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="4" /><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4" /></g></svg>
 const Moon = () => <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
 
-/** Bandeau défilant des derniers paris réglés (style Terminal uniquement). */
-function Ticker({ bets }: { bets: Bet[] }) {
-  const last = bets.filter(b => b.status === 'Pris' && isSettled(b.result))
+/** Bandeau défilant des derniers paris réglés (style Terminal) : ceux de Kelicful dans son espace, les paris communs ailleurs. */
+function Ticker({ bets, portfolio }: { bets: Bet[]; portfolio: 'commun' | 'kelicful' }) {
+  const last = bets.filter(b => b.portfolio === portfolio && b.status === 'Pris' && isSettled(b.result))
     .sort((a, b) => b.bet_date.localeCompare(a.bet_date) || b.created_at.localeCompare(a.created_at)).slice(0, 14)
   if (!last.length) return null
   return (
-    <div className="ticker border-b border-line py-2 font-mono text-[12px]" aria-label="Derniers paris">
-      <div className="ticker-track">
+    <div className="ticker border-b border-line py-2 font-mono text-[12px]" aria-label={portfolio === 'kelicful' ? 'Derniers paris de Kelicful' : 'Derniers paris communs'}>
+      <div key={portfolio} className="ticker-track">
         {last.map(b => {
           const p = resultProfit(b)
           return (
@@ -82,7 +82,7 @@ export function AppShell({ leagues, bets, userId, who, children }: { leagues: Le
           </div>
         </header>
 
-        {style === 'terminal' && <Ticker bets={bets} />}
+        {style === 'terminal' && <Ticker bets={bets} portfolio={section === '/kelicful' ? 'kelicful' : 'commun'} />}
 
         {(SUB[section] || section === '/modeles') && (
           <nav className="flex items-center gap-x-5 gap-y-1 overflow-x-auto border-b border-line py-2 text-[13px]" aria-label="Sous-sections">
