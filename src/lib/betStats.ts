@@ -204,7 +204,7 @@ export function interPersonBalance(bets: Bet[], legacyBalance: number, moves: Mo
 /** Marché déduit de la position (modifiable par l'utilisateur). */
 export function inferMarket(selection: string): Market {
   const s = selection.toLowerCase()
-  if (/\bcombin[ée]|\s\+\s|\s&\s/.test(s)) return 'Combiné'
+  if (/\bcombin[ée]|\s\+\s|\s&\s|\bx\s?\d+$/.test(s)) return 'Combiné'  // « Favo LFL x 5 » = combiné de 5
   if (/\b(points?|rebonds?|passes?|assists?|kills?|aces?|tirs?)\b/.test(s) && /\d/.test(s)) return 'Stats joueur'
   if (/\b(over|under|plus de|moins de)\b/.test(s)) return 'Over/Under'
   if (/(^|\s)[+\-−]\s?\d+([.,]\d+)?\b|\b(ah|hdp|handicap)\b|(^|\s)0([.,]0)?$/.test(s)) return 'Handicap'

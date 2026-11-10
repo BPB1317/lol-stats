@@ -90,9 +90,22 @@ export async function setBetResult(bet: Bet, result: BetResult, closingOdds?: nu
   return updateBet(bet.id, closingOdds === undefined ? { result } : { result, closing_odds: closingOdds }, bet)
 }
 
+/** Paris supprimés récemment, lus dans l'historique (version complète au moment de la suppression). */
+export async function fetchDeletedBets(limit = 50) {
+  const { data, error } = await supabase.from('data_history').select('id,old_row,changed_at')
+    .eq('table_name', 'bets').eq('action', 'DELETE').order('changed_at', { ascending: false }).limit(limit)
+  return { rows: (data ?? []) as { id: number; old_row: Bet; changed_at: string }[], error }
+}
+
+/** Remet un pari supprimé tel qu'il était (même identifiant). */
+export async function restoreBet(old: Bet): Promise<PostgrestError | null> {
+  const { error } = await supabase.from('bets').insert(old)
+  return report(error, () => restoreBet(old), 'Pari restauré')
+}
+
 export async function deleteBet(id: string): Promise<PostgrestError | null> {
   const { error } = await supabase.from('bets').delete().eq('id', id)
-  return report(error, () => deleteBet(id), 'Pari supprimé (restaurable depuis l’historique)')
+  return report(error, () => deleteBet(id), 'Pari supprimé (restaurable dans Réglages → Paris supprimés)')
 }
 
 // ── Mouvements d'argent ───────────────────────────────────────────

@@ -7,9 +7,10 @@ import { CumulativeChart } from '@/components/charts/Charts'
 import { Signed } from '@/components/bets/BetTable'
 import { ResultLabel } from '@/components/bets/ResultButtons'
 import { useSession } from '@/lib/session'
+import { todayLocal } from '@/lib/date'
 
 const fmtDate = (d: string | null) => (d ? d.split('-').reverse().join('/') : '—')
-const today = () => new Date().toISOString().slice(0, 10)
+const today = todayLocal
 
 function MoveForm() {
   const { person } = useSession()

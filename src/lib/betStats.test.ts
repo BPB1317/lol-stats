@@ -136,6 +136,7 @@ describe('déductions à la saisie', () => {
     expect(inferMarket('Over 24,5 points J. Arden')).toBe('Stats joueur')
     expect(inferMarket('G2 Esports')).toBe('Vainqueur')
     expect(inferMarket('G2 + T1 combiné')).toBe('Combiné')
+    expect(inferMarket('Favo LFL x 5')).toBe('Combiné')
   })
   it('sport, dans l’ordre des règles', () => {
     const teams = new Set(['g2 esports', 'dplus kia'])

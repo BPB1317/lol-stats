@@ -5,10 +5,11 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 're
 import type { Bet, BetInput, BetResult, Market, Person, Portfolio } from '@/types/betting'
 import { MARKETS, RESULTS } from '@/types/betting'
 import { inferMarket, inferSport, resultProfit, formatEur } from '@/lib/betStats'
-import { addBet, updateBet } from '@/hooks/useBetting'
+import { addBet, updateBet, deleteBet } from '@/hooks/useBetting'
 import type { League } from '@/types'
+import { todayLocal } from '@/lib/date'
 
-const today = () => new Date().toISOString().slice(0, 10)
+const today = todayLocal
 const DRAFT_KEY = 'bpb-bet-draft'
 
 export interface BetFormDefaults {
@@ -31,7 +32,7 @@ interface Props {
 interface Draft {
   betDate: string; game: string; selection: string; sport: string; sportTouched: boolean; market: Market | ''
   stake: string; odds: string; result: BetResult; status: 'Pris' | 'Vu pas pris'; portfolio: Portfolio
-  closing: string; league: string; placedBy: Person | ''; share: string; note: string
+  closing: string; league: string; placedBy: Person | ''; placedByTouched: boolean; share: string; note: string
 }
 
 function loadDraft(): Draft | null {
@@ -61,7 +62,7 @@ function initialState(bet: Bet | undefined, prefill: Partial<BetInput> | undefin
     betDate: init.bet_date ?? today(), game: init.game ?? '', selection: init.selection ?? '', sport: init.sport ?? '', sportTouched: !!init.sport,
     market: init.market ?? '', stake: init.stake != null ? String(init.stake) : '', odds: init.odds != null ? String(init.odds) : '',
     result: init.result ?? 'En cours', status: init.status ?? 'Pris', portfolio: init.portfolio ?? defaults.portfolio,
-    closing: init.closing_odds != null ? String(init.closing_odds) : '', league: init.league ?? '', placedBy: init.placed_by ?? defaults.placedBy ?? '',
+    closing: init.closing_odds != null ? String(init.closing_odds) : '', league: init.league ?? '', placedBy: init.placed_by ?? '', placedByTouched: init.placed_by != null,
     share: init.share_squawo != null ? String(init.share_squawo) : '', note: init.note ?? '',
   }
 }
@@ -74,6 +75,7 @@ export function BetForm({ bet, prefill, defaults, sports, leagues, teamKeys, onS
   const [more, setMore] = useState(!!(bet && (bet.closing_odds || bet.league || bet.note || bet.share_squawo != null || bet.status !== 'Pris' || bet.result !== 'En cours')))
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   // Brouillon enregistré à chaque frappe (nouveaux paris uniquement)
   useEffect(() => { if (!bet) saveDraft(f.selection || f.stake || f.odds || f.game ? f : null) }, [f, bet])
@@ -84,6 +86,9 @@ export function BetForm({ bet, prefill, defaults, sports, leagues, teamKeys, onS
   const s = num(f.stake), o = num(f.odds)
   const potential = s > 0 && o > 1 ? resultProfit({ stake: s, odds: o, result: 'Gagnant' }) : null
   const sportOptions = sports.includes(sport) || !sport ? sports : [...sports, sport]
+  // Placé par : celui qui a misé. Par défaut Kelicful pour son portefeuille, la personne connectée pour le commun
+  const placedBy: Person | '' = f.placedByTouched ? f.placedBy : (f.portfolio === 'kelicful' ? 'Kelicful' : (defaults.placedBy ?? ''))
+  const forOther = f.portfolio === 'kelicful' && placedBy === 'Squawo'
 
   const submit = async (e?: FormEvent) => {
     e?.preventDefault()
@@ -98,7 +103,7 @@ export function BetForm({ bet, prefill, defaults, sports, leagues, teamKeys, onS
     const values: BetInput = {
       bet_date: f.betDate || today(), game: f.game.trim() || null, selection: f.selection.trim(), sport, stake: s, odds: o,
       result: f.result, status: f.status, portfolio: f.portfolio, closing_odds: c, clv: bet?.clv ?? null, clv_method: bet?.clv_method ?? null,
-      league: f.league || null, market, placed_by: f.placedBy || null, share_squawo: sh, note: f.note.trim() || null,
+      league: f.league || null, market, placed_by: placedBy || null, share_squawo: sh, note: f.note.trim() || null,
     }
     setSaving(true)
     if (bet) {
@@ -193,16 +198,22 @@ export function BetForm({ bet, prefill, defaults, sports, leagues, teamKeys, onS
                     {leagues.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
                     {f.league && !leagues.some(l => l.name === f.league) && <option value={f.league}>{f.league}</option>}
                   </select></label>
-                <div><Label>Placé par</Label><Segmented value={f.placedBy} options={['Squawo', 'Kelicful'] as const} onChange={v => set('placedBy', v === f.placedBy ? '' : v)} /></div>
+                <div><Label>Placé par</Label><Segmented value={placedBy} options={['Squawo', 'Kelicful'] as const} onChange={v => setF(p => ({ ...p, placedBy: v, placedByTouched: true }))} /></div>
               </div>
               <label className="block"><Label>Note</Label>
                 <textarea value={f.note} onChange={e => set('note', e.target.value)} rows={2} className="field w-full px-3 py-2 text-sm" /></label>
             </div>
           )}
+          {forOther && <p className="rounded-md border border-line bg-raised px-3 py-2 text-xs text-muted">Placé par Squawo pour le portefeuille de Kelicful : ce pari comptera dans la compta entre vous.</p>}
           {error && <p className="text-sm text-loss" role="alert">{error}</p>}
         </div>
 
         <div className="flex gap-2 border-t border-line px-4 py-3">
+          {bet && (confirmDelete ? (
+            <button type="button" onClick={async () => { if (!(await deleteBet(bet.id))) onClose() }} className="rounded-md bg-danger px-3 py-2.5 text-sm font-semibold text-ink">Confirmer</button>
+          ) : (
+            <button type="button" onClick={() => setConfirmDelete(true)} className="btn-ghost px-3 py-2.5 text-sm text-loss" title="Restaurable depuis Réglages → Paris supprimés">Supprimer</button>
+          ))}
           <button type="button" onClick={discard} className="btn-ghost px-4 py-2.5 text-sm">{bet ? 'Annuler' : 'Abandonner'}</button>
           <button type="submit" disabled={saving} className="btn-primary flex-1 py-2.5 text-sm disabled:opacity-50">{saving ? 'Enregistrement…' : 'Enregistrer'}</button>
         </div>

@@ -5,6 +5,7 @@ import { useSettings, updateSettings, useUserPrefs } from '@/hooks/useBetting'
 import { useSession } from '@/lib/session'
 import { downloadFullBackup } from '@/lib/backup'
 import { formatEur } from '@/lib/betStats'
+import { DeletedBets } from '@/components/bets/DeletedBets'
 
 function Section({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
   return (
@@ -126,6 +127,10 @@ export function SettingsPage({ bets }: { bets: Bet[] }) {
       <Section title="Compta entre nous" sub="Solde de départ repris de l'onglet « Compta Kévin ».">
         <NumField label="Solde historique" value={s.compta_legacy_balance} suffix="€" hint="positif = Kelicful doit à Squawo" onSave={v => set({ compta_legacy_balance: v })} />
         <p className="text-xs text-muted">Actuellement : Kelicful doit {formatEur(s.compta_legacy_balance)} à Squawo avant les nouveaux paris. Chaque modification est gardée dans l'historique.</p>
+      </Section>
+
+      <Section title="Paris supprimés" sub="Chaque suppression est gardée dans l'historique : un pari supprimé par erreur se restaure ici, à l'identique.">
+        <DeletedBets bets={bets} />
       </Section>
 
       <Section title="Sauvegardes" sub="Une sauvegarde complète part chaque nuit sur le dépôt privé bpb-sauvegardes. Vous pouvez aussi en garder une copie sur cet appareil.">

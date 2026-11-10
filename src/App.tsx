@@ -81,8 +81,8 @@ function Root() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // En local, les drafts s'ouvrent sans connexion (captures) ; en ligne, connexion requise
-  if (pathname.startsWith('/drafts') && (import.meta.env.DEV || session)) {
+  // Maquettes de DA : uniquement en local (la direction B est retenue, la route n'est plus publiée)
+  if (pathname.startsWith('/drafts') && import.meta.env.DEV) {
     return <Suspense fallback={null}><DraftsPage /></Suspense>
   }
   if (!authChecked) return null

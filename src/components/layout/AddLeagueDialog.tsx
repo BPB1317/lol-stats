@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { League } from '@/types'
 import { createLeague, copyTeams } from '@/hooks/useLeagues'
+import { todayLocal } from '@/lib/date'
 
 interface AddLeagueDialogProps {
   onClose: () => void
@@ -17,7 +18,7 @@ export function AddLeagueDialog({ onClose, maxOrder, leagues }: AddLeagueDialogP
   const [threshold, setThreshold] = useState(0.85)
   const [fromId, setFromId] = useState('')
   const [withElo, setWithElo] = useState(false)
-  const [eloDate, setEloDate] = useState(new Date().toISOString().slice(0, 10))
+  const [eloDate, setEloDate] = useState(todayLocal())
   const [boType, setBoType] = useState('BO1')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
