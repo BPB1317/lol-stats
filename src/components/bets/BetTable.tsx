@@ -23,7 +23,8 @@ function Th({ k, sort, onSort, right, children }: { k: SortKey; sort: { key: Sor
 }
 
 export function Signed({ v, decimals = 2 }: { v: number; decimals?: number }) {
-  return <span className={`font-mono ${v > 0 ? 'text-win' : v < 0 ? 'text-loss' : ''}`}>{formatEur(v, { signed: true, decimals })}</span>
+  const r = Math.round(v * 10 ** decimals) / 10 ** decimals // couleur et signe suivent le montant affiché
+  return <span className={`font-mono ${r > 0 ? 'text-win' : r < 0 ? 'text-loss' : ''}`}>{formatEur(v, { signed: true, decimals })}</span>
 }
 
 interface Props {

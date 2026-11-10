@@ -156,5 +156,7 @@ describe('formats', () => {
     expect(formatEur(1234.5, { signed: true })).toBe('+1\u00a0234,50\u00a0€')
     expect(formatEur(-12, { signed: true, decimals: 0 })).toBe('−12\u00a0€')
     expect(formatPct(0.123, { signed: true })).toBe('+12,3\u00a0%')
+    expect(formatEur(0.0000004, { signed: true })).toBe('0,00\u00a0€')
+    expect(formatEur(-0.004, { signed: true })).toBe('0,00\u00a0€')
   })
 })

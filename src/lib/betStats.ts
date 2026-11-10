@@ -235,7 +235,9 @@ const sign = (n: number) => (n > 0 ? '+' : n < 0 ? '−' : '')
 
 /** Montant en euros ; avec `signed`, le signe est toujours affiché (lisible sans la couleur). */
 export function formatEur(n: number, { signed = false, decimals = 2 } = {}) {
-  return `${signed ? sign(n) : n < 0 ? '−' : ''}${fr(Math.abs(n), decimals)}\u00a0€`
+  // Le signe suit le montant arrondi : un reste de 0,000001 € s'affiche « 0,00 € », pas « +0,00 € »
+  const r = Math.round(n * 10 ** decimals) / 10 ** decimals || 0
+  return `${signed ? sign(r) : r < 0 ? '−' : ''}${fr(Math.abs(r), decimals)}\u00a0€`
 }
 export function formatPct(n: number | null, { signed = false, decimals = 1 } = {}) {
   if (n == null) return '—'
