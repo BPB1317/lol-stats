@@ -41,7 +41,7 @@ function SectionTitle({ children }: { children: ReactNode }) {
 function Sidebar({ leagues, email, onNavigate }: { leagues: League[]; email?: string; onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col gap-5 px-3 py-5">
-      <Link to="/modeles" onClick={onNavigate} className="px-3 text-lg font-semibold tracking-tight">BPB <span className="font-normal text-muted">paris</span></Link>
+      <Link to="/modeles" onClick={onNavigate} className="px-3 text-lg font-semibold tracking-tight">Squawo <span className="font-normal text-muted">x</span> Kelicful</Link>
       <nav className="flex-1 space-y-5 overflow-y-auto">
         <div>
           <SectionTitle>Paris</SectionTitle>

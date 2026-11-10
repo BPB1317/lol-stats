@@ -75,6 +75,7 @@ export function PartagePage({ bets, loading }: { bets: Bet[]; loading: boolean }
   const [showLegacy, setShowLegacy] = useState(false)
   const [confirmDel, setConfirmDel] = useState<string | null>(null)
   const [settling, setSettling] = useState(false)
+  const [zeroing, setZeroing] = useState<string | null>(null)
 
   if (loading || movesLoading) return <div className="py-16 text-center text-muted">Chargement…</div>
 
@@ -117,7 +118,21 @@ export function PartagePage({ bets, loading }: { bets: Bet[]; loading: boolean }
               <h2 className="text-sm font-semibold">{p.name}</h2>
               <span className="font-mono text-xs text-muted">part par défaut {formatPct(p.pct / 100, { decimals: 0 })}</span>
             </div>
-            <div className="mt-2 text-xs text-muted">Reste dû dans la bankroll commune</div>
+            <div className="mt-2 flex items-center justify-between gap-2 text-xs text-muted">
+              <span>Reste dû dans la bankroll commune</span>
+              {/* Régularisation faite hors du site : un retrait (ou dépôt) du montant exact ramène le solde à 0 */}
+              {year === 'Toutes' && Math.abs(p.remaining) >= 0.005 && (zeroing === p.name ? (
+                <span className="flex items-center gap-1">
+                  <button onClick={async () => {
+                    const err = await addMoneyMove({ move_date: todayLocal(), kind: p.remaining > 0 ? 'Retrait' : 'Dépôt', person: p.name as Person, amount: Math.round(Math.abs(p.remaining) * 100) / 100, portfolio: 'commun', note: `Régularisation (solde ramené à 0 le ${todayLocal().split('-').reverse().join('/')})` })
+                    if (!err) setZeroing(null)
+                  }} className="rounded bg-ink px-2 py-1 font-semibold text-bg">{p.remaining > 0 ? 'Retrait' : 'Dépôt'} de {formatEur(Math.abs(p.remaining))}</button>
+                  <button onClick={() => setZeroing(null)} className="px-1.5 py-1 hover:text-ink">Annuler</button>
+                </span>
+              ) : (
+                <button onClick={() => setZeroing(p.name)} className="btn-ghost px-2 py-1 text-xs">Solder à 0</button>
+              ))}
+            </div>
             <div className="text-[28px] font-semibold leading-tight"><Signed v={p.remaining} /></div>
             <dl className="mt-2 grid grid-cols-3 gap-2 font-mono text-[13px]">
               <div><dt className="font-sans text-xs text-muted">Bénéfice attribué</dt><dd><Signed v={p.earned} /></dd></div>
