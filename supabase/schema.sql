@@ -167,6 +167,9 @@ CREATE TABLE IF NOT EXISTS app_settings (
   tennis_elo_weight_overall NUMERIC(4, 3) NOT NULL DEFAULT 0.4,
   tennis_elo_weight_surface NUMERIC(4, 3) NOT NULL DEFAULT 0.6,
   series_concentration NUMERIC(8, 2) NOT NULL DEFAULT 40,
+  tennis_w_dur NUMERIC(4, 3) NOT NULL DEFAULT 0.4 CHECK (tennis_w_dur BETWEEN 0 AND 1),      -- part de l'Elo général, par surface (migration 04)
+  tennis_w_terre NUMERIC(4, 3) NOT NULL DEFAULT 0.4 CHECK (tennis_w_terre BETWEEN 0 AND 1),
+  tennis_w_gazon NUMERIC(4, 3) NOT NULL DEFAULT 0.4 CHECK (tennis_w_gazon BETWEEN 0 AND 1),
   sports TEXT[] NOT NULL DEFAULT ARRAY['E-sport', 'Tennis', 'Football', 'Basket', 'F1', 'Cyclisme', 'Autre'],
   compta_legacy_balance NUMERIC(12, 2) NOT NULL DEFAULT 1584.48,  -- Kelicful doit cette somme à Squawo (positif = dû à Squawo)
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

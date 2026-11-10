@@ -1,8 +1,8 @@
 // Elo tennis ATP / WTA : tableau des joueurs, Elo combinés, calculateur de match, mise à jour par collage.
 import { useMemo, useState } from 'react'
 import type { TennisElo } from '@/types/betting'
-import { useSettings, useTennisElo, replaceTennisElo } from '@/hooks/useBetting'
-import { parseEloPaste, combinedElo, eloProb, SURFACES, type Surface } from '@/lib/tennis'
+import { useSettings, useTennisElo, replaceTennisElo, updateSettings } from '@/hooks/useBetting'
+import { parseEloPaste, combinedElo, eloProb, SURFACES, type Surface, type SurfaceWeights } from '@/lib/tennis'
 import { formatPct } from '@/lib/betStats'
 import { notify } from '@/lib/toast'
 
@@ -16,7 +16,7 @@ function PlayerInput({ id, label, value, onChange }: { id: string; label: string
   )
 }
 
-function Calculator({ players, wO, wS, tour }: { players: TennisElo[]; wO: number; wS: number; tour: string }) {
+function Calculator({ players, weights, tour }: { players: TennisElo[]; weights: SurfaceWeights; tour: string }) {
   const [a, setA] = useState('')
   const [b, setB] = useState('')
   const [surface, setSurface] = useState<Surface>('dur')
@@ -25,8 +25,8 @@ function Calculator({ players, wO, wS, tour }: { players: TennisElo[]; wO: numbe
   const [bookB, setBookB] = useState('')
   const pa = players.find(p => p.player.toLowerCase() === a.trim().toLowerCase())
   const pb = players.find(p => p.player.toLowerCase() === b.trim().toLowerCase())
-  const ea = pa ? combinedElo(pa, surface, wO, wS) : null
-  const eb = pb ? combinedElo(pb, surface, wO, wS) : null
+  const ea = pa ? combinedElo(pa, surface, weights) : null
+  const eb = pb ? combinedElo(pb, surface, weights) : null
   const manualGap = parseFloat(manual.replace(',', '.'))
   const gap = !Number.isNaN(manualGap) ? manualGap : ea != null && eb != null ? ea - eb : null
   const p = gap == null ? null : eloProb(gap, 0)
@@ -53,10 +53,10 @@ function Calculator({ players, wO, wS, tour }: { players: TennisElo[]; wO: numbe
           <thead><tr className="border-b border-line text-muted"><th className="py-1.5 text-left font-sans font-medium">Elo + surface</th>{SURFACES.map(s => <th key={s.key} className="text-right font-sans font-medium">{s.label}</th>)}</tr></thead>
           <tbody>
             {[pa, pb].map((x, i) => x && (
-              <tr key={i} className="border-b border-line"><td className="py-1.5 font-sans">{x.player}</td>{SURFACES.map(s => <td key={s.key} className={`text-right ${s.key === surface ? 'font-semibold' : 'text-muted'}`}>{r1(combinedElo(x, s.key, wO, wS))}</td>)}</tr>
+              <tr key={i} className="border-b border-line"><td className="py-1.5 font-sans">{x.player}</td>{SURFACES.map(s => <td key={s.key} className={`text-right ${s.key === surface ? 'font-semibold' : 'text-muted'}`}>{r1(combinedElo(x, s.key, weights))}</td>)}</tr>
             ))}
             {pa && pb && (
-              <tr><td className="py-1.5 font-sans text-muted">Écart A − B</td>{SURFACES.map(s => { const x = combinedElo(pa, s.key, wO, wS), y = combinedElo(pb, s.key, wO, wS); return <td key={s.key} className={`text-right ${s.key === surface ? 'font-semibold' : 'text-muted'}`}>{x != null && y != null ? `${x - y > 0 ? '+' : x - y < 0 ? '−' : ''}${Math.abs(x - y).toFixed(1)}` : '—'}</td> })}</tr>
+              <tr><td className="py-1.5 font-sans text-muted">Écart A − B</td>{SURFACES.map(s => { const x = combinedElo(pa, s.key, weights), y = combinedElo(pb, s.key, weights); return <td key={s.key} className={`text-right ${s.key === surface ? 'font-semibold' : 'text-muted'}`}>{x != null && y != null ? `${x - y > 0 ? '+' : x - y < 0 ? '−' : ''}${Math.abs(x - y).toFixed(1)}` : '—'}</td> })}</tr>
             )}
           </tbody>
         </table>
@@ -82,6 +82,38 @@ function Calculator({ players, wO, wS, tour }: { players: TennisElo[]; wO: numbe
           })}
         </div>
       )}
+    </section>
+  )
+}
+
+/** Répartition Elo général / Elo surface pour chaque surface ; enregistrée au relâchement du curseur. */
+function WeightsPanel({ weights }: { weights: SurfaceWeights }) {
+  const [draft, setDraft] = useState<Partial<SurfaceWeights>>({})
+  const col = { dur: 'tennis_w_dur', terre: 'tennis_w_terre', gazon: 'tennis_w_gazon' } as const
+  const save = (k: Surface) => {
+    const v = draft[k]
+    if (v == null) return
+    setDraft(d => ({ ...d, [k]: undefined }))
+    if (Math.abs(v - weights[k]) > 0.0005) updateSettings({ [col[k]]: v })
+  }
+  return (
+    <section className="panel p-4">
+      <h2 className="text-sm font-semibold">Répartition Elo / Elo surface</h2>
+      <p className="mt-0.5 text-xs text-muted">Part de l'Elo général dans l'« Elo + surface », pour chaque surface. Commun à l'ATP et à la WTA.</p>
+      <div className="mt-3 space-y-2.5">
+        {SURFACES.map(s => {
+          const w = draft[s.key] ?? weights[s.key]
+          return (
+            <div key={s.key} className="grid grid-cols-[4rem_1fr_9.5rem] items-center gap-3 text-sm">
+              <span>{s.label}</span>
+              <input type="range" min={0} max={1} step={0.05} value={w} aria-label={`Part de l'Elo général sur ${s.label.toLowerCase()}`}
+                onChange={e => setDraft(d => ({ ...d, [s.key]: parseFloat(e.target.value) }))}
+                onPointerUp={() => save(s.key)} onKeyUp={() => save(s.key)} onBlur={() => save(s.key)} />
+              <span className="text-right font-mono text-xs"><b className="text-ink">{Math.round(w * 100)} %</b> Elo · <b className="text-ink">{Math.round((1 - w) * 100)} %</b> {s.label.toLowerCase()}</span>
+            </div>
+          )
+        })}
+      </div>
     </section>
   )
 }
@@ -137,14 +169,12 @@ export function TennisEloPage({ tour }: { tour: 'ATP' | 'WTA' }) {
   const { settings } = useSettings()
   const [q, setQ] = useState('')
   const [sort, setSort] = useState<'elo' | Surface>('elo')
-  const wO = settings.tennis_elo_weight_overall, wS = settings.tennis_elo_weight_surface
+  const weights: SurfaceWeights = { dur: settings.tennis_w_dur, terre: settings.tennis_w_terre, gazon: settings.tennis_w_gazon }
 
-  const rows = useMemo(() => {
-    const s = q.trim().toLowerCase()
-    const list = s ? players.filter(p => p.player.toLowerCase().includes(s)) : players
-    const key = (p: TennisElo) => sort === 'elo' ? Number(p.elo ?? -1) : (combinedElo(p, sort, wO, wS) ?? -1)
-    return [...list].sort((a, b) => key(b) - key(a))
-  }, [players, q, sort, wO, wS])
+  const s = q.trim().toLowerCase()
+  const list = s ? players.filter(p => p.player.toLowerCase().includes(s)) : players
+  const sortKey = (p: TennisElo) => sort === 'elo' ? Number(p.elo ?? -1) : (combinedElo(p, sort, weights) ?? -1)
+  const rows = [...list].sort((a, b) => sortKey(b) - sortKey(a))
 
   if (loading) return <div className="py-16 text-center text-muted">Chargement…</div>
   const updated = players.reduce((m, p) => (p.updated_at > m ? p.updated_at : m), '')
@@ -153,15 +183,18 @@ export function TennisEloPage({ tour }: { tour: 'ATP' | 'WTA' }) {
   return (
     <main className="space-y-4 px-4 py-4 md:px-6">
       <div className="grid items-start gap-4 xl:grid-cols-[1fr_1fr]">
-        <Calculator players={players} wO={wO} wS={wS} tour={tour} />
-        <PasteUpdate tour={tour} count={players.length} />
+        <Calculator players={players} weights={weights} tour={tour} />
+        <div className="space-y-4">
+          <WeightsPanel weights={weights} />
+          <PasteUpdate tour={tour} count={players.length} />
+        </div>
       </div>
 
       <section className="panel overflow-hidden">
         <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2">
           <span className="text-sm font-semibold">{players.length} joueurs</span>
           {updated && <span className="text-xs text-muted">mis à jour le {updated.slice(0, 10).split('-').reverse().join('/')}</span>}
-          <span className="text-xs text-muted">· Elo + surface = {wO} × Elo + {wS} × Elo surface</span>
+          <span className="text-xs text-muted">· Elo + surface = part Elo × Elo + part surface × Elo surface (répartition ci-dessus)</span>
           <input value={q} onChange={e => setQ(e.target.value)} placeholder="Rechercher un joueur…" className="field ml-auto w-full px-3 py-1.5 text-xs sm:w-56" />
         </div>
         {players.length === 0 ? (
@@ -180,7 +213,7 @@ export function TennisEloPage({ tour }: { tour: 'ATP' | 'WTA' }) {
                   <tr key={p.id} className="border-b border-line hover:bg-stripe">
                     <td className="px-4 py-1.5 text-faint">{i + 1}</td><td className="font-sans">{p.player}</td>
                     <td className="text-right font-semibold">{r1(p.elo)}</td><td className="text-right text-muted">{r1(p.helo)}</td><td className="text-right text-muted">{r1(p.celo)}</td><td className="text-right text-muted">{r1(p.gelo)}</td>
-                    {SURFACES.map(s => <td key={s.key} className={`text-right last:pr-4 ${sort === s.key ? 'font-semibold' : ''}`}>{r1(combinedElo(p, s.key, wO, wS))}</td>)}
+                    {SURFACES.map(s => <td key={s.key} className={`text-right last:pr-4 ${sort === s.key ? 'font-semibold' : ''}`}>{r1(combinedElo(p, s.key, weights))}</td>)}
                   </tr>
                 ))}
               </tbody>

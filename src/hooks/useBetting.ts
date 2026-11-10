@@ -121,7 +121,7 @@ export function useComptaLegacy() {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   default_share_squawo: 50, bankroll: 5000, stake_exponent: -0.7, reset_date_commun: null, reset_date_kelicful: null,
-  tennis_elo_weight_overall: 0.4, tennis_elo_weight_surface: 0.6, series_concentration: 40, sports: DEFAULT_SPORTS,
+  tennis_elo_weight_overall: 0.4, tennis_elo_weight_surface: 0.6, series_concentration: 40, tennis_w_dur: 0.4, tennis_w_terre: 0.4, tennis_w_gazon: 0.4, sports: DEFAULT_SPORTS,
   compta_legacy_balance: 1584.48,
 }
 

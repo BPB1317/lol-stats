@@ -78,6 +78,9 @@ export interface AppSettings {
   tennis_elo_weight_overall: number
   tennis_elo_weight_surface: number
   series_concentration: number
+  tennis_w_dur: number      // part de l'Elo général sur dur (Elo surface = 1 − part)
+  tennis_w_terre: number
+  tennis_w_gazon: number
   sports: string[]
   compta_legacy_balance: number
 }

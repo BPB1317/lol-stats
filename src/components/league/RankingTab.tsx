@@ -86,7 +86,7 @@ export function RankingTab({ league }: RankingTabProps) {
         </div>
         <RankingTable ratings={ratings} />
       </div>
-      <EloCalculator ratings={ratings} />
+      <EloCalculator ratings={ratings} leagueName={league.name} />
     </div>
   )
 }

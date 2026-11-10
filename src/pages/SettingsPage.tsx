@@ -118,9 +118,9 @@ export function SettingsPage({ bets }: { bets: Bet[] }) {
 
       <Section title="Modèles" sub="Paramètres des calculateurs.">
         <NumField label="Concentration s (BO3 / BO5)" value={s.series_concentration} min={0.1} onSave={v => set({ series_concentration: v })} />
-        <NumField label="Elo tennis : poids Elo général" value={s.tennis_elo_weight_overall} min={0} max={1} onSave={v => set({ tennis_elo_weight_overall: v })} />
-        <NumField label="Elo tennis : poids Elo surface" value={s.tennis_elo_weight_surface} min={0} max={1} onSave={v => set({ tennis_elo_weight_surface: v })}
-          hint={Math.abs(s.tennis_elo_weight_overall + s.tennis_elo_weight_surface - 1) > 0.001 ? <span className="text-warn">la somme des poids ne fait pas 1</span> : undefined} />
+        <NumField label="Elo tennis dur : part Elo général" value={s.tennis_w_dur} min={0} max={1} hint={`surface : ${Math.round((1 - s.tennis_w_dur) * 100)} %`} onSave={v => set({ tennis_w_dur: v })} />
+        <NumField label="Elo tennis terre : part Elo général" value={s.tennis_w_terre} min={0} max={1} hint={`surface : ${Math.round((1 - s.tennis_w_terre) * 100)} %`} onSave={v => set({ tennis_w_terre: v })} />
+        <NumField label="Elo tennis gazon : part Elo général" value={s.tennis_w_gazon} min={0} max={1} hint={`surface : ${Math.round((1 - s.tennis_w_gazon) * 100)} %`} onSave={v => set({ tennis_w_gazon: v })} />
       </Section>
 
       <Section title="Compta entre nous" sub="Solde de départ repris de l'onglet « Compta Kévin ».">

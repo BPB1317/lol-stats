@@ -1,4 +1,6 @@
 import { useState, Fragment } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { useSettings } from '@/hooks/useBetting'
 import { seriesProbs, type SeriesProbs } from '@/lib/seriesOdds'
 
 // Marchés affichés comme sur les books : chaque ligne = un marché, A à gauche, B à droite (somme = 100 %)
@@ -24,11 +26,15 @@ const SERIES_BLOCKS: { title: string; rows: { label: string; a: Side; b: Side }[
   },
 ]
 
-function OddsCell({ p, hdp }: { p: number; hdp?: string }) {
+// Une cote cliquable ouvre le formulaire de pari prérempli (« Prendre ce pari »)
+function OddsCell({ p, hdp, href }: { p: number; hdp?: string; href?: string }) {
   const isFav = p >= 0.5
+  const Tag = href ? Link : 'div'
   return (
-    <div
-      className="rounded-lg px-3 py-2 flex items-center justify-between gap-2"
+    <Tag
+      to={href ?? ''}
+      title={href ? 'Prendre ce pari' : undefined}
+      className={`rounded-lg px-3 py-2 flex items-center justify-between gap-2 ${href ? 'hover:brightness-125' : ''}`}
       style={{
         background: isFav ? 'color-mix(in srgb, var(--color-win) 12%, transparent)' : 'var(--color-line)',
         border: `1px solid ${isFav ? 'color-mix(in srgb, var(--color-win) 35%, transparent)' : 'var(--color-line)'}`,
@@ -43,7 +49,7 @@ function OddsCell({ p, hdp }: { p: number; hdp?: string }) {
           {(p * 100).toFixed(1)}%
         </div>
       </div>
-    </div>
+    </Tag>
   )
 }
 
@@ -55,6 +61,7 @@ interface CalcRating {
 interface EloCalculatorProps {
   ratings: CalcRating[]
   defaultMode?: 'teams' | 'manual'
+  leagueName?: string             // pour préremplir le pari pris depuis le calculateur
 }
 
 // P(team1 wins) = 1 / (1 + 10^(-delta/400))  — formule ELO standard (inverse du log-odds)
@@ -62,12 +69,15 @@ function eloWinProb(delta: number): number {
   return 1 / (1 + Math.pow(10, -delta / 400))
 }
 
-export function EloCalculator({ ratings, defaultMode = 'teams' }: EloCalculatorProps) {
+export function EloCalculator({ ratings, defaultMode = 'teams', leagueName }: EloCalculatorProps) {
+  const { settings } = useSettings()
+  const { pathname } = useLocation()
   const [team1Id, setTeam1Id] = useState('')
   const [team2Id, setTeam2Id] = useState('')
   const [manualDelta, setManualDelta] = useState('')
   const [mode, setMode] = useState<'teams' | 'manual'>(defaultMode)
-  const [sInput, setSInput] = useState('40')
+  const [sEdit, setSInput] = useState<string | null>(null)
+  const sInput = sEdit ?? String(settings.series_concentration) // valeur des Réglages tant qu'on ne la change pas
   const s = parseFloat(sInput)
 
   const sorted = [...ratings].sort((a, b) => b.output - a.output)
@@ -92,6 +102,15 @@ export function EloCalculator({ ratings, defaultMode = 'teams' }: EloCalculatorP
       label2: mode === 'teams' && team2 ? team2.team.name : 'Équipe B',
     }
   })()
+
+  const takeHref = (teamName: string, hdp: string | undefined, odds: number) => {
+    if (mode !== 'teams' || !team1 || !team2) return undefined
+    const q = new URLSearchParams({
+      pari: 'nouveau', game: `${team1.team.name} vs ${team2.team.name}`, selection: hdp ? `${teamName} ${hdp.replace('−', '-')}` : teamName,
+      odds: odds.toFixed(2), sport: 'E-sport', ...(leagueName ? { league: leagueName } : {}),
+    })
+    return `${pathname}?${q}`
+  }
 
   const series = result && s > 0 ? { a: seriesProbs(result.p1, s), b: seriesProbs(result.p2, s) } : null
 
@@ -202,6 +221,9 @@ export function EloCalculator({ ratings, defaultMode = 'teams' }: EloCalculatorP
                       <div className="text-xs" style={{ color: 'var(--color-muted)' }}>Cote décimale</div>
                     </div>
                   </div>
+                  {takeHref(side.label, undefined, side.odds) && (
+                    <Link to={takeHref(side.label, undefined, side.odds)!} className="text-xs text-muted underline underline-offset-2 hover:text-ink">Prendre ce pari</Link>
+                  )}
                 </div>
               )
             })}
@@ -239,8 +261,8 @@ export function EloCalculator({ ratings, defaultMode = 'teams' }: EloCalculatorP
                       {block.rows.map((row, i) => (
                         <Fragment key={i}>
                           <div className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{row.label}</div>
-                          <OddsCell p={series.a[row.a.key]} hdp={row.a.hdp} />
-                          <OddsCell p={series.b[row.b.key]} hdp={row.b.hdp} />
+                          <OddsCell p={series.a[row.a.key]} hdp={row.a.hdp} href={takeHref(result.label1, row.a.hdp, 1 / series.a[row.a.key])} />
+                          <OddsCell p={series.b[row.b.key]} hdp={row.b.hdp} href={takeHref(result.label2, row.b.hdp, 1 / series.b[row.b.key])} />
                         </Fragment>
                       ))}
                     </div>

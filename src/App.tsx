@@ -7,13 +7,13 @@ import { LoginForm } from '@/components/auth/LoginForm'
 import { AppShell } from '@/components/layout/AppShell'
 import { useLeagues } from '@/hooks/useLeagues'
 import { ModelsPage } from '@/pages/ModelsPage'
-import { EloCalculator } from '@/components/league/EloCalculator'
 import { JournalPage } from '@/pages/JournalPage'
 import { VuPasPrisPage } from '@/pages/VuPasPrisPage'
 import { BilanPage } from '@/pages/BilanPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { PartagePage } from '@/pages/PartagePage'
 import { TennisEloPage } from '@/pages/TennisEloPage'
+import { CalculatorsPage } from '@/pages/CalculatorsPage'
 import { BetFormHost } from '@/components/bets/BetFormHost'
 import { useBets, useProfile } from '@/hooks/useBetting'
 import { SessionContext } from '@/lib/session'
@@ -48,7 +48,7 @@ function AuthenticatedApp({ session }: { session: Session }) {
     <AppShell leagues={leagues} email={person ?? session.user.email} title={title}>
       <Routes>
         <Route path="/" element={<Navigate to="/modeles" replace />} />
-        <Route path="/modeles/calculateurs" element={<main className="px-4 py-4 md:px-6"><EloCalculator ratings={[]} defaultMode="manual" /></main>} />
+        <Route path="/modeles/calculateurs" element={<CalculatorsPage />} />
         <Route path="/modeles" element={<ModelsPage leagues={leagues} loading={loading} />} />
         <Route path="/modeles/:leagueId/:tab?" element={<ModelsPage leagues={leagues} loading={loading} />} />
         <Route path="/paris/journal" element={<JournalPage bets={bets} loading={betsLoading} />} />

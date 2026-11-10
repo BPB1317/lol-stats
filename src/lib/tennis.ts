@@ -51,11 +51,15 @@ export function parseEloPaste(text: string): { rows: ParsedElo[]; skipped: numbe
   return { rows: unique, skipped: skipped + rows.length - unique.length, headerFound: headerIdx >= 0 }
 }
 
-/** « Elo + surface » = poids général × Elo + poids surface × Elo surface (null si l'Elo surface manque). */
-export function combinedElo(p: Pick<TennisElo, 'elo' | 'helo' | 'celo' | 'gelo'>, surface: Surface, wOverall: number, wSurface: number): number | null {
+/** Part de l'Elo général pour chaque surface (la part de l'Elo surface est 1 − cette valeur). */
+export type SurfaceWeights = Record<Surface, number>
+
+/** « Elo + surface » = w × Elo + (1 − w) × Elo surface, w propre à la surface (null si l'Elo surface manque). */
+export function combinedElo(p: Pick<TennisElo, 'elo' | 'helo' | 'celo' | 'gelo'>, surface: Surface, weights: SurfaceWeights): number | null {
   const s = p[SURFACES.find(x => x.key === surface)!.col]
   if (p.elo == null || s == null) return null
-  return wOverall * Number(p.elo) + wSurface * Number(s)
+  const w = weights[surface]
+  return w * Number(p.elo) + (1 - w) * Number(s)
 }
 
 /** Probabilité que A batte B : 1 / (1 + 10^((Elo_B − Elo_A)/400)). */

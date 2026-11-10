@@ -28,9 +28,14 @@ describe('collage Tennis Abstract', () => {
 })
 
 describe('Elo combinés et probabilité', () => {
-  it('0,4 × Elo + 0,6 × Elo surface', () => {
-    expect(combinedElo({ elo: 2000, helo: 2100, celo: null, gelo: 1900 }, 'dur', 0.4, 0.6)).toBeCloseTo(2060)
-    expect(combinedElo({ elo: 2000, helo: 2100, celo: null, gelo: 1900 }, 'terre', 0.4, 0.6)).toBeNull()
+  const w = { dur: 0.4, terre: 0.4, gazon: 0.7 }
+  it('w × Elo + (1 − w) × Elo surface, avec un poids propre à chaque surface', () => {
+    expect(combinedElo({ elo: 2000, helo: 2100, celo: null, gelo: 1900 }, 'dur', w)).toBeCloseTo(2060)
+    expect(combinedElo({ elo: 2000, helo: 2100, celo: null, gelo: 1900 }, 'gazon', w)).toBeCloseTo(1970)
+    expect(combinedElo({ elo: 2000, helo: 2100, celo: null, gelo: 1900 }, 'terre', w)).toBeNull()
+  })
+  it('Machac sur dur : 0,4 × 1789 + 0,6 × 1745,6 = 1762,96 (comme l’Excel)', () => {
+    expect(combinedElo({ elo: 1789, helo: 1745.6, celo: 1744.3, gelo: 1667.4 }, 'dur', w)).toBeCloseTo(1762.96, 2)
   })
   it('1 / (1 + 10^((B − A)/400))', () => {
     expect(eloProb(1600, 1600)).toBeCloseTo(0.5)

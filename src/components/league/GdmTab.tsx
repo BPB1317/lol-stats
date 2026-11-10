@@ -358,6 +358,7 @@ export function GdmTab({ league }: Props) {
 
       {/* Calculateur de cotes GDM */}
       <EloCalculator
+        leagueName={league.name}
         ratings={ratings.map(r => ({ team: r.team, output: r.output ?? r.input }))}
       />
 
