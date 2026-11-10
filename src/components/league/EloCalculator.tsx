@@ -1,4 +1,4 @@
-import { useState, useMemo, Fragment } from 'react'
+import { useState, Fragment } from 'react'
 import { seriesProbs, type SeriesProbs } from '@/lib/seriesOdds'
 
 // Marchés affichés comme sur les books : chaque ligne = un marché, A à gauche, B à droite (somme = 100 %)
@@ -30,16 +30,16 @@ function OddsCell({ p, hdp }: { p: number; hdp?: string }) {
     <div
       className="rounded-lg px-3 py-2 flex items-center justify-between gap-2"
       style={{
-        background: isFav ? 'hsl(142 70% 45% / 0.12)' : 'hsl(216 34% 16%)',
-        border: `1px solid ${isFav ? 'hsl(142 70% 45% / 0.35)' : 'hsl(216 34% 22%)'}`,
+        background: isFav ? 'color-mix(in srgb, var(--color-win) 12%, transparent)' : 'var(--color-line)',
+        border: `1px solid ${isFav ? 'color-mix(in srgb, var(--color-win) 35%, transparent)' : 'var(--color-line)'}`,
       }}
     >
-      <span className="text-sm font-semibold font-mono" style={{ color: 'hsl(217 91% 75%)' }}>{hdp ?? ''}</span>
+      <span className="text-sm font-semibold font-mono" style={{ color: 'var(--color-muted)' }}>{hdp ?? ''}</span>
       <div className="text-right">
-        <div className="text-xl font-bold font-mono leading-tight" style={{ color: isFav ? '#4ade80' : 'white' }}>
+        <div className="text-xl font-bold font-mono leading-tight" style={{ color: isFav ? 'var(--color-win)' : 'var(--color-ink)' }}>
           {(1 / p).toFixed(2)}
         </div>
-        <div className="text-xs font-mono" style={{ color: 'hsl(215 20% 60%)' }}>
+        <div className="text-xs font-mono" style={{ color: 'var(--color-muted)' }}>
           {(p * 100).toFixed(1)}%
         </div>
       </div>
@@ -54,6 +54,7 @@ interface CalcRating {
 
 interface EloCalculatorProps {
   ratings: CalcRating[]
+  defaultMode?: 'teams' | 'manual'
 }
 
 // P(team1 wins) = 1 / (1 + 10^(-delta/400))  — formule ELO standard (inverse du log-odds)
@@ -61,11 +62,11 @@ function eloWinProb(delta: number): number {
   return 1 / (1 + Math.pow(10, -delta / 400))
 }
 
-export function EloCalculator({ ratings }: EloCalculatorProps) {
+export function EloCalculator({ ratings, defaultMode = 'teams' }: EloCalculatorProps) {
   const [team1Id, setTeam1Id] = useState('')
   const [team2Id, setTeam2Id] = useState('')
   const [manualDelta, setManualDelta] = useState('')
-  const [mode, setMode] = useState<'teams' | 'manual'>('teams')
+  const [mode, setMode] = useState<'teams' | 'manual'>(defaultMode)
   const [sInput, setSInput] = useState('40')
   const s = parseFloat(sInput)
 
@@ -74,17 +75,13 @@ export function EloCalculator({ ratings }: EloCalculatorProps) {
   const team1 = sorted.find(r => r.team.id === team1Id)
   const team2 = sorted.find(r => r.team.id === team2Id)
 
-  const delta = useMemo(() => {
-    if (mode === 'manual') {
-      const v = parseFloat(manualDelta)
-      return isNaN(v) ? null : v
-    }
-    if (team1 && team2) return team1.output - team2.output
-    return null
-  }, [mode, manualDelta, team1, team2])
+  // Calculs instantanés : pas de mémoïsation nécessaire
+  const manual = parseFloat(manualDelta)
+  const delta = mode === 'manual'
+    ? (isNaN(manual) ? null : manual)
+    : (team1 && team2 ? team1.output - team2.output : null)
 
-  const result = useMemo(() => {
-    if (delta === null) return null
+  const result = delta === null ? null : (() => {
     const p1 = eloWinProb(delta)
     const p2 = 1 - p1
     return {
@@ -94,26 +91,23 @@ export function EloCalculator({ ratings }: EloCalculatorProps) {
       label1: mode === 'teams' && team1 ? team1.team.name : 'Équipe A',
       label2: mode === 'teams' && team2 ? team2.team.name : 'Équipe B',
     }
-  }, [delta, mode, team1, team2])
+  })()
 
-  const series = useMemo(() => {
-    if (!result || !(s > 0)) return null
-    return { a: seriesProbs(result.p1, s), b: seriesProbs(result.p2, s) }
-  }, [result, s])
+  const series = result && s > 0 ? { a: seriesProbs(result.p1, s), b: seriesProbs(result.p2, s) } : null
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: 'hsl(222 47% 14%)', border: '1px solid hsl(216 34% 22%)' }}>
-      <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: 'hsl(216 34% 22%)' }}>
-        <h2 className="text-sm font-semibold text-white">Calculateur de cotes</h2>
-        <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid hsl(216 34% 22%)' }}>
+    <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-line)' }}>
+      <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: 'var(--color-line)' }}>
+        <h2 className="text-sm font-semibold text-ink">Calculateur de cotes</h2>
+        <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-line)' }}>
           {(['teams', 'manual'] as const).map(m => (
             <button
               key={m}
               onClick={() => setMode(m)}
               className="px-3 py-1 text-xs transition-colors"
               style={mode === m
-                ? { background: 'hsl(216 34% 22%)', color: 'white' }
-                : { background: 'transparent', color: 'hsl(215 20% 65%)' }
+                ? { background: 'var(--color-line)', color: 'var(--color-ink)' }
+                : { background: 'transparent', color: 'var(--color-muted)' }
               }
             >
               {m === 'teams' ? 'Équipes' : 'Manuel'}
@@ -129,8 +123,8 @@ export function EloCalculator({ ratings }: EloCalculatorProps) {
             <select
               value={team1Id}
               onChange={e => setTeam1Id(e.target.value)}
-              className="flex-1 rounded-lg px-2 py-2 text-sm text-white outline-none"
-              style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)' }}
+              className="flex-1 rounded-lg px-2 py-2 text-sm text-ink outline-none"
+              style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
             >
               <option value="">Équipe 1…</option>
               {sorted.map(r => (
@@ -139,12 +133,12 @@ export function EloCalculator({ ratings }: EloCalculatorProps) {
                 </option>
               ))}
             </select>
-            <span className="text-sm font-bold" style={{ color: 'hsl(215 20% 65%)' }}>vs</span>
+            <span className="text-sm font-bold" style={{ color: 'var(--color-muted)' }}>vs</span>
             <select
               value={team2Id}
               onChange={e => setTeam2Id(e.target.value)}
-              className="flex-1 rounded-lg px-2 py-2 text-sm text-white outline-none"
-              style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)' }}
+              className="flex-1 rounded-lg px-2 py-2 text-sm text-ink outline-none"
+              style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
             >
               <option value="">Équipe 2…</option>
               {sorted.map(r => (
@@ -154,14 +148,14 @@ export function EloCalculator({ ratings }: EloCalculatorProps) {
               ))}
             </select>
             {delta !== null && (
-              <span className="text-xs font-mono whitespace-nowrap" style={{ color: 'hsl(215 20% 65%)' }}>
+              <span className="text-xs font-mono whitespace-nowrap" style={{ color: 'var(--color-muted)' }}>
                 Δ = {delta > 0 ? '+' : ''}{Math.round(delta)}
               </span>
             )}
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <label className="text-xs font-medium whitespace-nowrap" style={{ color: 'hsl(215 20% 65%)' }}>
+            <label className="text-xs font-medium whitespace-nowrap" style={{ color: 'var(--color-muted)' }}>
               Δ ELO (A − B)
             </label>
             <input
@@ -169,10 +163,10 @@ export function EloCalculator({ ratings }: EloCalculatorProps) {
               value={manualDelta}
               onChange={e => setManualDelta(e.target.value)}
               placeholder="ex: 280"
-              className="w-32 rounded-lg px-2 py-2 text-sm text-white outline-none text-center font-mono"
-              style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)' }}
+              className="w-32 rounded-lg px-2 py-2 text-sm text-ink outline-none text-center font-mono"
+              style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
             />
-            <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+            <span className="text-xs" style={{ color: 'var(--color-muted)' }}>
               (positif = Équipe A favorite)
             </span>
           </div>
@@ -186,26 +180,26 @@ export function EloCalculator({ ratings }: EloCalculatorProps) {
               { label: result.label2, p: result.p2, odds: result.odds2 },
             ].map((side, i) => {
               const isFav = side.p >= 0.5
-              const pColor = isFav ? '#4ade80' : '#f87171'
+              const pColor = isFav ? 'var(--color-win)' : 'var(--color-loss)'
               return (
                 <div
                   key={i}
                   className="rounded-lg p-3 space-y-2"
-                  style={{ background: 'hsl(222 47% 11%)', border: '1px solid hsl(216 34% 22%)' }}
+                  style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
                 >
-                  <div className="text-xs font-medium text-white truncate">{side.label}</div>
+                  <div className="text-xs font-medium text-ink truncate">{side.label}</div>
                   <div className="flex items-end justify-between">
                     <div>
                       <div className="text-2xl font-bold font-mono" style={{ color: pColor }}>
                         {(side.p * 100).toFixed(1)}%
                       </div>
-                      <div className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>Proba victoire</div>
+                      <div className="text-xs" style={{ color: 'var(--color-muted)' }}>Proba victoire</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xl font-bold font-mono text-white">
+                      <div className="text-xl font-bold font-mono text-ink">
                         {side.odds.toFixed(2)}
                       </div>
-                      <div className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>Cote décimale</div>
+                      <div className="text-xs" style={{ color: 'var(--color-muted)' }}>Cote décimale</div>
                     </div>
                   </div>
                 </div>
@@ -218,15 +212,15 @@ export function EloCalculator({ ratings }: EloCalculatorProps) {
         {result && (
           <div className="space-y-3 pt-1">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-white">Séries & handicaps</h3>
-              <label className="flex items-center gap-2 text-sm" style={{ color: 'hsl(215 20% 65%)' }}>
+              <h3 className="text-sm font-semibold text-ink">Séries & handicaps</h3>
+              <label className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-muted)' }}>
                 s =
                 <input
                   type="number"
                   value={sInput}
                   onChange={e => setSInput(e.target.value)}
-                  className="w-20 rounded-lg px-2 py-1.5 text-sm text-white outline-none text-center font-mono"
-                  style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)' }}
+                  className="w-20 rounded-lg px-2 py-1.5 text-sm text-ink outline-none text-center font-mono"
+                  style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
                 />
               </label>
             </div>
@@ -236,15 +230,15 @@ export function EloCalculator({ ratings }: EloCalculatorProps) {
                   <div
                     key={block.title}
                     className="rounded-lg p-3"
-                    style={{ background: 'hsl(222 47% 11%)', border: '1px solid hsl(216 34% 22%)' }}
+                    style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
                   >
                     <div className="grid grid-cols-[4.5rem_1fr_1fr] gap-2 items-center">
-                      <div className="text-base font-bold" style={{ color: 'hsl(217 91% 70%)' }}>{block.title}</div>
-                      <div className="text-sm font-semibold text-white text-center truncate">{result.label1}</div>
-                      <div className="text-sm font-semibold text-white text-center truncate">{result.label2}</div>
+                      <div className="text-base font-bold" style={{ color: 'var(--color-ink)' }}>{block.title}</div>
+                      <div className="text-sm font-semibold text-ink text-center truncate">{result.label1}</div>
+                      <div className="text-sm font-semibold text-ink text-center truncate">{result.label2}</div>
                       {block.rows.map((row, i) => (
                         <Fragment key={i}>
-                          <div className="text-sm font-semibold" style={{ color: 'hsl(215 20% 80%)' }}>{row.label}</div>
+                          <div className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{row.label}</div>
                           <OddsCell p={series.a[row.a.key]} hdp={row.a.hdp} />
                           <OddsCell p={series.b[row.b.key]} hdp={row.b.hdp} />
                         </Fragment>
@@ -254,13 +248,13 @@ export function EloCalculator({ ratings }: EloCalculatorProps) {
                 ))}
               </div>
             ) : (
-              <div className="text-sm" style={{ color: 'hsl(215 20% 65%)' }}>s doit être &gt; 0.</div>
+              <div className="text-sm" style={{ color: 'var(--color-muted)' }}>s doit être &gt; 0.</div>
             )}
           </div>
         )}
 
         {!result && (
-          <div className="text-center py-2 text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+          <div className="text-center py-2 text-xs" style={{ color: 'var(--color-muted)' }}>
             {mode === 'teams'
               ? 'Sélectionnez deux équipes pour calculer les cotes.'
               : 'Saisissez un delta ELO pour calculer les cotes.'}

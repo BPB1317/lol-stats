@@ -1,100 +1,97 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
+import { HashRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import type { League } from '@/types'
 import { LoginForm } from '@/components/auth/LoginForm'
-import { Layout } from '@/components/layout/Layout'
-import { LeagueTabs } from '@/components/layout/LeagueTabs'
+import { AppShell } from '@/components/layout/AppShell'
 import { useLeagues } from '@/hooks/useLeagues'
-import { RankingTab } from '@/components/league/RankingTab'
-import { MatchesTab } from '@/components/league/MatchesTab'
-import { TeamsTab } from '@/components/league/TeamsTab'
-import { GdmTab } from '@/components/league/GdmTab'
+import { ModelsPage } from '@/pages/ModelsPage'
+import { ComingSoon } from '@/pages/ComingSoon'
+import { EloCalculator } from '@/components/league/EloCalculator'
+import { JournalPage } from '@/pages/JournalPage'
+import { VuPasPrisPage } from '@/pages/VuPasPrisPage'
+import { BilanPage } from '@/pages/BilanPage'
+import { SettingsPage } from '@/pages/SettingsPage'
+import { PartagePage } from '@/pages/PartagePage'
+import { BetFormHost } from '@/components/bets/BetFormHost'
+import { useBets, useProfile } from '@/hooks/useBetting'
+import { SessionContext } from '@/lib/session'
 
-type SubTab = 'ranking' | 'gdm' | 'matches' | 'teams'
+// Drafts de DA (données fictives) : chargés à la demande, hors du bundle principal
+const DraftsPage = lazy(() => import('@/drafts/DraftsPage'))
 
-// Composant séparé : monté uniquement après authentification
-// → les hooks Supabase s'exécutent avec une session active, RLS OK
+const TITLES: Record<string, string> = {
+  '/paris/journal': 'Journal', '/paris/bilan': 'Bilan commun', '/paris/partage': 'Partage & compta', '/paris/vu-pas-pris': 'Vu pas pris',
+  '/kelicful/bilan': 'Bilan Kelicful', '/kelicful/atp': 'Elo Tennis ATP', '/kelicful/wta': 'Elo Tennis WTA',
+  '/reglages': 'Réglages', '/modeles/calculateurs': 'Calculateurs',
+}
+
+function ModelsTitle({ leagues }: { leagues: League[] }) {
+  const { leagueId } = useParams()
+  const l = leagues.find(x => x.id === leagueId)
+  return l ? <>Modèles <span className="text-faint">·</span> {l.name}</> : <>Modèles</>
+}
+
+// Composant monté uniquement après authentification → les hooks Supabase s'exécutent avec une session active (RLS)
 function AuthenticatedApp({ session }: { session: Session }) {
-  const [activeLeagueId, setActiveLeagueId] = useState<string>('')
-  const [subTab, setSubTab] = useState<SubTab>('ranking')
-  const { leagues, loading: leaguesLoading } = useLeagues()
-
-  useEffect(() => {
-    if (!activeLeagueId && leagues.length > 0) {
-      setActiveLeagueId(leagues[0].id)
-    }
-  }, [leagues, activeLeagueId])
-
-  const activeLeague = leagues.find(l => l.id === activeLeagueId)
+  const { leagues, loading } = useLeagues()
+  const { bets, loading: betsLoading } = useBets()
+  const person = useProfile(session.user.id)
+  const { pathname } = useLocation()
+  const title = TITLES[pathname] ?? (pathname.startsWith('/modeles')
+    ? <Routes><Route path="/modeles/:leagueId/*" element={<ModelsTitle leagues={leagues} />} /><Route path="*" element={<>Modèles</>} /></Routes>
+    : null)
 
   return (
-    <Layout userEmail={session.user.email}>
-      <LeagueTabs
-        leagues={leagues}
-        activeId={activeLeagueId}
-        onSelect={id => { setActiveLeagueId(id); setSubTab('ranking') }}
-      />
-
-      {leaguesLoading ? (
-        <div className="py-16 text-center" style={{ color: 'hsl(215 20% 65%)' }}>Chargement…</div>
-      ) : !activeLeague ? (
-        <div className="py-16 text-center" style={{ color: 'hsl(215 20% 65%)' }}>
-          Aucune ligue. Cliquez sur "+" pour en créer une.
-        </div>
-      ) : (
-        <div className="flex flex-col flex-1 p-4 gap-4">
-          <div className="flex gap-1">
-            {(['ranking', 'gdm', 'matches', 'teams'] as SubTab[]).map(tab => {
-              const labels: Record<SubTab, string> = {
-                ranking: 'Classement',
-                gdm: `${activeLeague.short_name} GDM`,
-                matches: 'Matchs',
-                teams: 'Équipes',
-              }
-              return (
-                <button
-                  key={tab}
-                  onClick={() => setSubTab(tab)}
-                  className="px-4 py-1.5 text-sm rounded-lg transition-colors"
-                  style={subTab === tab
-                    ? { background: 'hsl(216 34% 22%)', color: 'white', fontWeight: 600 }
-                    : { background: 'transparent', color: 'hsl(215 20% 65%)' }
-                  }
-                >
-                  {labels[tab]}
-                </button>
-              )
-            })}
-          </div>
-
-          {subTab === 'ranking' && <RankingTab league={activeLeague} />}
-          {subTab === 'gdm' && <GdmTab league={activeLeague} />}
-          {subTab === 'matches' && <MatchesTab league={activeLeague} />}
-          {subTab === 'teams' && <TeamsTab league={activeLeague} />}
-        </div>
-      )}
-    </Layout>
+    <SessionContext.Provider value={{ userId: session.user.id, email: session.user.email, person }}>
+    <AppShell leagues={leagues} email={person ?? session.user.email} title={title}>
+      <Routes>
+        <Route path="/" element={<Navigate to="/modeles" replace />} />
+        <Route path="/modeles/calculateurs" element={<main className="px-4 py-4 md:px-6"><EloCalculator ratings={[]} defaultMode="manual" /></main>} />
+        <Route path="/modeles" element={<ModelsPage leagues={leagues} loading={loading} />} />
+        <Route path="/modeles/:leagueId/:tab?" element={<ModelsPage leagues={leagues} loading={loading} />} />
+        <Route path="/paris/journal" element={<JournalPage bets={bets} loading={betsLoading} />} />
+        <Route path="/paris/bilan" element={<BilanPage portfolio="commun" bets={bets} loading={betsLoading} />} />
+        <Route path="/paris/partage" element={<PartagePage bets={bets} loading={betsLoading} />} />
+        <Route path="/paris/vu-pas-pris" element={<VuPasPrisPage bets={bets} loading={betsLoading} />} />
+        <Route path="/kelicful/:tab" element={<ComingSoon what="Espace Kelicful" step="7" />} />
+        <Route path="/reglages" element={<SettingsPage bets={bets} />} />
+        <Route path="*" element={<Navigate to="/modeles" replace />} />
+      </Routes>
+      <BetFormHost bets={bets} leagues={leagues} />
+    </AppShell>
+    </SessionContext.Provider>
   )
 }
 
-function App() {
+function Root() {
   const [session, setSession] = useState<Session | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
+  const { pathname } = useLocation()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
       setAuthChecked(true)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
     return () => subscription.unsubscribe()
   }, [])
 
+  // En local, les drafts s'ouvrent sans connexion (captures) ; en ligne, connexion requise
+  if (pathname.startsWith('/drafts') && (import.meta.env.DEV || session)) {
+    return <Suspense fallback={null}><DraftsPage /></Suspense>
+  }
   if (!authChecked) return null
   if (!session) return <LoginForm />
   return <AuthenticatedApp session={session} />
 }
 
-export default App
+export default function App() {
+  return (
+    <HashRouter>
+      <Root />
+    </HashRouter>
+  )
+}

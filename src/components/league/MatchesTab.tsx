@@ -67,7 +67,7 @@ function InlineNote({
     <div className="flex items-center justify-center gap-3">
       {/* Note T1 — éditable */}
       <div className="flex items-center gap-1">
-        <span className="text-xs" style={{ color: 'hsl(215 20% 50%)' }}>{match.team1?.name?.split(' ')[0]}</span>
+        <span className="text-xs" style={{ color: 'var(--color-muted)' }}>{match.team1?.name?.split(' ')[0]}</span>
         {editing ? (
           <input
             ref={inputRef}
@@ -84,9 +84,9 @@ function InlineNote({
             disabled={saving}
             className="w-14 text-center text-xs px-1 py-0.5 rounded font-mono"
             style={{
-              background: 'hsl(222 47% 11%)',
-              border: '1px solid hsl(217 91% 60%)',
-              color: 'white',
+              background: 'var(--color-bg)',
+              border: '1px solid var(--color-accent)',
+              color: 'var(--color-ink)',
               outline: 'none',
             }}
           />
@@ -96,8 +96,8 @@ function InlineNote({
             title="Cliquer pour saisir la note"
             className="font-mono text-xs px-2 py-0.5 rounded transition-opacity hover:opacity-70"
             style={currentPct !== null
-              ? { background: 'hsl(216 34% 22%)', color: 'hsl(217 91% 60%)' }
-              : { background: 'transparent', color: 'hsl(215 20% 40%)', border: '1px dashed hsl(215 20% 30%)' }
+              ? { background: 'var(--color-line)', color: 'var(--color-ink)' }
+              : { background: 'transparent', color: 'var(--color-faint)', border: '1px dashed var(--color-faint)' }
             }
           >
             {currentPct !== null ? `${currentPct}%` : '—'}
@@ -107,12 +107,12 @@ function InlineNote({
 
       {/* Note T2 — affichage seul */}
       <div className="flex items-center gap-1">
-        <span className="text-xs" style={{ color: 'hsl(215 20% 50%)' }}>{match.team2?.name?.split(' ')[0]}</span>
+        <span className="text-xs" style={{ color: 'var(--color-muted)' }}>{match.team2?.name?.split(' ')[0]}</span>
         <span
           className="font-mono text-xs px-2 py-0.5 rounded"
           style={noteT2 !== null
-            ? { background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }
-            : { color: 'hsl(215 20% 35%)' }
+            ? { background: 'var(--color-line)', color: 'var(--color-muted)' }
+            : { color: 'var(--color-faint)' }
           }
         >
           {noteT2 !== null ? `${noteT2}%` : '—'}
@@ -158,25 +158,25 @@ export function MatchesTab({ league }: MatchesTabProps) {
   })
 
   if (loading) {
-    return <div className="py-16 text-center" style={{ color: 'hsl(215 20% 65%)' }}>Chargement…</div>
+    return <div className="py-16 text-center" style={{ color: 'var(--color-muted)' }}>Chargement…</div>
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-sm font-semibold text-white">Matchs — {league.name}</h2>
+        <h2 className="text-sm font-semibold text-ink">Matchs — {league.name}</h2>
         <div className="flex gap-2">
           <button
             onClick={() => setShowImport(true)}
             className="px-3 py-2 text-sm rounded-lg font-medium"
-            style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 85%)' }}
+            style={{ background: 'var(--color-line)', color: 'var(--color-ink)' }}
           >
             Importer calendrier
           </button>
           <button
             onClick={() => { setEditMatch(undefined); setShowDialog(true) }}
             className="px-3 py-2 text-sm rounded-lg font-medium"
-            style={{ background: 'hsl(217 91% 60%)', color: 'hsl(222 47% 11%)' }}
+            style={{ background: 'var(--color-ink)', color: 'var(--color-bg)' }}
           >
             + Ajouter un match
           </button>
@@ -184,23 +184,23 @@ export function MatchesTab({ league }: MatchesTabProps) {
       </div>
 
       {stagesSorted.length === 0 && (
-        <div className="text-center py-16" style={{ color: 'hsl(215 20% 65%)' }}>
+        <div className="text-center py-16" style={{ color: 'var(--color-muted)' }}>
           Aucun match enregistré.
         </div>
       )}
 
       {stagesSorted.map(stage => (
-        <div key={stage} className="rounded-xl overflow-hidden" style={{ background: 'hsl(222 47% 14%)', border: '1px solid hsl(216 34% 22%)' }}>
+        <div key={stage} className="rounded-xl overflow-hidden" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-line)' }}>
           {stage && (
-            <div className="px-4 py-2 border-b" style={{ borderColor: 'hsl(216 34% 22%)', background: 'hsl(222 47% 16%)' }}>
-              <span className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'hsl(217 91% 60%)' }}>
+            <div className="px-4 py-2 border-b" style={{ borderColor: 'var(--color-line)', background: 'var(--color-raised)' }}>
+              <span className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'var(--color-muted)' }}>
                 {stage}
               </span>
             </div>
           )}
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-xs" style={{ borderColor: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}>
+              <tr className="border-b text-xs" style={{ borderColor: 'var(--color-line)', color: 'var(--color-muted)' }}>
                 <th className="py-2 px-4 text-left">Date</th>
                 <th className="py-2 px-4 text-left">Match</th>
                 <th className="py-2 px-4 text-center">Score</th>
@@ -210,19 +210,19 @@ export function MatchesTab({ league }: MatchesTabProps) {
             </thead>
             <tbody>
               {grouped[stage].map(m => (
-                <tr key={m.id} className="border-b" style={{ borderColor: 'hsl(216 34% 22%)' }}>
-                  <td className="py-2.5 px-4 text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+                <tr key={m.id} className="border-b" style={{ borderColor: 'var(--color-line)' }}>
+                  <td className="py-2.5 px-4 text-xs" style={{ color: 'var(--color-muted)' }}>
                     {format(new Date(m.match_date + 'T00:00:00'), 'dd/MM/yy')}
                   </td>
                   <td className="py-2.5 px-4">
-                    <span className={m.winner_id === m.team1_id ? 'font-bold text-white' : 'text-gray-400'}>{m.team1?.name}</span>
-                    <span className="mx-2" style={{ color: 'hsl(215 20% 65%)' }}>vs</span>
-                    <span className={m.winner_id === m.team2_id ? 'font-bold text-white' : 'text-gray-400'}>{m.team2?.name}</span>
+                    <span className={m.winner_id === m.team1_id ? 'font-bold text-ink' : 'text-muted'}>{m.team1?.name}</span>
+                    <span className="mx-2" style={{ color: 'var(--color-muted)' }}>vs</span>
+                    <span className={m.winner_id === m.team2_id ? 'font-bold text-ink' : 'text-muted'}>{m.team2?.name}</span>
                   </td>
                   <td className="py-2.5 px-4 text-center">
                     {m.score
-                      ? <span className="font-mono text-xs text-white">{m.score}</span>
-                      : <span style={{ color: 'hsl(215 20% 65%)' }}>—</span>
+                      ? <span className="font-mono text-xs text-ink">{m.score}</span>
+                      : <span style={{ color: 'var(--color-muted)' }}>—</span>
                     }
                   </td>
                   <td className="py-1.5 px-4">
@@ -238,7 +238,7 @@ export function MatchesTab({ league }: MatchesTabProps) {
                       <button
                         onClick={() => { setEditMatch(m as Match & { note?: MatchNote }); setShowDialog(true) }}
                         className="text-xs px-2 py-1 rounded hover:opacity-80"
-                        style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}
+                        style={{ background: 'var(--color-line)', color: 'var(--color-muted)' }}
                       >
                         Modifier
                       </button>
@@ -247,14 +247,14 @@ export function MatchesTab({ league }: MatchesTabProps) {
                           <button
                             onClick={async () => { await deleteMatch(m.id); refetchMatches(); refetchNotes(); setConfirmDelete(null) }}
                             className="text-xs px-2 py-1 rounded"
-                            style={{ background: 'hsl(0 72% 51%)', color: 'white' }}
+                            style={{ background: 'var(--color-danger)', color: 'var(--color-ink)' }}
                           >
                             Confirmer
                           </button>
                           <button
                             onClick={() => setConfirmDelete(null)}
                             className="text-xs px-2 py-1 rounded"
-                            style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}
+                            style={{ background: 'var(--color-line)', color: 'var(--color-muted)' }}
                           >
                             Annuler
                           </button>
@@ -263,7 +263,7 @@ export function MatchesTab({ league }: MatchesTabProps) {
                         <button
                           onClick={() => setConfirmDelete(m.id)}
                           className="text-xs px-2 py-1 rounded hover:opacity-80"
-                          style={{ background: 'hsl(216 34% 22%)', color: '#f87171' }}
+                          style={{ background: 'var(--color-line)', color: 'var(--color-loss)' }}
                         >
                           Suppr.
                         </button>

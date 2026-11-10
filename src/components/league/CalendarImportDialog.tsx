@@ -55,7 +55,7 @@ function parseLine(line: string, teamMap: Map<string, string>): ParsedSeries | n
   let team2Name: string
   let score1: number | null = null
   let score2: number | null = null
-  let stage = ''
+  let stage: string
 
   if (scoreIdx !== -1) {
     // Score trouvé → teams détectées relativement au score
@@ -185,14 +185,14 @@ export function CalendarImportDialog({ league, teams, onClose, onDone }: Calenda
 
   if (result) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
-        <div className="rounded-2xl p-6 w-full max-w-sm space-y-4" style={{ background: 'hsl(222 47% 14%)', border: '1px solid hsl(216 34% 22%)' }}>
-          <h2 className="text-base font-semibold text-white">Import terminé</h2>
-          <p className="text-sm" style={{ color: 'hsl(215 20% 65%)' }}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgb(5 8 15 / 0.75)' }}>
+        <div className="rounded-2xl p-6 w-full max-w-sm space-y-4" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-line)' }}>
+          <h2 className="text-base font-semibold text-ink">Import terminé</h2>
+          <p className="text-sm" style={{ color: 'var(--color-muted)' }}>
             {result.ok} match{result.ok > 1 ? 's' : ''} créé{result.ok > 1 ? 's' : ''}
             {result.skipped > 0 ? `, ${result.skipped} erreur${result.skipped > 1 ? 's' : ''}` : ''}.
           </p>
-          <button onClick={onClose} className="w-full py-2 rounded-lg text-sm font-medium" style={{ background: 'hsl(217 91% 60%)', color: 'hsl(222 47% 11%)' }}>
+          <button onClick={onClose} className="w-full py-2 rounded-lg text-sm font-medium" style={{ background: 'var(--color-ink)', color: 'var(--color-bg)' }}>
             Fermer
           </button>
         </div>
@@ -201,15 +201,15 @@ export function CalendarImportDialog({ league, teams, onClose, onDone }: Calenda
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
-      <div className="w-full max-w-2xl rounded-xl overflow-hidden" style={{ background: 'hsl(222 47% 14%)', border: '1px solid hsl(216 34% 22%)' }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'hsl(216 34% 22%)' }}>
-          <h3 className="font-semibold text-white text-sm">Importer un calendrier — {league.name}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-lg leading-none">✕</button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(5 8 15 / 0.75)' }}>
+      <div className="w-full max-w-2xl rounded-xl overflow-hidden" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-line)' }}>
+        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--color-line)' }}>
+          <h3 className="font-semibold text-ink text-sm">Importer un calendrier — {league.name}</h3>
+          <button onClick={onClose} className="text-muted hover:text-ink text-lg leading-none">✕</button>
         </div>
 
         <div className="p-5 space-y-4">
-          <p className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+          <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
             Collez le calendrier (copier-coller depuis le site). La date et les équipes sont obligatoires — le score est optionnel.
           </p>
 
@@ -219,22 +219,22 @@ export function CalendarImportDialog({ league, teams, onClose, onDone }: Calenda
             rows={8}
             spellCheck={false}
             className="w-full rounded-lg px-3 py-2 text-xs font-mono resize-y"
-            style={{ background: 'hsl(222 47% 11%)', border: '1px solid hsl(216 34% 22%)', color: 'hsl(215 20% 85%)', outline: 'none' }}
+            style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)', color: 'var(--color-ink)', outline: 'none' }}
             placeholder="Coller ici…"
           />
 
           {unknownTeams.length > 0 && (
-            <div className="rounded-lg px-3 py-2 text-xs" style={{ background: 'hsl(217 91% 60% / 0.1)', border: '1px solid hsl(217 91% 60% / 0.3)', color: 'hsl(217 91% 75%)' }}>
+            <div className="rounded-lg px-3 py-2 text-xs" style={{ background: 'var(--color-raised)', border: '1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)', color: 'var(--color-accent)' }}>
               Équipes inconnues — seront créées automatiquement : {unknownTeams.join(', ')}
             </div>
           )}
 
           {parsed.length > 0 && (
-            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid hsl(216 34% 22%)' }}>
-              <div className="px-3 py-2 text-xs" style={{ background: 'hsl(222 47% 16%)', color: 'hsl(215 20% 65%)' }}>
+            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-line)' }}>
+              <div className="px-3 py-2 text-xs" style={{ background: 'var(--color-raised)', color: 'var(--color-muted)' }}>
                 {valid.length} série{valid.length > 1 ? 's' : ''} valide{valid.length > 1 ? 's' : ''} — {totalGames} match{totalGames > 1 ? 's' : ''} à créer
                 {parsed.length > valid.length && (
-                  <span className="ml-2" style={{ color: 'hsl(38 92% 70%)' }}>
+                  <span className="ml-2" style={{ color: 'var(--color-warn)' }}>
                     ({parsed.length - valid.length} ignorée{parsed.length - valid.length > 1 ? 's' : ''})
                   </span>
                 )}
@@ -245,18 +245,18 @@ export function CalendarImportDialog({ league, teams, onClose, onDone }: Calenda
                     {parsed.map((p, i) => {
                       const ok = p.team1Id && p.team2Id
                       return (
-                        <tr key={i} className="border-b" style={{ borderColor: 'hsl(216 34% 22%)', opacity: ok ? 1 : 0.45 }}>
-                          <td className="px-3 py-1.5 text-white">
+                        <tr key={i} className="border-b" style={{ borderColor: 'var(--color-line)', opacity: ok ? 1 : 0.45 }}>
+                          <td className="px-3 py-1.5 text-ink">
                             {p.team1Name}
-                            <span className="mx-1.5" style={{ color: 'hsl(215 20% 50%)' }}>vs</span>
+                            <span className="mx-1.5" style={{ color: 'var(--color-muted)' }}>vs</span>
                             {p.team2Name}
                           </td>
-                          <td className="px-3 py-1.5 font-mono" style={{ color: 'hsl(215 20% 65%)' }}>
+                          <td className="px-3 py-1.5 font-mono" style={{ color: 'var(--color-muted)' }}>
                             {p.score1 !== null && p.score2 !== null ? `${p.score1}–${p.score2}` : '—'}
                           </td>
-                          <td className="px-3 py-1.5" style={{ color: 'hsl(215 20% 50%)' }}>{p.stage}</td>
-                          <td className="px-3 py-1.5" style={{ color: 'hsl(215 20% 65%)' }}>{p.date}</td>
-                          <td className="px-3 py-1.5 text-right" style={{ color: ok ? 'hsl(215 20% 65%)' : 'hsl(217 91% 70%)' }}>
+                          <td className="px-3 py-1.5" style={{ color: 'var(--color-muted)' }}>{p.stage}</td>
+                          <td className="px-3 py-1.5" style={{ color: 'var(--color-muted)' }}>{p.date}</td>
+                          <td className="px-3 py-1.5 text-right" style={{ color: ok ? 'var(--color-muted)' : 'var(--color-accent)' }}>
                             {ok ? `${p.games} match${p.games > 1 ? 's' : ''}` : '✚ équipes créées'}
                           </td>
                         </tr>
@@ -269,14 +269,14 @@ export function CalendarImportDialog({ league, teams, onClose, onDone }: Calenda
           )}
 
           <div className="flex justify-end gap-2 pt-1">
-            <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg" style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}>
+            <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg" style={{ background: 'var(--color-line)', color: 'var(--color-muted)' }}>
               Annuler
             </button>
             <button
               onClick={handleImport}
               disabled={importing || parsed.length === 0}
               className="px-4 py-2 text-sm rounded-lg font-medium disabled:opacity-40"
-              style={{ background: 'hsl(217 91% 60%)', color: 'hsl(222 47% 11%)' }}
+              style={{ background: 'var(--color-ink)', color: 'var(--color-bg)' }}
             >
               {importing ? 'Import en cours…' : `Importer ${totalGames || ''} match${totalGames !== 1 ? 's' : ''}`.trim()}
             </button>

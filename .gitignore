@@ -24,3 +24,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Données privées et maquettes (dépôt public)
+data/
+*.xlsx
+design/

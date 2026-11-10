@@ -70,36 +70,36 @@ export function MatchDialog({ league, teams, match, onClose }: MatchDialogProps)
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
-      <div className="w-full max-w-lg rounded-xl overflow-hidden" style={{ background: 'hsl(222 47% 14%)', border: '1px solid hsl(216 34% 22%)' }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'hsl(216 34% 22%)' }}>
-          <h3 className="font-semibold text-white text-sm">{match ? 'Modifier le match' : 'Ajouter un match'}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-lg leading-none">✕</button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(5 8 15 / 0.75)' }}>
+      <div className="w-full max-w-lg rounded-xl overflow-hidden" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-line)' }}>
+        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--color-line)' }}>
+          <h3 className="font-semibold text-ink text-sm">{match ? 'Modifier le match' : 'Ajouter un match'}</h3>
+          <button onClick={onClose} className="text-muted hover:text-ink text-lg leading-none">✕</button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs mb-1" style={{ color: 'hsl(215 20% 65%)' }}>Équipe 1</label>
+              <label className="block text-xs mb-1" style={{ color: 'var(--color-muted)' }}>Équipe 1</label>
               <select
                 value={team1Id}
                 onChange={e => setTeam1Id(e.target.value)}
                 required
-                className="w-full rounded-lg px-2 py-2 text-sm text-white outline-none"
-                style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)' }}
+                className="w-full rounded-lg px-2 py-2 text-sm text-ink outline-none"
+                style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
               >
                 <option value="">Sélectionner…</option>
                 {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs mb-1" style={{ color: 'hsl(215 20% 65%)' }}>Équipe 2</label>
+              <label className="block text-xs mb-1" style={{ color: 'var(--color-muted)' }}>Équipe 2</label>
               <select
                 value={team2Id}
                 onChange={e => setTeam2Id(e.target.value)}
                 required
-                className="w-full rounded-lg px-2 py-2 text-sm text-white outline-none"
-                style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)' }}
+                className="w-full rounded-lg px-2 py-2 text-sm text-ink outline-none"
+                style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
               >
                 <option value="">Sélectionner…</option>
                 {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -109,12 +109,12 @@ export function MatchDialog({ league, teams, match, onClose }: MatchDialogProps)
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs mb-1" style={{ color: 'hsl(215 20% 65%)' }}>Vainqueur</label>
+              <label className="block text-xs mb-1" style={{ color: 'var(--color-muted)' }}>Vainqueur</label>
               <select
                 value={winnerId}
                 onChange={e => setWinnerId(e.target.value)}
-                className="w-full rounded-lg px-2 py-2 text-sm text-white outline-none"
-                style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)' }}
+                className="w-full rounded-lg px-2 py-2 text-sm text-ink outline-none"
+                style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
               >
                 <option value="">—</option>
                 {team1 && <option value={team1.id}>{team1.name}</option>}
@@ -122,23 +122,23 @@ export function MatchDialog({ league, teams, match, onClose }: MatchDialogProps)
               </select>
             </div>
             <div>
-              <label className="block text-xs mb-1" style={{ color: 'hsl(215 20% 65%)' }}>Score</label>
+              <label className="block text-xs mb-1" style={{ color: 'var(--color-muted)' }}>Score</label>
               <input
                 type="text"
                 value={score}
                 onChange={e => handleScoreChange(e.target.value)}
                 placeholder="3-0"
-                className="w-full rounded-lg px-2 py-2 text-sm text-white outline-none"
-                style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)' }}
+                className="w-full rounded-lg px-2 py-2 text-sm text-ink outline-none"
+                style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
               />
             </div>
             <div>
-              <label className="block text-xs mb-1" style={{ color: 'hsl(215 20% 65%)' }}>Stage</label>
+              <label className="block text-xs mb-1" style={{ color: 'var(--color-muted)' }}>Stage</label>
               <select
                 value={stage}
                 onChange={e => setStage(e.target.value)}
-                className="w-full rounded-lg px-2 py-2 text-sm text-white outline-none"
-                style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)' }}
+                className="w-full rounded-lg px-2 py-2 text-sm text-ink outline-none"
+                style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
               >
                 {STAGES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -146,35 +146,35 @@ export function MatchDialog({ league, teams, match, onClose }: MatchDialogProps)
           </div>
 
           <div>
-            <label className="block text-xs mb-1" style={{ color: 'hsl(215 20% 65%)' }}>Date du match</label>
+            <label className="block text-xs mb-1" style={{ color: 'var(--color-muted)' }}>Date du match</label>
             <input
               type="date"
               value={matchDate}
               onChange={e => setMatchDate(e.target.value)}
               required
-              className="w-full rounded-lg px-2 py-2 text-sm text-white outline-none"
-              style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)', colorScheme: 'dark' }}
+              className="w-full rounded-lg px-2 py-2 text-sm text-ink outline-none"
+              style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
             />
           </div>
 
-          <div className="rounded-lg p-3 space-y-3" style={{ background: 'hsl(222 47% 11%)', border: '1px solid hsl(216 34% 22%)' }}>
+          <div className="rounded-lg p-3 space-y-3" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}>
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
                 id="hasNote"
                 checked={hasNote}
                 onChange={e => setHasNote(e.target.checked)}
-                className="accent-blue-500"
+                className="accent-accent"
               />
-              <label htmlFor="hasNote" className="text-xs font-medium text-white">Ajouter une note de performance</label>
+              <label htmlFor="hasNote" className="text-xs font-medium text-ink">Ajouter une note de performance</label>
             </div>
 
             {hasNote && (
               <div className="space-y-3">
                 <div>
-                  <div className="flex justify-between text-xs mb-2" style={{ color: 'hsl(215 20% 65%)' }}>
-                    <span>{team1?.name ?? 'Équipe 1'}: <strong className="text-white">{(noteTeam1 * 100).toFixed(0)}%</strong></span>
-                    <span>{team2?.name ?? 'Équipe 2'}: <strong className="text-white">{(noteTeam2 * 100).toFixed(0)}%</strong></span>
+                  <div className="flex justify-between text-xs mb-2" style={{ color: 'var(--color-muted)' }}>
+                    <span>{team1?.name ?? 'Équipe 1'}: <strong className="text-ink">{(noteTeam1 * 100).toFixed(0)}%</strong></span>
+                    <span>{team2?.name ?? 'Équipe 2'}: <strong className="text-ink">{(noteTeam2 * 100).toFixed(0)}%</strong></span>
                   </div>
                   <input
                     type="range"
@@ -183,35 +183,35 @@ export function MatchDialog({ league, teams, match, onClose }: MatchDialogProps)
                     step="0.01"
                     value={noteTeam1}
                     onChange={e => setNoteTeam1(parseFloat(e.target.value))}
-                    className="w-full accent-blue-500"
+                    className="w-full accent-accent"
                   />
-                  <div className="flex justify-between text-xs mt-1" style={{ color: 'hsl(215 20% 65%)' }}>
+                  <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--color-muted)' }}>
                     <span>0%</span>
                     <span>Seuil max: {(league.threshold * 100).toFixed(0)}%</span>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: 'hsl(215 20% 65%)' }}>Date de la note</label>
+                  <label className="block text-xs mb-1" style={{ color: 'var(--color-muted)' }}>Date de la note</label>
                   <input
                     type="date"
                     value={noteDate}
                     onChange={e => setNoteDate(e.target.value)}
-                    className="w-full rounded-lg px-2 py-2 text-sm text-white outline-none"
-                    style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)', colorScheme: 'dark' }}
+                    className="w-full rounded-lg px-2 py-2 text-sm text-ink outline-none"
+                    style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
                   />
                 </div>
               </div>
             )}
           </div>
 
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && <p className="text-sm text-loss">{error}</p>}
 
           <div className="flex justify-end gap-2 pt-1">
             <button
               type="button"
               onClick={onClose}
               className="px-4 py-2 text-sm rounded-lg transition-opacity hover:opacity-80"
-              style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}
+              style={{ background: 'var(--color-line)', color: 'var(--color-muted)' }}
             >
               Annuler
             </button>
@@ -219,7 +219,7 @@ export function MatchDialog({ league, teams, match, onClose }: MatchDialogProps)
               type="submit"
               disabled={loading}
               className="px-4 py-2 text-sm rounded-lg font-medium transition-opacity disabled:opacity-50"
-              style={{ background: 'hsl(217 91% 60%)', color: 'hsl(222 47% 11%)' }}
+              style={{ background: 'var(--color-ink)', color: 'var(--color-bg)' }}
             >
               {loading ? 'Enregistrement…' : (match ? 'Modifier' : 'Ajouter')}
             </button>

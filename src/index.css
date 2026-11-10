@@ -1,37 +1,84 @@
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: 222 47% 11%;
-    --foreground: 213 31% 91%;
-    --card: 222 47% 14%;
-    --border: 216 34% 22%;
-    --input: 216 34% 18%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
-    --muted: 223 47% 20%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 216 34% 22%;
-    --destructive: 0 72% 51%;
-    --ring: 217 91% 60%;
-    color-scheme: dark;
-  }
+/* DA « Back-office » (draft B) — tokens reliés au thème Tailwind 4.
+   Règle : l'accent ambre ne sert qu'à la sélection ; gain / perte toujours accompagnés du signe. */
+@theme {
+  --color-bg: #0c1220;
+  --color-surface: #121a2b;
+  --color-stripe: #0f1626;
+  --color-raised: #18223a;
+  --color-line: #222c44;
+  --color-ink: #e4e8f1;
+  --color-muted: #8a93a8;
+  --color-faint: #5d6680;
+  --color-accent: #e9b949;
+  --color-accent-ink: #0c1220;
+  --color-win: #4fd08f;
+  --color-loss: #f2756b;
+  --color-danger: #e5534b;
+  --color-warn: #e9a23b;
 
-  * {
-    box-sizing: border-box;
-    border-color: hsl(var(--border));
-  }
+  --font-sans: 'Instrument Sans', system-ui, sans-serif;
+  --font-mono: 'Spline Sans Mono', ui-monospace, monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+}
+
+/* Thème clair : mêmes rôles, valeurs claires. Le thème est posé sur <html data-theme> (voir index.html). */
+:root[data-theme='light'] {
+  --color-bg: #f4f5f8;
+  --color-surface: #ffffff;
+  --color-stripe: #f7f8fb;
+  --color-raised: #eceff5;
+  --color-line: #dce1e9;
+  --color-ink: #131a2a;
+  --color-muted: #5a6377;
+  --color-faint: #8a92a5;
+  --color-accent: #9c6508;
+  --color-accent-ink: #ffffff;
+  --color-win: #15803d;
+  --color-loss: #c2362b;
+  --color-danger: #c9372c;
+  --color-warn: #a35f00;
+  color-scheme: light;
+}
+
+@layer base {
+  :root { color-scheme: dark; }
+  :root[data-theme='light'] { color-scheme: light; }
+
+  * { box-sizing: border-box; border-color: var(--color-line); }
 
   body {
     margin: 0;
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
   }
 
-  #root {
-    min-height: 100vh;
-  }
+  #root { min-height: 100vh; }
+
+  /* Tous les chiffres en mono sont tabulaires */
+  .font-mono { font-variant-numeric: tabular-nums; }
+
+  input, select, textarea { font: inherit; }
+  :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--color-accent) !important; }
+  input[type='range'] { accent-color: var(--color-accent); }
+}
+
+@layer components {
+  /* Champs et panneaux communs */
+  .field { background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-md); color: var(--color-ink); }
+  .panel { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-lg); }
+  .pill { border: 1px solid var(--color-line); border-radius: var(--radius-md); color: var(--color-muted); }
+  .pill[data-on='true'] { border-color: var(--color-accent); color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+  .btn-primary { background: var(--color-ink); color: var(--color-bg); border-radius: var(--radius-md); font-weight: 600; }
+  .btn-ghost { border: 1px solid var(--color-line); color: var(--color-ink); border-radius: var(--radius-md); }
+  .btn-ghost:hover { background: var(--color-raised); }
 }

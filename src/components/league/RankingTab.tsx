@@ -31,17 +31,12 @@ export function RankingTab({ league }: RankingTabProps) {
   // - au premier chargement de chaque ligue
   // - quand une baseline plus récente que le since courant est ajoutée en temps réel
   const initializedLeague = useRef('')
-  const sinceDateRef = useRef(sinceDate)
-  sinceDateRef.current = sinceDate
 
   useEffect(() => {
     if (!lastBaselineDate) return
     const isNewLeague = initializedLeague.current !== league.id
-    const isNewerBaseline = lastBaselineDate > sinceDateRef.current
-    if (isNewLeague || isNewerBaseline) {
-      setSinceDate(lastBaselineDate)
-      initializedLeague.current = league.id
-    }
+    setSinceDate(prev => (isNewLeague || lastBaselineDate > prev) ? lastBaselineDate : prev)
+    initializedLeague.current = league.id
   }, [lastBaselineDate, league.id])
 
   useEffect(() => {
@@ -59,7 +54,7 @@ export function RankingTab({ league }: RankingTabProps) {
   }, [notes])
 
   if (teamsLoading || matchesLoading) {
-    return <div className="py-16 text-center" style={{ color: 'hsl(215 20% 65%)' }}>Chargement…</div>
+    return <div className="py-16 text-center" style={{ color: 'var(--color-muted)' }}>Chargement…</div>
   }
 
   return (
@@ -70,21 +65,21 @@ export function RankingTab({ league }: RankingTabProps) {
         onSinceDateChange={setSinceDate}
         onSensitivityChange={setSensitivity}
       />
-      <div className="rounded-xl overflow-hidden" style={{ background: 'hsl(222 47% 14%)', border: '1px solid hsl(216 34% 22%)' }}>
-        <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: 'hsl(216 34% 22%)' }}>
-          <h2 className="text-sm font-semibold text-white">Classement — {league.name}</h2>
+      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-line)' }}>
+        <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: 'var(--color-line)' }}>
+          <h2 className="text-sm font-semibold text-ink">Classement — {league.name}</h2>
           <div className="flex items-center gap-4">
             {lastNoteDate && (
-              <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
-                Dernier match noté : <span className="text-white">{format(new Date(lastNoteDate + 'T00:00:00'), 'dd/MM/yyyy')}</span>
+              <span className="text-xs" style={{ color: 'var(--color-muted)' }}>
+                Dernier match noté : <span className="text-ink">{format(new Date(lastNoteDate + 'T00:00:00'), 'dd/MM/yyyy')}</span>
               </span>
             )}
             {lastBaselineDate && (
-              <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+              <span className="text-xs" style={{ color: 'var(--color-muted)' }}>
                 Baselines : {format(new Date(lastBaselineDate + 'T00:00:00'), 'dd/MM/yyyy')}
               </span>
             )}
-            <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+            <span className="text-xs" style={{ color: 'var(--color-muted)' }}>
               Seuil : {(league.threshold * 100).toFixed(0)}%
             </span>
           </div>

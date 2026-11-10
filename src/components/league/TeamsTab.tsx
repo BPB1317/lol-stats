@@ -57,7 +57,7 @@ function TeamRow({ team, allTeams }: { team: Team; allTeams: Team[] }) {
 
   return (
     <>
-      <tr className="border-b" style={{ borderColor: 'hsl(216 34% 22%)' }}>
+      <tr className="border-b" style={{ borderColor: 'var(--color-line)' }}>
         <td className="py-3 px-4 font-medium">
           {editingName ? (
             <input
@@ -69,31 +69,31 @@ function TeamRow({ team, allTeams }: { team: Team; allTeams: Team[] }) {
                 if (e.key === 'Enter') saveName()
                 if (e.key === 'Escape') setEditingName(false)
               }}
-              className="rounded px-2 py-0.5 text-sm text-white outline-none w-full max-w-xs"
-              style={{ background: 'hsl(222 47% 11%)', border: '1px solid hsl(217 91% 60%)' }}
+              className="rounded px-2 py-0.5 text-sm text-ink outline-none w-full max-w-xs"
+              style={{ background: 'var(--color-bg)', border: '1px solid var(--color-accent)' }}
             />
           ) : (
             <button
               onClick={startRename}
               title="Cliquer pour renommer"
-              className="text-white hover:text-blue-400 transition-colors text-left"
+              className="text-ink hover:text-accent transition-colors text-left"
             >
               {team.name}
             </button>
           )}
         </td>
         <td className="py-3 px-4 text-center">
-          <span className="font-mono text-sm" style={{ color: 'hsl(217 91% 60%)' }}>
+          <span className="font-mono text-sm" style={{ color: 'var(--color-ink)' }}>
             {latest ? `${Math.round(latest.rating)} ELO` : '1500 ELO'}
           </span>
           {latest && (
-            <span className="ml-2 text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+            <span className="ml-2 text-xs" style={{ color: 'var(--color-muted)' }}>
               ({latest.bo_type} · {latest.effective_date})
             </span>
           )}
         </td>
         <td className="py-3 px-4 text-center">
-          <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>{baselines.length}</span>
+          <span className="text-xs" style={{ color: 'var(--color-muted)' }}>{baselines.length}</span>
         </td>
         <td className="py-3 px-4 text-right">
           <div className="flex flex-wrap justify-end items-center gap-1">
@@ -102,8 +102,8 @@ function TeamRow({ team, allTeams }: { team: Team; allTeams: Team[] }) {
                 <select
                   value={mergeTarget}
                   onChange={e => setMergeTarget(e.target.value)}
-                  className="rounded px-2 py-1 text-xs text-white outline-none"
-                  style={{ background: 'hsl(222 47% 11%)', border: '1px solid hsl(216 34% 22%)' }}
+                  className="rounded px-2 py-1 text-xs text-ink outline-none"
+                  style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
                 >
                   <option value="">→ fusionner dans…</option>
                   {allTeams.filter(t => t.id !== team.id).map(t => (
@@ -114,32 +114,32 @@ function TeamRow({ team, allTeams }: { team: Team; allTeams: Team[] }) {
                   onClick={handleMerge}
                   disabled={!mergeTarget || mergeLoading}
                   className="text-xs px-2 py-1 rounded disabled:opacity-40"
-                  style={{ background: 'hsl(38 92% 50%)', color: 'hsl(222 47% 11%)' }}
+                  style={{ background: 'var(--color-warn)', color: 'var(--color-bg)' }}
                 >
                   {mergeLoading ? '…' : 'Fusionner'}
                 </button>
                 <button
                   onClick={() => { setMerging(false); setMergeError('') }}
                   className="text-xs px-2 py-1 rounded"
-                  style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}
+                  style={{ background: 'var(--color-line)', color: 'var(--color-muted)' }}
                 >
                   ✕
                 </button>
-                {mergeError && <p className="w-full text-xs text-red-400 mt-1">{mergeError}</p>}
+                {mergeError && <p className="w-full text-xs text-loss mt-1">{mergeError}</p>}
               </>
             ) : confirmDelete ? (
               <>
                 <button
                   onClick={handleDelete}
                   className="text-xs px-2 py-1 rounded"
-                  style={{ background: 'hsl(0 72% 51%)', color: 'white' }}
+                  style={{ background: 'var(--color-danger)', color: 'var(--color-ink)' }}
                 >
                   Confirmer
                 </button>
                 <button
                   onClick={() => setConfirmDelete(false)}
                   className="text-xs px-2 py-1 rounded"
-                  style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}
+                  style={{ background: 'var(--color-line)', color: 'var(--color-muted)' }}
                 >
                   Annuler
                 </button>
@@ -149,27 +149,27 @@ function TeamRow({ team, allTeams }: { team: Team; allTeams: Team[] }) {
                 <button
                   onClick={() => setShowBaselines(true)}
                   className="text-xs px-2 py-1 rounded hover:opacity-80"
-                  style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}
+                  style={{ background: 'var(--color-line)', color: 'var(--color-muted)' }}
                 >
                   Baselines
                 </button>
                 <button
                   onClick={() => { setMerging(true); setMergeTarget(''); setMergeError('') }}
                   className="text-xs px-2 py-1 rounded hover:opacity-80"
-                  style={{ background: 'hsl(216 34% 22%)', color: 'hsl(38 92% 70%)' }}
+                  style={{ background: 'var(--color-line)', color: 'var(--color-warn)' }}
                 >
                   Fusionner
                 </button>
                 <button
                   onClick={() => { setConfirmDelete(true); setDeleteError('') }}
                   className="text-xs px-2 py-1 rounded hover:opacity-80"
-                  style={{ background: 'hsl(216 34% 22%)', color: '#f87171' }}
+                  style={{ background: 'var(--color-line)', color: 'var(--color-loss)' }}
                 >
                   Suppr.
                 </button>
               </>
             )}
-            {deleteError && <p className="w-full text-xs text-red-400 mt-1">{deleteError}</p>}
+            {deleteError && <p className="w-full text-xs text-loss mt-1">{deleteError}</p>}
           </div>
         </td>
       </tr>
@@ -190,31 +190,31 @@ export function TeamsTab({ league }: TeamsTabProps) {
   const [showAdd, setShowAdd] = useState(false)
 
   if (loading) {
-    return <div className="py-16 text-center" style={{ color: 'hsl(215 20% 65%)' }}>Chargement…</div>
+    return <div className="py-16 text-center" style={{ color: 'var(--color-muted)' }}>Chargement…</div>
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-sm font-semibold text-white">Équipes — {league.name}</h2>
+        <h2 className="text-sm font-semibold text-ink">Équipes — {league.name}</h2>
         <button
           onClick={() => setShowAdd(true)}
           className="px-3 py-2 text-sm rounded-lg font-medium"
-          style={{ background: 'hsl(217 91% 60%)', color: 'hsl(222 47% 11%)' }}
+          style={{ background: 'var(--color-ink)', color: 'var(--color-bg)' }}
         >
           + Ajouter une équipe
         </button>
       </div>
 
-      <div className="rounded-xl overflow-hidden" style={{ background: 'hsl(222 47% 14%)', border: '1px solid hsl(216 34% 22%)' }}>
+      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-line)' }}>
         {teams.length === 0 ? (
-          <div className="text-center py-16" style={{ color: 'hsl(215 20% 65%)' }}>
+          <div className="text-center py-16" style={{ color: 'var(--color-muted)' }}>
             Aucune équipe. Cliquez sur "Ajouter une équipe".
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-xs" style={{ borderColor: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}>
+              <tr className="border-b text-xs" style={{ borderColor: 'var(--color-line)', color: 'var(--color-muted)' }}>
                 <th className="py-3 px-4 text-left">Équipe <span className="font-normal opacity-60">(clic pour renommer)</span></th>
                 <th className="py-3 px-4 text-center">Baseline actuelle</th>
                 <th className="py-3 px-4 text-center">Nb baselines</th>

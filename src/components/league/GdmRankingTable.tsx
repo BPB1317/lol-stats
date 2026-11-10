@@ -31,7 +31,7 @@ function StageDetail({ stages, colSpan, teamId }: { stages: GdmStageBreakdown[];
   if (stages.length === 0) {
     return (
       <tr>
-        <td colSpan={colSpan} className="px-10 py-3 text-xs" style={{ color: 'hsl(215 20% 65%)', background: 'hsl(222 47% 11%)' }}>
+        <td colSpan={colSpan} className="px-10 py-3 text-xs" style={{ color: 'var(--color-muted)', background: 'var(--color-bg)' }}>
           Aucune donnée par stage disponible.
         </td>
       </tr>
@@ -40,11 +40,11 @@ function StageDetail({ stages, colSpan, teamId }: { stages: GdmStageBreakdown[];
 
   return (
     <tr>
-      <td colSpan={colSpan} style={{ background: 'hsl(222 47% 11%)', padding: 0 }}>
+      <td colSpan={colSpan} style={{ background: 'var(--color-bg)', padding: 0 }}>
         <div className="px-10 py-3">
           <table className="w-full text-xs">
             <thead>
-              <tr style={{ color: 'hsl(215 20% 50%)' }}>
+              <tr style={{ color: 'var(--color-muted)' }}>
                 <th className="text-left pb-1.5 font-normal">Stage</th>
                 <th className="text-left pb-1.5 font-normal">Date</th>
                 <th className="text-left pb-1.5 font-normal">Adversaire</th>
@@ -58,32 +58,32 @@ function StageDetail({ stages, colSpan, teamId }: { stages: GdmStageBreakdown[];
             </thead>
             <tbody>
               {chronological(stages).map(s => {
-                const gdmColor = s.gdm == null ? 'hsl(215 20% 65%)' : s.gdm > 0 ? '#4ade80' : '#f87171'
-                const gd15Color = s.gd15 == null ? 'hsl(215 20% 65%)' : s.gd15 > 0 ? '#4ade80' : '#f87171'
+                const gdmColor = s.gdm == null ? 'var(--color-muted)' : s.gdm > 0 ? 'var(--color-win)' : 'var(--color-loss)'
+                const gd15Color = s.gd15 == null ? 'var(--color-muted)' : s.gd15 > 0 ? 'var(--color-win)' : 'var(--color-loss)'
                 // Une ligne par adversaire ; les stats du stage fusionnées sur toutes ses lignes
                 const rows = s.matches.length > 0 ? s.matches : [null]
                 const span = rows.length
                 return (
                   <Fragment key={`${teamId}-${s.stage}`}>
                     {rows.map((m, i) => (
-                      <tr key={i} className={i === 0 ? 'border-t' : ''} style={{ borderColor: 'hsl(216 34% 20%)' }}>
+                      <tr key={i} className={i === 0 ? 'border-t' : ''} style={{ borderColor: 'var(--color-line)' }}>
                         {i === 0 && (
-                          <td rowSpan={span} className="py-1 pr-6 font-mono font-semibold text-white align-top">{s.stage}</td>
+                          <td rowSpan={span} className="py-1 pr-6 font-mono font-semibold text-ink align-top">{s.stage}</td>
                         )}
-                        <td className="py-1 pr-4 font-mono" style={{ color: 'hsl(215 20% 85%)' }}>
+                        <td className="py-1 pr-4 font-mono" style={{ color: 'var(--color-ink)' }}>
                           {m ? format(new Date(m.date + 'T00:00:00'), 'dd/MM') : '—'}
                         </td>
-                        <td className="py-1 pr-4 text-white">{m?.opponentName ?? '—'}</td>
-                        <td className="py-1 pr-4 text-right font-mono" style={{ color: 'hsl(217 91% 60%)' }}>{m?.score ?? '—'}</td>
-                        <td className="py-1 pr-4 text-right font-mono" style={{ color: 'hsl(215 20% 50%)' }}>{m ? m.opponentInput : fmtElo(s.avgOpp)}</td>
+                        <td className="py-1 pr-4 text-ink">{m?.opponentName ?? '—'}</td>
+                        <td className="py-1 pr-4 text-right font-mono" style={{ color: 'var(--color-ink)' }}>{m?.score ?? '—'}</td>
+                        <td className="py-1 pr-4 text-right font-mono" style={{ color: 'var(--color-muted)' }}>{m ? m.opponentInput : fmtElo(s.avgOpp)}</td>
                         {i === 0 && (
                           <>
                             <td rowSpan={span} className="py-1 pr-4 text-right font-mono font-semibold align-middle" style={{ color: gdmColor }}>{fmt(s.gdm)}</td>
                             <td rowSpan={span} className="py-1 pr-4 text-right font-mono font-semibold align-middle" style={{ color: gd15Color }}>{fmt(s.gd15)}</td>
-                            <td rowSpan={span} className="py-1 pr-4 text-right font-mono align-middle" style={{ color: s.games > 0 ? 'hsl(217 91% 60%)' : 'hsl(215 20% 65%)' }}>
+                            <td rowSpan={span} className="py-1 pr-4 text-right font-mono align-middle" style={{ color: s.games > 0 ? 'var(--color-ink)' : 'var(--color-muted)' }}>
                               {s.games > 0 ? s.games : '—'}
                             </td>
-                            <td rowSpan={span} className="py-1 text-right font-mono align-middle" style={{ color: 'hsl(215 20% 65%)' }}>{fmtElo(s.perf)}</td>
+                            <td rowSpan={span} className="py-1 text-right font-mono align-middle" style={{ color: 'var(--color-muted)' }}>{fmtElo(s.perf)}</td>
                           </>
                         )}
                       </tr>
@@ -109,7 +109,8 @@ export function GdmRankingTable({ ratings }: Props) {
   const toggle = (id: string) => {
     setExpandedIds(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
@@ -122,7 +123,7 @@ export function GdmRankingTable({ ratings }: Props) {
 
   if (sorted.length === 0) {
     return (
-      <div className="text-center py-16" style={{ color: 'hsl(215 20% 65%)' }}>
+      <div className="text-center py-16" style={{ color: 'var(--color-muted)' }}>
         Aucune équipe. Ajoutez des équipes dans l'onglet "Équipes".
       </div>
     )
@@ -134,7 +135,7 @@ export function GdmRankingTable({ ratings }: Props) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b text-xs uppercase tracking-wider" style={{ borderColor: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}>
+          <tr className="border-b text-xs uppercase tracking-wider" style={{ borderColor: 'var(--color-line)', color: 'var(--color-muted)' }}>
             <th className="py-3 px-3 text-left w-6"></th>
             <th className="py-3 px-3 text-left w-8">#</th>
             <th className="py-3 px-3 text-left">Équipe</th>
@@ -153,43 +154,43 @@ export function GdmRankingTable({ ratings }: Props) {
             const output = r.output ?? r.input
             const delta = r.output != null ? r.output - r.input : null
             const outputColor = r.output == null
-              ? 'hsl(215 20% 65%)'
-              : r.output > r.input ? '#4ade80' : r.output < r.input ? '#f87171' : 'hsl(215 20% 65%)'
-            const gdmColor = r.gdm == null ? 'hsl(215 20% 65%)' : r.gdm > 0 ? '#4ade80' : '#f87171'
-            const gd15Color = r.gd15 == null ? 'hsl(215 20% 65%)' : r.gd15 > 0 ? '#4ade80' : '#f87171'
-            const rowBg = idx % 2 === 0 ? 'transparent' : 'hsl(222 47% 13%)'
+              ? 'var(--color-muted)'
+              : r.output > r.input ? 'var(--color-win)' : r.output < r.input ? 'var(--color-loss)' : 'var(--color-muted)'
+            const gdmColor = r.gdm == null ? 'var(--color-muted)' : r.gdm > 0 ? 'var(--color-win)' : 'var(--color-loss)'
+            const gd15Color = r.gd15 == null ? 'var(--color-muted)' : r.gd15 > 0 ? 'var(--color-win)' : 'var(--color-loss)'
+            const rowBg = idx % 2 === 0 ? 'transparent' : 'var(--color-stripe)'
 
             return (
               <Fragment key={r.team.id}>
                 <tr
                   className="border-b"
-                  style={{ borderColor: 'hsl(216 34% 22%)', background: rowBg }}
+                  style={{ borderColor: 'var(--color-line)', background: rowBg }}
                 >
                   <td className="py-3 px-3">
                     <button
                       onClick={() => toggle(r.team.id)}
                       className="w-4 h-4 flex items-center justify-center rounded transition-colors"
-                      style={{ color: isExpanded ? 'hsl(217 91% 70%)' : 'hsl(215 20% 45%)', fontSize: '0.6rem' }}
+                      style={{ color: isExpanded ? 'var(--color-accent)' : 'var(--color-faint)', fontSize: '0.6rem' }}
                     >
                       {isExpanded ? '▼' : '▶'}
                     </button>
                   </td>
-                  <td className="py-3 px-3 text-xs" style={{ color: 'hsl(215 20% 65%)' }}>{idx + 1}</td>
+                  <td className="py-3 px-3 text-xs" style={{ color: 'var(--color-muted)' }}>{idx + 1}</td>
                   <td className="py-3 px-3">
                     <button
                       onClick={() => toggle(r.team.id)}
-                      className="font-medium text-white hover:text-blue-400 transition-colors text-left"
+                      className="font-medium text-ink hover:text-accent transition-colors text-left"
                     >
                       {r.team.name}
                     </button>
                   </td>
                   <td className="py-3 px-3 text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      <span className="font-mono text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+                      <span className="font-mono text-xs" style={{ color: 'var(--color-muted)' }}>
                         {Math.round(r.input)}
                       </span>
                       {r.inputBoType && (
-                        <span className="font-medium rounded px-1 py-px" style={{ fontSize: '0.6rem', lineHeight: '1.3', background: 'hsl(217 91% 60% / 0.12)', color: 'hsl(217 91% 70%)' }}>
+                        <span className="font-medium rounded px-1 py-px" style={{ fontSize: '0.6rem', lineHeight: '1.3', background: 'var(--color-raised)', color: 'var(--color-muted)' }}>
                           {r.inputBoType}
                         </span>
                       )}
@@ -201,13 +202,13 @@ export function GdmRankingTable({ ratings }: Props) {
                   <td className="py-3 px-3 text-right font-mono text-xs font-semibold" style={{ color: gd15Color }}>
                     {fmt(r.gd15)}
                   </td>
-                  <td className="py-3 px-3 text-right font-mono text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+                  <td className="py-3 px-3 text-right font-mono text-xs" style={{ color: 'var(--color-muted)' }}>
                     {fmtElo(r.avgOpp)}
                   </td>
-                  <td className="py-3 px-3 text-center font-mono text-xs" style={{ color: r.games > 0 ? 'hsl(217 91% 60%)' : 'hsl(215 20% 65%)' }}>
+                  <td className="py-3 px-3 text-center font-mono text-xs" style={{ color: r.games > 0 ? 'var(--color-ink)' : 'var(--color-muted)' }}>
                     {r.games > 0 ? r.games : '—'}
                   </td>
-                  <td className="py-3 px-3 text-right font-mono text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+                  <td className="py-3 px-3 text-right font-mono text-xs" style={{ color: 'var(--color-muted)' }}>
                     {fmtElo(r.perf)}
                   </td>
                   <td className="py-3 px-3 text-right">
@@ -216,7 +217,7 @@ export function GdmRankingTable({ ratings }: Props) {
                         {Math.round(output)}
                       </span>
                       {delta != null && Math.abs(delta) >= 1 && (
-                        <span className="text-xs font-medium" style={{ color: delta > 0 ? '#4ade80' : '#f87171' }}>
+                        <span className="text-xs font-medium" style={{ color: delta > 0 ? 'var(--color-win)' : 'var(--color-loss)' }}>
                           {delta > 0 ? '▲' : '▼'}{Math.abs(delta).toFixed(0)}
                         </span>
                       )}

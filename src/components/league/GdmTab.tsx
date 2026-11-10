@@ -83,7 +83,7 @@ export function GdmTab({ league }: Props) {
   }, [gdmStats])
 
   if (teamsLoading || matchesLoading) {
-    return <div className="py-16 text-center" style={{ color: 'hsl(215 20% 65%)' }}>Chargement…</div>
+    return <div className="py-16 text-center" style={{ color: 'var(--color-muted)' }}>Chargement…</div>
   }
 
   const hasAnyData = calendarStages.length > 0 || importedStages.length > 0
@@ -93,45 +93,45 @@ export function GdmTab({ league }: Props) {
       {/* Contrôles */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
-          <label className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>Depuis</label>
+          <label className="text-xs" style={{ color: 'var(--color-muted)' }}>Depuis</label>
           <input
             type="date"
             value={sinceDate}
             onChange={e => { if (e.target.value) setSinceDate(e.target.value) }}
-            className="rounded-lg px-2 py-1.5 text-xs text-white outline-none"
-            style={{ background: 'hsl(216 34% 18%)', border: '1px solid hsl(216 34% 22%)', colorScheme: 'dark' }}
+            className="rounded-lg px-2 py-1.5 text-xs text-ink outline-none"
+            style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
           />
         </div>
         <div className="flex-1" />
         <button
           onClick={() => setShowCalendar(true)}
           className="px-3 py-1.5 text-xs rounded-lg font-medium"
-          style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 85%)' }}
+          style={{ background: 'var(--color-line)', color: 'var(--color-ink)' }}
         >
           Importer calendrier
         </button>
         <button
           onClick={() => setShowStats(true)}
           className="px-3 py-1.5 text-xs rounded-lg font-medium"
-          style={{ background: 'hsl(217 91% 60%)', color: 'hsl(222 47% 11%)' }}
+          style={{ background: 'var(--color-ink)', color: 'var(--color-bg)' }}
         >
           Importer stats GDM
         </button>
       </div>
 
       {/* Classement */}
-      <div className="rounded-xl overflow-hidden" style={{ background: 'hsl(222 47% 14%)', border: '1px solid hsl(216 34% 22%)' }}>
-        <div className="px-4 py-3 border-b" style={{ borderColor: 'hsl(216 34% 22%)' }}>
-          <h2 className="text-sm font-semibold text-white">{league.name} GDM</h2>
+      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-line)' }}>
+        <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--color-line)' }}>
+          <h2 className="text-sm font-semibold text-ink">{league.name} GDM</h2>
         </div>
         <GdmRankingTable ratings={ratings} />
       </div>
 
       {/* Diagnostic + stages importés */}
       {hasAnyData && (
-        <div className="rounded-xl overflow-hidden" style={{ background: 'hsl(222 47% 14%)', border: '1px solid hsl(216 34% 22%)' }}>
-          <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: 'hsl(216 34% 22%)' }}>
-            <h3 className="text-xs font-semibold" style={{ color: 'hsl(215 20% 65%)' }}>
+        <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-line)' }}>
+          <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: 'var(--color-line)' }}>
+            <h3 className="text-xs font-semibold" style={{ color: 'var(--color-muted)' }}>
               Stages — {qualifyingCalendarStages.size} actif{qualifyingCalendarStages.size > 1 ? 's' : ''} sur {calendarStages.length} calendrier
             </h3>
             {calendarStages.length > 0 && (
@@ -144,14 +144,14 @@ export function GdmTab({ league }: Props) {
                       setConfirmDeleteAll(false)
                     }}
                     className="text-xs px-2 py-1 rounded"
-                    style={{ background: 'hsl(0 72% 51%)', color: 'white' }}
+                    style={{ background: 'var(--color-danger)', color: 'var(--color-ink)' }}
                   >
                     Confirmer tout suppr.
                   </button>
                   <button
                     onClick={() => setConfirmDeleteAll(false)}
                     className="text-xs px-2 py-1 rounded"
-                    style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}
+                    style={{ background: 'var(--color-line)', color: 'var(--color-muted)' }}
                   >
                     Annuler
                   </button>
@@ -160,14 +160,14 @@ export function GdmTab({ league }: Props) {
                 <button
                   onClick={() => setConfirmDeleteAll(true)}
                   className="text-xs px-2 py-1 rounded hover:opacity-80"
-                  style={{ background: 'hsl(216 34% 22%)', color: '#f87171' }}
+                  style={{ background: 'var(--color-line)', color: 'var(--color-loss)' }}
                 >
                   Tout supprimer
                 </button>
               )
             )}
           </div>
-          <div className="divide-y" style={{ borderColor: 'hsl(216 34% 22%)' }}>
+          <div className="divide-y" style={{ borderColor: 'var(--color-line)' }}>
             {/* Stages du calendrier sans stats */}
             {calendarStages.filter(s => !importedStages.find(([is]) => is === s)).map(s => {
               const qualifying = qualifyingCalendarStages.has(s)
@@ -179,17 +179,17 @@ export function GdmTab({ league }: Props) {
                     <button
                       onClick={() => toggleExpanded(s)}
                       className="text-xs font-mono w-4 shrink-0"
-                      style={{ color: 'hsl(215 20% 50%)' }}
+                      style={{ color: 'var(--color-muted)' }}
                     >
                       {expanded ? '▼' : '▶'}
                     </button>
-                    <span className="text-xs font-semibold w-20 shrink-0" style={{ color: qualifying ? 'hsl(215 20% 65%)' : 'hsl(215 20% 35%)' }}>{s}</span>
-                    <span className="text-xs" style={{ color: 'hsl(215 20% 50%)' }}>
+                    <span className="text-xs font-semibold w-20 shrink-0" style={{ color: qualifying ? 'var(--color-muted)' : 'var(--color-faint)' }}>{s}</span>
+                    <span className="text-xs" style={{ color: 'var(--color-muted)' }}>
                       {stageMinDate[s]} → {stageMaxDate[s]} · {stageMatches.length} match{stageMatches.length > 1 ? 's' : ''}
                     </span>
                     {qualifying
-                      ? <span className="text-xs" style={{ color: '#facc15' }}>calendrier ✓ · stats manquantes</span>
-                      : <span className="text-xs" style={{ color: 'hsl(215 20% 35%)' }}>exclu (avant sinceDate)</span>
+                      ? <span className="text-xs" style={{ color: 'var(--color-warn)' }}>calendrier ✓ · stats manquantes</span>
+                      : <span className="text-xs" style={{ color: 'var(--color-faint)' }}>exclu (avant sinceDate)</span>
                     }
                     <div className="flex-1" />
                     {confirmDeleteCalStage === s ? (
@@ -201,14 +201,14 @@ export function GdmTab({ league }: Props) {
                             setConfirmDeleteCalStage(null)
                           }}
                           className="text-xs px-2 py-1 rounded"
-                          style={{ background: 'hsl(0 72% 51%)', color: 'white' }}
+                          style={{ background: 'var(--color-danger)', color: 'var(--color-ink)' }}
                         >
                           Confirmer
                         </button>
                         <button
                           onClick={() => setConfirmDeleteCalStage(null)}
                           className="text-xs px-2 py-1 rounded"
-                          style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}
+                          style={{ background: 'var(--color-line)', color: 'var(--color-muted)' }}
                         >
                           Annuler
                         </button>
@@ -217,7 +217,7 @@ export function GdmTab({ league }: Props) {
                       <button
                         onClick={() => setConfirmDeleteCalStage(s)}
                         className="text-xs px-2 py-1 rounded hover:opacity-80 shrink-0"
-                        style={{ background: 'hsl(216 34% 22%)', color: '#f87171' }}
+                        style={{ background: 'var(--color-line)', color: 'var(--color-loss)' }}
                       >
                         Suppr.
                       </button>
@@ -226,11 +226,11 @@ export function GdmTab({ league }: Props) {
                   {expanded && (
                     <div className="px-10 pb-2 space-y-0.5">
                       {stageMatches.map(m => (
-                        <div key={m.id} className="flex gap-3 text-xs py-0.5" style={{ color: 'hsl(215 20% 65%)' }}>
-                          <span style={{ color: 'hsl(215 20% 45%)' }}>{m.match_date}</span>
-                          <span className={m.winner_id === m.team1_id ? 'font-semibold text-white' : ''}>{m.team1?.name}</span>
-                          <span style={{ color: 'hsl(215 20% 40%)' }}>vs</span>
-                          <span className={m.winner_id === m.team2_id ? 'font-semibold text-white' : ''}>{m.team2?.name}</span>
+                        <div key={m.id} className="flex gap-3 text-xs py-0.5" style={{ color: 'var(--color-muted)' }}>
+                          <span style={{ color: 'var(--color-faint)' }}>{m.match_date}</span>
+                          <span className={m.winner_id === m.team1_id ? 'font-semibold text-ink' : ''}>{m.team1?.name}</span>
+                          <span style={{ color: 'var(--color-faint)' }}>vs</span>
+                          <span className={m.winner_id === m.team2_id ? 'font-semibold text-ink' : ''}>{m.team2?.name}</span>
                           {m.score && <span className="font-mono">{m.score}</span>}
                         </div>
                       ))}
@@ -254,21 +254,21 @@ export function GdmTab({ league }: Props) {
                         <button
                           onClick={() => toggleExpanded(stage)}
                           className="text-xs font-mono w-4 shrink-0"
-                          style={{ color: 'hsl(215 20% 50%)' }}
+                          style={{ color: 'var(--color-muted)' }}
                         >
                           {expanded ? '▼' : '▶'}
                         </button>
                       )}
-                      <span className="text-xs font-semibold" style={{ color: active ? 'white' : 'hsl(215 20% 35%)' }}>{stage}</span>
-                      <span className="text-xs" style={{ color: 'hsl(215 20% 65%)' }}>
+                      <span className="text-xs font-semibold" style={{ color: active ? 'var(--color-ink)' : 'var(--color-faint)' }}>{stage}</span>
+                      <span className="text-xs" style={{ color: 'var(--color-muted)' }}>
                         {info.teams} éq. · {info.totalGames} games GDM
                         {hasCalendar && ` · ${stageMatches.length} cal.`}
                       </span>
                       {active
-                        ? <span className="text-xs" style={{ color: '#4ade80' }}>actif ✓</span>
+                        ? <span className="text-xs" style={{ color: 'var(--color-win)' }}>actif ✓</span>
                         : !hasCalendar
-                          ? <span className="text-xs" style={{ color: '#f87171' }}>calendrier manquant</span>
-                          : <span className="text-xs" style={{ color: 'hsl(215 20% 35%)' }}>exclu (avant sinceDate)</span>
+                          ? <span className="text-xs" style={{ color: 'var(--color-loss)' }}>calendrier manquant</span>
+                          : <span className="text-xs" style={{ color: 'var(--color-faint)' }}>exclu (avant sinceDate)</span>
                       }
                     </div>
                     <div className="flex gap-1">
@@ -282,14 +282,14 @@ export function GdmTab({ league }: Props) {
                                 setConfirmDeleteCalStage(null)
                               }}
                               className="text-xs px-2 py-1 rounded"
-                              style={{ background: 'hsl(0 72% 51%)', color: 'white' }}
+                              style={{ background: 'var(--color-danger)', color: 'var(--color-ink)' }}
                             >
                               Confirmer cal.
                             </button>
                             <button
                               onClick={() => setConfirmDeleteCalStage(null)}
                               className="text-xs px-2 py-1 rounded"
-                              style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}
+                              style={{ background: 'var(--color-line)', color: 'var(--color-muted)' }}
                             >
                               Annuler
                             </button>
@@ -298,7 +298,7 @@ export function GdmTab({ league }: Props) {
                           <button
                             onClick={() => setConfirmDeleteCalStage(`cal-${stage}`)}
                             className="text-xs px-2 py-1 rounded hover:opacity-80"
-                            style={{ background: 'hsl(216 34% 22%)', color: '#f87171' }}
+                            style={{ background: 'var(--color-line)', color: 'var(--color-loss)' }}
                           >
                             Suppr. cal.
                           </button>
@@ -313,14 +313,14 @@ export function GdmTab({ league }: Props) {
                               setConfirmDeleteStage(null)
                             }}
                             className="text-xs px-2 py-1 rounded"
-                            style={{ background: 'hsl(0 72% 51%)', color: 'white' }}
+                            style={{ background: 'var(--color-danger)', color: 'var(--color-ink)' }}
                           >
                             Confirmer GDM
                           </button>
                           <button
                             onClick={() => setConfirmDeleteStage(null)}
                             className="text-xs px-2 py-1 rounded"
-                            style={{ background: 'hsl(216 34% 22%)', color: 'hsl(215 20% 65%)' }}
+                            style={{ background: 'var(--color-line)', color: 'var(--color-muted)' }}
                           >
                             Annuler
                           </button>
@@ -329,7 +329,7 @@ export function GdmTab({ league }: Props) {
                         <button
                           onClick={() => setConfirmDeleteStage(stage)}
                           className="text-xs px-2 py-1 rounded hover:opacity-80"
-                          style={{ background: 'hsl(216 34% 22%)', color: '#f87171' }}
+                          style={{ background: 'var(--color-line)', color: 'var(--color-loss)' }}
                         >
                           Suppr. GDM
                         </button>
@@ -339,11 +339,11 @@ export function GdmTab({ league }: Props) {
                   {expanded && hasCalendar && (
                     <div className="px-10 pb-2 space-y-0.5">
                       {stageMatches.map(m => (
-                        <div key={m.id} className="flex gap-3 text-xs py-0.5" style={{ color: 'hsl(215 20% 65%)' }}>
-                          <span style={{ color: 'hsl(215 20% 45%)' }}>{m.match_date}</span>
-                          <span className={m.winner_id === m.team1_id ? 'font-semibold text-white' : ''}>{m.team1?.name}</span>
-                          <span style={{ color: 'hsl(215 20% 40%)' }}>vs</span>
-                          <span className={m.winner_id === m.team2_id ? 'font-semibold text-white' : ''}>{m.team2?.name}</span>
+                        <div key={m.id} className="flex gap-3 text-xs py-0.5" style={{ color: 'var(--color-muted)' }}>
+                          <span style={{ color: 'var(--color-faint)' }}>{m.match_date}</span>
+                          <span className={m.winner_id === m.team1_id ? 'font-semibold text-ink' : ''}>{m.team1?.name}</span>
+                          <span style={{ color: 'var(--color-faint)' }}>vs</span>
+                          <span className={m.winner_id === m.team2_id ? 'font-semibold text-ink' : ''}>{m.team2?.name}</span>
                           {m.score && <span className="font-mono">{m.score}</span>}
                         </div>
                       ))}
