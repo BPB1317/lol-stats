@@ -104,12 +104,12 @@ function WeightsPanel({ weights }: { weights: SurfaceWeights }) {
         {SURFACES.map(s => {
           const w = draft[s.key] ?? weights[s.key]
           return (
-            <div key={s.key} className="grid grid-cols-[4rem_1fr_9.5rem] items-center gap-3 text-sm">
+            <div key={s.key} className="grid grid-cols-[3.5rem_1fr] items-center gap-x-3 gap-y-1 text-sm sm:grid-cols-[4rem_1fr_9.5rem]">
               <span>{s.label}</span>
               <input type="range" min={0} max={1} step={0.05} value={w} aria-label={`Part de l'Elo général sur ${s.label.toLowerCase()}`}
                 onChange={e => setDraft(d => ({ ...d, [s.key]: parseFloat(e.target.value) }))}
                 onPointerUp={() => save(s.key)} onKeyUp={() => save(s.key)} onBlur={() => save(s.key)} />
-              <span className="text-right font-mono text-xs"><b className="text-ink">{Math.round(w * 100)} %</b> Elo · <b className="text-ink">{Math.round((1 - w) * 100)} %</b> {s.label.toLowerCase()}</span>
+              <span className="col-start-2 font-mono text-xs sm:col-start-auto sm:text-right"><b className="text-ink">{Math.round(w * 100)} %</b> Elo · <b className="text-ink">{Math.round((1 - w) * 100)} %</b> {s.label.toLowerCase()}</span>
             </div>
           )
         })}
@@ -182,7 +182,7 @@ export function TennisEloPage({ tour }: { tour: 'ATP' | 'WTA' }) {
 
   return (
     <main className="space-y-4 px-4 py-4 md:px-6">
-      <div className="grid items-start gap-4 xl:grid-cols-[1fr_1fr]">
+      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2 [&>*]:min-w-0">
         <Calculator players={players} weights={weights} tour={tour} />
         <div className="space-y-4">
           <WeightsPanel weights={weights} />

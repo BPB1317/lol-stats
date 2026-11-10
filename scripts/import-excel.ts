@@ -286,7 +286,11 @@ async function main() {
   console.log(`Méthodes de CLV : ${[...methods].map(([m, n]) => `${m} ${n}`).join(' · ')}`)
 
   if (notes.length) { console.log(`\nRemarques (${notes.length}) :`); notes.slice(0, 40).forEach(n => console.log(`  · ${n}`)); if (notes.length > 40) console.log(`  … et ${notes.length - 40} autres`) }
-  if (unmatched.length) { console.log(`\nLignes Live / compta foot sans correspondance dans Bilan Kelicful (${unmatched.length}) — non importées, à décider :`); unmatched.forEach(u => console.log(`  · ${u}`)) }
+  // Choix validé le 11/11/2026 : les lignes de « Bilan foot "compta" » absentes du bilan principal restent dans l'Excel
+  const comptaFoot = unmatched.filter(u => u.startsWith('Bilan foot'))
+  const otherUnmatched = unmatched.filter(u => !u.startsWith('Bilan foot'))
+  if (comptaFoot.length) console.log(`\n${comptaFoot.length} lignes de « Bilan foot "compta" » absentes du bilan principal : laissées dans l'Excel (choix validé), non importées.`)
+  if (otherUnmatched.length) { console.log(`\nLignes Live sans correspondance dans Bilan Kelicful (${otherUnmatched.length}) — non importées :`); otherUnmatched.forEach(u => console.log(`  · ${u}`)) }
   if (problems.length) { console.log(`\nLignes refusées (${problems.length}) :`); problems.forEach(p => console.log(`  ✗ ${p}`)) }
 
   if (failed || problems.length) {
