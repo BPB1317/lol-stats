@@ -73,8 +73,8 @@
   --color-series: var(--c-text);
 }
 :root[data-style='terminal'] {
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;  /* chiffres et tableaux en IBM Plex Mono */
-  --hero-font: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-mono: 'Chivo Mono', ui-monospace, monospace;  /* chiffres et tableaux en mono (Chivo Mono : zéro sans point) */
+  --hero-font: 'Chivo Mono', ui-monospace, monospace;
   --hero-weight: 500;
   --hero-track: -0.02em;
   --color-series: var(--c-accent);
