@@ -34,10 +34,12 @@ function AuthenticatedApp({ session }: { session: Session }) {
     <AppShell leagues={leagues} bets={bets} userId={session.user.id} who={person ?? session.user.email}>
       <Routes>
         <Route path="/" element={<Navigate to="/modeles" replace />} />
-        <Route path="/modeles/calculateurs" element={<CalculatorsPage />} />
+        <Route path="/modeles/calculateurs" element={<Navigate to="/paris/calculateurs" replace />} />
         <Route path="/modeles" element={<ModelsPage leagues={leagues} loading={loading} />} />
         <Route path="/modeles/:leagueId/:tab?" element={<ModelsPage leagues={leagues} loading={loading} />} />
-        <Route path="/paris/journal" element={<JournalPage bets={bets} loading={betsLoading} />} />
+        <Route path="/paris/recap" element={<JournalPage bets={bets} loading={betsLoading} />} />
+        <Route path="/paris/journal" element={<Navigate to="/paris/recap" replace />} />
+        <Route path="/paris/calculateurs" element={<CalculatorsPage />} />
         <Route path="/paris/bilan" element={<BilanPage portfolio="commun" bets={bets} loading={betsLoading} />} />
         <Route path="/paris/partage" element={<PartagePage bets={bets} loading={betsLoading} />} />
         <Route path="/paris/vu-pas-pris" element={<VuPasPrisPage bets={bets} loading={betsLoading} />} />

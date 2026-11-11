@@ -12,8 +12,8 @@ React 19 · Vite · TypeScript · Tailwind 4 · Supabase · déployé sur GitHub
 
 | Section | Contenu |
 |---|---|
-| **Paris** | Journal (saisie rapide, paris en cours, résultat en un clic) · Bilan · Partage & compta · Vu pas pris |
-| **Modèles** | Ligues LoL (Classement, GDM, Matchs, Équipes) · Calculateurs |
+| **Paris** | Bilan · Récap (paris en cours, résultat en un clic) · Partage & compta · Vu pas pris · Calculateurs |
+| **Modèles** | Ligues LoL (Classement, GDM, Matchs, Équipes) |
 | **Kelicful** | Bilan perso · Elo tennis ATP · Elo tennis WTA |
 | **Réglages** | Partage, bankroll, remises à zéro, saisons masquées, sports, paramètres des modèles, sauvegarde |
 

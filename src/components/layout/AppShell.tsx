@@ -1,5 +1,5 @@
-// Coque « Hybride » : en-tête (sections, Style Suisse | Terminal, Mode clair | sombre, Pari +),
-// bandeau des derniers paris en style Terminal, sous-navigation de la section, contenu sur une grille commune.
+// Coque « Hybride » : en-tête (sections, Style Suisse | Bourse, Mode clair | sombre, Pari +),
+// bandeau des derniers paris en style Bourse, sous-navigation de la section, contenu sur une grille commune.
 // Ni le style ni le mode ne changent la mise en page.
 import { useEffect, type ReactNode } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
@@ -18,7 +18,7 @@ const SECTIONS = [
   { label: 'Réglages', base: '/reglages', to: '/reglages' },
 ]
 const SUB: Record<string, { label: string; to: string }[]> = {
-  '/paris': [{ label: 'Bilan', to: '/paris/bilan' }, { label: 'Journal', to: '/paris/journal' }, { label: 'Partage & compta', to: '/paris/partage' }, { label: 'Vu pas pris', to: '/paris/vu-pas-pris' }],
+  '/paris': [{ label: 'Bilan', to: '/paris/bilan' }, { label: 'Récap', to: '/paris/recap' }, { label: 'Partage & compta', to: '/paris/partage' }, { label: 'Vu pas pris', to: '/paris/vu-pas-pris' }, { label: 'Calculateurs', to: '/paris/calculateurs' }],
   '/kelicful': [{ label: 'Bilan perso', to: '/kelicful/bilan' }, { label: 'Elo ATP', to: '/kelicful/atp' }, { label: 'Elo WTA', to: '/kelicful/wta' }],
 }
 
@@ -38,7 +38,7 @@ function Segmented<T extends string>({ value, options, onChange, label }: { valu
 const Sun = () => <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden><g fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="4" /><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4" /></g></svg>
 const Moon = () => <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
 
-/** Bandeau défilant des derniers paris réglés (style Terminal) : ceux de Kelicful dans son espace, les paris communs ailleurs. */
+/** Bandeau défilant des derniers paris réglés (style Bourse) : ceux de Kelicful dans son espace, les paris communs ailleurs. */
 function Ticker({ bets, portfolio }: { bets: Bet[]; portfolio: 'commun' | 'kelicful' }) {
   const last = bets.filter(b => b.portfolio === portfolio && b.status === 'Pris' && isSettled(b.result))
     .sort((a, b) => b.bet_date.localeCompare(a.bet_date) || b.created_at.localeCompare(a.created_at)).slice(0, 14)
@@ -82,7 +82,7 @@ export function AppShell({ leagues, bets, userId, who, children }: { leagues: Le
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-2">
-            <Segmented label="Style" value={style} onChange={setStyle} options={[{ v: 'suisse', content: 'Suisse', title: 'Style Suisse' }, { v: 'terminal', content: 'Terminal', title: 'Style Terminal' }]} />
+            <Segmented label="Style" value={style} onChange={setStyle} options={[{ v: 'suisse', content: 'Suisse', title: 'Style Suisse' }, { v: 'terminal', content: 'Bourse', title: 'Style Bourse' }]} />
             <Segmented label="Mode" value={mode} onChange={setMode} options={[{ v: 'clair', content: <Sun />, title: 'Mode clair' }, { v: 'sombre', content: <Moon />, title: 'Mode sombre' }]} />
             <Link to={newBetHref} className="btn-primary hidden h-8 items-center px-3.5 text-[13px] md:flex">Pari +</Link>
           </div>

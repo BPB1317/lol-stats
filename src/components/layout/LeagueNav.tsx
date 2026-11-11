@@ -1,5 +1,5 @@
 // Ligues en ligne, sous l'en-tête de la section Modèles (dernière mise à jour en premier) :
-// sélection, masquage (préférence locale), suppression, ajout, et lien vers les calculateurs.
+// sélection, masquage (préférence locale), suppression, ajout.
 import { useState } from 'react'
 import { NavLink, useMatch, useNavigate } from 'react-router-dom'
 import type { League } from '@/types'
@@ -47,8 +47,6 @@ export function LeagueNav({ leagues }: { leagues: League[] }) {
           {l.short_name} <span className="font-mono text-[11px] text-faint">{l.season}</span>
         </NavLink>
       ))}
-      <span className="shrink-0 text-line" aria-hidden>|</span>
-      <NavLink to="/modeles/calculateurs" className={({ isActive }) => link(isActive)}>Calculateurs</NavLink>
       <button onClick={() => setShowAdd(true)} className="shrink-0 py-1 text-faint hover:text-ink">+ Ligue</button>
       <button onClick={() => { setManage(m => !m); setConfirmId(null) }} className={`shrink-0 py-1 ${manage ? 'text-accent' : 'text-faint hover:text-ink'}`}>{manage ? 'Terminé' : 'Gérer'}</button>
       {error && <span className="shrink-0 text-xs text-loss">Erreur : {error}</span>}
