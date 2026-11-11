@@ -17,6 +17,7 @@
   --color-faint: #9b9b9b;
   --color-accent: #d7001f;
   --color-accent-ink: #ffffff;
+  --color-nav: #d7001f;
   --color-win: #111111;
   --color-loss: #d7001f;
   --color-danger: #d7001f;
@@ -34,10 +35,10 @@
 /* ── Couleurs : ordre fond / texte / gris / filets / accent / gain / perte ── */
 /* Suisse « Papier vert » : fond teinté, texte vert sapin, gains en vert franc */
 :root[data-style='suisse'][data-mode='clair'] {
-  --c-bg: #f3f6f2; --c-text: #123524; --c-gray: #5c6e63; --c-rule: #d5ded7; --c-accent: #d7001f; --c-gain: #1e7a46; --c-loss: #c4001c;
+  --c-bg: #f3f6f2; --c-text: #123524; --c-gray: #5c6e63; --c-rule: #d5ded7; --c-accent: #d7001f; --c-gain: #1e7a46; --c-loss: #c4001c; --c-nav: #9a5b00;
 }
 :root[data-style='suisse'][data-mode='sombre'] {
-  --c-bg: #0f1a14; --c-text: #e3eee6; --c-gray: #93a79a; --c-rule: #24352b; --c-accent: #ff4d5e; --c-gain: #5fd08f; --c-loss: #ff6b6b;
+  --c-bg: #0f1a14; --c-text: #e3eee6; --c-gray: #93a79a; --c-rule: #24352b; --c-accent: #ff4d5e; --c-gain: #5fd08f; --c-loss: #ff6b6b; --c-nav: #d9a35b;
 }
 :root[data-style='terminal'][data-mode='clair'] {
   --c-bg: #f3efe3; --c-text: #1c1a14; --c-gray: #6a6455; --c-rule: #ddd6c3; --c-accent: #9a5b00; --c-gain: #1f7a3a; --c-loss: #b3261e;
@@ -56,6 +57,7 @@
   --color-muted: var(--c-gray);
   --color-faint: color-mix(in srgb, var(--c-gray) 65%, var(--c-bg));
   --color-accent: var(--c-accent);
+  --color-nav: var(--c-nav, var(--c-accent)); /* section active de l'en-tête (marron en Suisse) */
   --color-accent-ink: var(--c-bg);
   --color-win: var(--c-gain);
   --color-loss: var(--c-loss);

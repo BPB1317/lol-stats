@@ -78,7 +78,7 @@ export function AppShell({ leagues, bets, userId, who, children }: { leagues: Le
           <Link to="/paris/bilan" className="shrink-0 text-[15px] font-bold tracking-tight">Squawo &amp; Kelicful</Link>
           <nav className="-mx-1 flex overflow-x-auto" aria-label="Sections">
             {SECTIONS.map(s => (
-              <NavLink key={s.base} to={s.to} className={`shrink-0 px-2 py-1 text-[15px] ${section === s.base ? 'text-accent' : 'text-ink hover:text-accent'}`}>{s.label}</NavLink>
+              <NavLink key={s.base} to={s.to} className={`shrink-0 px-2 py-1 text-[15px] ${section === s.base ? 'text-nav' : 'text-ink hover:text-nav'}`}>{s.label}</NavLink>
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-2">
