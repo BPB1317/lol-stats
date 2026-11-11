@@ -32,11 +32,12 @@
 }
 
 /* ── Couleurs : ordre fond / texte / gris / filets / accent / gain / perte ── */
+/* Suisse « Papier vert » : fond teinté, texte vert sapin, gains en vert franc */
 :root[data-style='suisse'][data-mode='clair'] {
-  --c-bg: #ffffff; --c-text: #111111; --c-gray: #6b6b6b; --c-rule: #e4e4e4; --c-accent: #d7001f; --c-gain: #111111; --c-loss: #d7001f;
+  --c-bg: #f3f6f2; --c-text: #123524; --c-gray: #5c6e63; --c-rule: #d5ded7; --c-accent: #d7001f; --c-gain: #1e7a46; --c-loss: #c4001c;
 }
 :root[data-style='suisse'][data-mode='sombre'] {
-  --c-bg: #121212; --c-text: #f5f5f5; --c-gray: #a3a3a3; --c-rule: #2e2e2e; --c-accent: #ff4d5e; --c-gain: #f5f5f5; --c-loss: #ff4d5e;
+  --c-bg: #0f1a14; --c-text: #e3eee6; --c-gray: #93a79a; --c-rule: #24352b; --c-accent: #ff4d5e; --c-gain: #5fd08f; --c-loss: #ff6b6b;
 }
 :root[data-style='terminal'][data-mode='clair'] {
   --c-bg: #f3efe3; --c-text: #1c1a14; --c-gray: #6a6455; --c-rule: #ddd6c3; --c-accent: #9a5b00; --c-gain: #1f7a3a; --c-loss: #b3261e;
