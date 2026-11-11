@@ -182,8 +182,8 @@ export function BetForm({ bet, prefill, defaults, sports, leagues, teamKeys, onS
               <Row k="Match"><input value={f.game} onChange={e => set('game', e.target.value)} className={LINE} placeholder="G2 Esports vs Dplus KIA" /></Row>
               <Row k="Date">
                 <div className="flex flex-wrap gap-1">
-                  {quickDates.map((d, i) => (
-                    <button key={d} type="button" data-on={f.betDate === d} onClick={() => set('betDate', d)} className={`${PILL_SM} font-mono`} title={d.split('-').reverse().join('/')}>{i === 0 ? ddmm(d) : `D+${i}`}</button>
+                  {quickDates.map(d => (
+                    <button key={d} type="button" data-on={f.betDate === d} onClick={() => set('betDate', d)} className={`${PILL_SM} font-mono`} title={d.split('-').reverse().join('/')}>{ddmm(d)}</button>
                   ))}
                   <span className="relative">
                     <button type="button" data-on={!quickDates.includes(f.betDate)} className={`${PILL_SM} font-mono`}
