@@ -5,6 +5,7 @@ import type { Bet } from '@/types/betting'
 import { formatEur, formatPct, profit, theoreticalProfit } from '@/lib/betStats'
 import { downloadCsv } from '@/lib/csv'
 import { ResultLabel } from './ResultButtons'
+import { ClosingCell } from './ClosingCell'
 
 const PAGE = 50
 type SortKey = 'date' | 'stake' | 'odds' | 'clv' | 'profit'
@@ -78,7 +79,7 @@ export function BetTable({ bets, theoretical = false, showPortfolio = true, tool
             </div>
             <div className="flex items-baseline justify-between gap-3 text-xs text-muted">
               <span className="min-w-0 truncate">{fmtDate(b.bet_date)}{b.game ? ` · ${b.game}` : ''}</span>
-              <span className="shrink-0 font-mono">{formatEur(Number(b.stake), { decimals: 0 })} · {Number(b.odds).toFixed(2)}</span>
+              <span className="flex shrink-0 items-center gap-1 font-mono">{formatEur(Number(b.stake), { decimals: 0 })} · {Number(b.odds).toFixed(2)}{!theoretical && <> · <ClosingCell bet={b} emptyLabel="clôt." className="text-xs" /></>}</span>
             </div>
             <div className="mt-0.5 flex items-center justify-between gap-2">
               <ResultLabel result={b.result} />
@@ -102,13 +103,13 @@ export function BetTable({ bets, theoretical = false, showPortfolio = true, tool
             {rows.map(b => (
               <tr key={b.id} className="border-b border-line hover:bg-stripe">
                 <td className={`whitespace-nowrap px-4 font-mono text-muted ${py}`}>{fmtDate(b.bet_date)}</td>
-                <td className="text-muted">{b.sport}</td>
+                <td className="whitespace-nowrap text-muted">{b.sport}</td>
                 <td className="font-medium">{b.selection}</td>
                 <td className="max-w-[260px] truncate text-muted">{b.game}</td>
                 {showPortfolio && <td className="text-muted">{b.portfolio === 'commun' ? 'Commun' : 'Kelicful'}</td>}
                 <td className="text-right font-mono">{formatEur(Number(b.stake))}</td>
                 <td className="text-right font-mono">{Number(b.odds).toFixed(2)}</td>
-                <td className="text-right font-mono text-muted">{b.closing_odds ? Number(b.closing_odds).toFixed(2) : '—'}</td>
+                <td className="text-right">{theoretical ? <span className="font-mono text-muted">{b.closing_odds ? Number(b.closing_odds).toFixed(2) : '—'}</span> : <ClosingCell bet={b} />}</td>
                 <td className={`text-right font-mono ${b.clv == null ? 'text-faint' : Number(b.clv) > 0 ? 'text-win' : Number(b.clv) < 0 ? 'text-loss' : ''}`}>{b.clv == null ? '—' : formatPct(Number(b.clv), { signed: true })}</td>
                 <td className="pl-4"><ResultLabel result={b.result} /></td>
                 <td className="px-4 text-right">{b.result === 'En cours' ? <span className="text-faint">—</span> : <Signed v={pl(b)} />}</td>

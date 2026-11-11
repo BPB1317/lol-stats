@@ -1,4 +1,4 @@
-// Journal des paris : paris en cours (résultat en un clic, puis cote de clôture facultative) et historique.
+// Récap des paris : paris en cours (résultat en un clic, clôture saisie sur place à tout moment) et historique.
 import { useState } from 'react'
 import type { Bet, BetResult, Portfolio } from '@/types/betting'
 import { setBetResult, updateBet } from '@/hooks/useBetting'
@@ -6,6 +6,7 @@ import { formatEur, formatPct, clvRatio } from '@/lib/betStats'
 import { BetTable } from '@/components/bets/BetTable'
 import { ResultButtons, ResultLabel } from '@/components/bets/ResultButtons'
 import { QuickAdd } from '@/components/bets/QuickAdd'
+import { ClosingCell } from '@/components/bets/ClosingCell'
 
 type Filter = 'tous' | Portfolio
 
@@ -75,7 +76,7 @@ export function JournalPage({ bets, loading }: { bets: Bet[]; loading: boolean }
                 <div className="truncate text-sm font-medium">{b.selection}</div>
                 <div className="truncate text-xs text-muted">{b.game ? `${b.game} · ` : ''}{b.bet_date.split('-').reverse().join('/')} · {b.portfolio === 'commun' ? 'Commun' : 'Kelicful'}{b.placed_by ? ` · ${b.placed_by}` : ''}</div>
               </div>
-              <div className="shrink-0 text-right font-mono text-sm"><span className="font-semibold">{Number(b.odds).toFixed(2)}</span> <span className="text-muted">· {formatEur(Number(b.stake), { decimals: 0 })}</span></div>
+              <div className="flex shrink-0 items-center gap-2 text-right font-mono text-sm"><span><span className="font-semibold">{Number(b.odds).toFixed(2)}</span> <span className="text-muted">· {formatEur(Number(b.stake), { decimals: 0 })}</span></span><ClosingCell bet={b} emptyLabel="clôture" className="text-xs" /></div>
             </div>
             <div className="mt-2 md:max-w-md"><ResultButtons disabled={busy === b.id} onPick={r => pick(b, r)} /></div>
           </div>

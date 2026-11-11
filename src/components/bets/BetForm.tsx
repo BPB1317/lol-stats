@@ -1,13 +1,13 @@
 // Formulaire « + Pari », pensé pour aller aussi vite qu'une ligne de tableur :
-// seuls Position, Mise et Cote sont obligatoires ; Entrée enregistre ; le reste est déduit ou rangé sous « Plus ».
+// seuls Position, Mise et Cote sont obligatoires ; Entrée enregistre ; le reste est visible sur la même page, en retrait (petit, gris, au clic).
 // Le pari en cours de saisie est gardé dans le navigateur (brouillon) tant qu'il n'est pas enregistré.
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import type { Bet, BetInput, BetResult, Market, Person, Portfolio } from '@/types/betting'
 import { MARKETS, RESULTS } from '@/types/betting'
 import { inferMarket, inferSport, resultProfit, formatEur } from '@/lib/betStats'
 import { addBet, updateBet, deleteBet } from '@/hooks/useBetting'
 import type { League } from '@/types'
-import { todayLocal } from '@/lib/date'
+import { todayLocal, addDaysLocal } from '@/lib/date'
 
 const today = todayLocal
 const DRAFT_KEY = 'bpb-bet-draft'
@@ -54,6 +54,27 @@ function Segmented<T extends string>({ value, options, onChange, labels }: { val
   )
 }
 
+// Facultatif : petites pilules, champs soulignés, libellés gris
+const PILL_SM = 'pill px-2 py-1 text-[11px]'
+const LINE = 'w-full border-0 border-b border-line bg-transparent px-0 py-1 text-[13px] text-ink placeholder:text-faint'
+const ddmm = (iso: string) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}`
+
+function Pills<T extends string>({ value, options, onChange, labels }: { value: T | ''; options: readonly T[]; onChange: (v: T) => void; labels?: Partial<Record<T, string>> }) {
+  return (
+    <div className="flex flex-wrap gap-1">
+      {options.map(o => <button key={o} type="button" data-on={value === o} onClick={() => onChange(o)} className={PILL_SM}>{labels?.[o] ?? o}</button>)}
+    </div>
+  )
+}
+function Row({ k, hint, children }: { k: string; hint?: string; children: ReactNode }) {
+  return (
+    <>
+      <span className="pt-1 text-[11px] leading-tight text-faint">{k}{hint && <span className="block text-[10px] italic">{hint}</span>}</span>
+      <div className="min-w-0">{children}</div>
+    </>
+  )
+}
+
 const num = (s: string) => parseFloat(s.replace(',', '.'))
 
 function initialState(bet: Bet | undefined, prefill: Partial<BetInput> | undefined, defaults: BetFormDefaults): Draft {
@@ -72,7 +93,7 @@ export function BetForm({ bet, prefill, defaults, sports, leagues, teamKeys, onS
   const [restored] = useState(() => (!bet && !prefill?.selection ? loadDraft() : null))
   const [f, setF] = useState<Draft>(() => restored ?? initialState(bet, prefill, defaults))
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setF(p => ({ ...p, [k]: v }))
-  const [more, setMore] = useState(!!(bet && (bet.closing_odds || bet.league || bet.note || bet.share_squawo != null || bet.status !== 'Pris' || bet.result !== 'En cours')))
+  const dateRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -88,6 +109,7 @@ export function BetForm({ bet, prefill, defaults, sports, leagues, teamKeys, onS
   const sportOptions = sports.includes(sport) || !sport ? sports : [...sports, sport]
   // Placé par : celui qui a misé. Par défaut Kelicful pour son portefeuille, la personne connectée pour le commun
   const placedBy: Person | '' = f.placedByTouched ? f.placedBy : (f.portfolio === 'kelicful' ? 'Kelicful' : (defaults.placedBy ?? ''))
+  const quickDates = [0, 1, 2, 3, 4].map(n => addDaysLocal(today(), n))
   const forOther = f.portfolio === 'kelicful' && placedBy === 'Squawo'
 
   const submit = async (e?: FormEvent) => {
@@ -153,57 +175,51 @@ export function BetForm({ bet, prefill, defaults, sports, leagues, teamKeys, onS
 
           <Segmented value={f.portfolio} options={['commun', 'kelicful'] as const} onChange={v => set('portfolio', v)} labels={{ commun: 'Commun', kelicful: 'Kelicful' }} />
 
-          <label className="block"><Label hint="facultatif">Match</Label>
-            <input value={f.game} onChange={e => set('game', e.target.value)} className="field w-full px-3 py-2" placeholder="G2 Esports vs Dplus KIA" /></label>
-
-          <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
-            <button type="button" onClick={() => setMore(true)} className="pill px-2.5 py-1" title="Changer le sport">{sport}</button>
-            <button type="button" onClick={() => setMore(true)} className="pill px-2.5 py-1" title="Changer le marché">{market}</button>
-            <span>{f.betDate === today() ? "aujourd'hui" : f.betDate.split('-').reverse().join('/')}</span>
-            {f.status === 'Vu pas pris' && <span className="pill px-2.5 py-1">Vu pas pris</span>}
-          </div>
-
-          <button type="button" onClick={() => setMore(m => !m)} className="text-xs text-muted hover:text-ink">{more ? '▾ Moins' : '▸ Plus : date, sport, marché, statut, résultat, clôture, ligue, placé par, part, note'}</button>
-          {more && (
-            <div className="space-y-4 border-l border-line pl-3">
-              <div className="grid grid-cols-2 gap-3">
-                <label className="block"><Label hint={!f.sportTouched && suggestedSport ? 'proposé' : undefined}>Sport</Label>
-                  <select value={sport} onChange={e => setF(p => ({ ...p, sport: e.target.value, sportTouched: true }))} className="field w-full px-2 py-2">
-                    {sportOptions.map(x => <option key={x} value={x}>{x}</option>)}
-                  </select></label>
-                <label className="block"><Label hint={!f.market ? 'déduit' : undefined}>Marché</Label>
-                  <select value={market} onChange={e => set('market', e.target.value as Market)} className="field w-full px-2 py-2">
-                    {MARKETS.map(x => <option key={x} value={x}>{x}</option>)}
-                  </select></label>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="block"><Label>Date</Label>
-                  <input type="date" value={f.betDate} onChange={e => set('betDate', e.target.value)} className="field w-full px-2 py-2 font-mono text-sm" /></label>
-                <label className="block"><Label>Résultat</Label>
-                  <select value={f.result} onChange={e => set('result', e.target.value as BetResult)} className="field w-full px-2 py-2">
-                    {RESULTS.map(x => <option key={x} value={x}>{x}</option>)}
-                  </select></label>
-              </div>
-              <div><Label>Statut</Label><Segmented value={f.status} options={['Pris', 'Vu pas pris'] as const} onChange={v => set('status', v)} /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="block"><Label>Cote de clôture</Label>
-                  <input inputMode="decimal" value={f.closing} onChange={e => set('closing', e.target.value)} className="field w-full px-3 py-2 font-mono" placeholder="—" /></label>
-                <label className="block"><Label>Part de Squawo (%)</Label>
-                  <input inputMode="decimal" value={f.share} onChange={e => set('share', e.target.value)} className="field w-full px-3 py-2 font-mono" placeholder="général" /></label>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="block"><Label>Ligue</Label>
-                  <select value={f.league} onChange={e => set('league', e.target.value)} className="field w-full px-2 py-2">
+          {/* Facultatif : tout visible, en retrait */}
+          <div className="border-t border-dashed border-line pt-3">
+            <div className="mb-2 text-[11px] uppercase tracking-[0.06em] text-faint">Facultatif</div>
+            <div className="grid grid-cols-[78px_1fr] items-start gap-x-3 gap-y-2.5">
+              <Row k="Match"><input value={f.game} onChange={e => set('game', e.target.value)} className={LINE} placeholder="G2 Esports vs Dplus KIA" /></Row>
+              <Row k="Date">
+                <div className="flex flex-wrap gap-1">
+                  {quickDates.map((d, i) => (
+                    <button key={d} type="button" data-on={f.betDate === d} onClick={() => set('betDate', d)} className={`${PILL_SM} font-mono`} title={d.split('-').reverse().join('/')}>{i === 0 ? ddmm(d) : `D+${i}`}</button>
+                  ))}
+                  <span className="relative">
+                    <button type="button" data-on={!quickDates.includes(f.betDate)} className={`${PILL_SM} font-mono`}
+                      onClick={() => { const el = dateRef.current; if (!el) return; try { el.showPicker() } catch { el.focus() } }}>
+                      {quickDates.includes(f.betDate) ? 'Autre…' : ddmm(f.betDate)}
+                    </button>
+                    <input ref={dateRef} type="date" value={f.betDate} onChange={e => e.target.value && set('betDate', e.target.value)}
+                      tabIndex={-1} aria-label="Autre date" className="pointer-events-none absolute bottom-0 left-0 h-px w-px opacity-0" />
+                  </span>
+                </div>
+              </Row>
+              <Row k="Sport" hint={!f.sportTouched && suggestedSport ? 'proposé' : undefined}>
+                <Pills value={sport} options={sportOptions} onChange={v => setF(p => ({ ...p, sport: v, sportTouched: true }))} />
+              </Row>
+              <Row k="Marché" hint={!f.market ? 'déduit' : undefined}><Pills value={market} options={MARKETS} onChange={v => set('market', v)} /></Row>
+              <Row k="Résultat"><Pills value={f.result} options={RESULTS} onChange={v => set('result', v)} labels={{ '1/2 Gagnant': '½ Gagnant', '1/2 Perdant': '½ Perdant' }} /></Row>
+              <Row k="Statut"><Pills value={f.status} options={['Pris', 'Vu pas pris'] as const} onChange={v => set('status', v)} /></Row>
+              <Row k="Placé par"><Pills value={placedBy} options={['Squawo', 'Kelicful'] as const} onChange={v => setF(p => ({ ...p, placedBy: v, placedByTouched: true }))} /></Row>
+              <Row k="Clôture · part">
+                <div className="grid grid-cols-2 gap-3">
+                  <input inputMode="decimal" value={f.closing} onChange={e => set('closing', e.target.value)} className={`${LINE} font-mono`} placeholder="clôture" aria-label="Cote de clôture" />
+                  <input inputMode="decimal" value={f.share} onChange={e => set('share', e.target.value)} className={`${LINE} font-mono`} placeholder="part Squawo (%)" aria-label="Part de Squawo (%)" />
+                </div>
+              </Row>
+              <Row k="Ligue · note">
+                <div className="grid grid-cols-2 gap-3">
+                  <select value={f.league} onChange={e => set('league', e.target.value)} className={LINE} aria-label="Ligue">
                     <option value="">—</option>
                     {leagues.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
                     {f.league && !leagues.some(l => l.name === f.league) && <option value={f.league}>{f.league}</option>}
-                  </select></label>
-                <div><Label>Placé par</Label><Segmented value={placedBy} options={['Squawo', 'Kelicful'] as const} onChange={v => setF(p => ({ ...p, placedBy: v, placedByTouched: true }))} /></div>
-              </div>
-              <label className="block"><Label>Note</Label>
-                <textarea value={f.note} onChange={e => set('note', e.target.value)} rows={2} className="field w-full px-3 py-2 text-sm" /></label>
+                  </select>
+                  <input value={f.note} onChange={e => set('note', e.target.value)} className={LINE} placeholder="note" aria-label="Note" />
+                </div>
+              </Row>
             </div>
-          )}
+          </div>
           {forOther && <p className="rounded-md border border-line bg-raised px-3 py-2 text-xs text-muted">Placé par Squawo pour le portefeuille de Kelicful : ce pari comptera dans la compta entre vous.</p>}
           {error && <p className="text-sm text-loss" role="alert">{error}</p>}
         </div>
