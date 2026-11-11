@@ -12,7 +12,7 @@ const num = (s: string) => parseFloat(s.replace(',', '.'))
 
 export function QuickAdd() {
   const { userId, person } = useSession()
-  const { prefs, save } = useUserPrefs(userId)
+  const { save } = useUserPrefs(userId)
   const teamKeys = useTeamKeys()
   const [selection, setSelection] = useState('')
   const [stake, setStake] = useState('')
@@ -21,7 +21,7 @@ export function QuickAdd() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const first = useRef<HTMLInputElement>(null)
-  const pf = portfolio ?? prefs?.last_portfolio ?? 'commun'
+  const pf = portfolio ?? 'commun' // toujours Commun par défaut
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()

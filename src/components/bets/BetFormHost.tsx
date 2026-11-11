@@ -63,7 +63,8 @@ export function BetFormHost({ bets, leagues }: { bets: Bet[]; leagues: League[] 
       key={`${target}-${formKey}`}
       bet={editing}
       prefill={dup ? { ...dup, result: 'En cours', closing_odds: null, market: null } : fromUrl}
-      defaults={{ portfolio: prefs?.last_portfolio ?? 'commun', sport: prefs?.last_sport ?? 'E-sport', placedBy: person }}
+      // Portefeuille toujours Commun par défaut ; Kelicful se choisit d'un clic
+      defaults={{ portfolio: 'commun', sport: prefs?.last_sport ?? 'E-sport', placedBy: person }}
       sports={settings.sports}
       leagues={leagues}
       teamKeys={teamKeys}
