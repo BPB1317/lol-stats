@@ -75,6 +75,12 @@ function Row({ k, hint, children }: { k: string; hint?: string; children: ReactN
   )
 }
 
+/** 100 − x pour les parts (vide si la saisie est vide ou invalide) */
+function complement(v: string): string {
+  const x = parseFloat(v.replace(',', '.'))
+  return v.trim() === '' || Number.isNaN(x) ? '' : String(Math.round((100 - x) * 100) / 100)
+}
+
 const num = (s: string) => parseFloat(s.replace(',', '.'))
 
 function initialState(bet: Bet | undefined, prefill: Partial<BetInput> | undefined, defaults: BetFormDefaults): Draft {
@@ -94,6 +100,7 @@ export function BetForm({ bet, prefill, defaults, sports, leagues, teamKeys, onS
   const [f, setF] = useState<Draft>(() => restored ?? initialState(bet, prefill, defaults))
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setF(p => ({ ...p, [k]: v }))
   const dateRef = useRef<HTMLInputElement>(null)
+  const [kelText, setKelText] = useState<string | null>(null) // saisie en cours côté Kelicful (garde « 6. » tel quel)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -202,20 +209,24 @@ export function BetForm({ bet, prefill, defaults, sports, leagues, teamKeys, onS
               <Row k="Résultat"><Pills value={f.result} options={RESULTS} onChange={v => set('result', v)} labels={{ '1/2 Gagnant': '½ Gagnant', '1/2 Perdant': '½ Perdant' }} /></Row>
               <Row k="Statut"><Pills value={f.status} options={['Pris', 'Vu pas pris'] as const} onChange={v => set('status', v)} /></Row>
               <Row k="Placé par"><Pills value={placedBy} options={['Squawo', 'Kelicful'] as const} onChange={v => setF(p => ({ ...p, placedBy: v, placedByTouched: true }))} /></Row>
-              <Row k="Clôture · part">
+              <Row k="Clôture · ligue">
                 <div className="grid grid-cols-2 gap-3">
                   <input inputMode="decimal" value={f.closing} onChange={e => set('closing', e.target.value)} className={`${LINE} font-mono`} placeholder="clôture" aria-label="Cote de clôture" />
-                  <input inputMode="decimal" value={f.share} onChange={e => set('share', e.target.value)} className={`${LINE} font-mono`} placeholder="part Squawo (%)" aria-label="Part de Squawo (%)" />
-                </div>
-              </Row>
-              <Row k="Ligue · note">
-                <div className="grid grid-cols-2 gap-3">
                   <select value={f.league} onChange={e => set('league', e.target.value)} className={LINE} aria-label="Ligue">
                     <option value="">—</option>
                     {leagues.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
                     {f.league && !leagues.some(l => l.name === f.league) && <option value={f.league}>{f.league}</option>}
                   </select>
-                  <input value={f.note} onChange={e => set('note', e.target.value)} className={LINE} placeholder="note" aria-label="Note" />
+                </div>
+              </Row>
+              {/* Parts liées : l'une se remplit toute seule avec 100 − l'autre */}
+              <Row k="Parts (%)">
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="flex items-baseline gap-2"><span className="text-[11px] text-faint">Squawo</span>
+                    <input inputMode="decimal" value={f.share} onChange={e => { setKelText(null); set('share', e.target.value) }} className={`${LINE} font-mono`} placeholder="général" aria-label="Part de Squawo (%)" /></label>
+                  <label className="flex items-baseline gap-2"><span className="text-[11px] text-faint">Kelicful</span>
+                    <input inputMode="decimal" value={kelText ?? complement(f.share)} aria-label="Part de Kelicful (%)" placeholder="général" className={`${LINE} font-mono`}
+                      onChange={e => { const v = e.target.value; setKelText(v); set('share', complement(v)) }} /></label>
                 </div>
               </Row>
             </div>
