@@ -1,7 +1,7 @@
 // Coque « Hybride » : en-tête (sections, Style Suisse | Terminal, Mode clair | sombre, Pari +),
 // bandeau des derniers paris en style Terminal, sous-navigation de la section, contenu sur une grille commune.
 // Ni le style ni le mode ne changent la mise en page.
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import type { League } from '@/types'
@@ -64,6 +64,12 @@ export function AppShell({ leagues, bets, userId, who, children }: { leagues: Le
   const { style, mode, setStyle, setMode } = useAppearance(userId)
   const section = SECTIONS.find(s => pathname.startsWith(s.base))?.base ?? '/paris'
   const newBetHref = `${pathname}?pari=nouveau`
+
+  // Logo d'onglet : minimap rouge sur les sections communes, ambre dans l'espace Kelicful
+  useEffect(() => {
+    const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+    if (link) link.href = `${import.meta.env.BASE_URL}${section === '/kelicful' ? 'favicon-kelicful.svg' : 'favicon.svg'}`
+  }, [section])
 
   return (
     <div className="min-h-screen">
