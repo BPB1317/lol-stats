@@ -131,5 +131,10 @@
 
 @keyframes ticker { to { transform: translateX(-100%); } }
 
+/* CLV moyen en dégradé rouge → jaune → vert, uniquement en style Suisse (clair : teintes foncées, sombre : teintes claires) */
+:root[data-style='suisse'] .clv-grad { color: hsl(var(--clv-h, 50) 80% calc(var(--clv-l) - var(--clv-dark, 0) * 8%)); }
+:root[data-mode='clair'] { --clv-l: 38%; }
+:root[data-mode='sombre'] { --clv-l: 62%; }
+
 /* Les écrans s'alignent sur la grille de la coque (pas de marge latérale propre) */
 .shell-main > main { padding-left: 0 !important; padding-right: 0 !important; }

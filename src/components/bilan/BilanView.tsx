@@ -1,7 +1,7 @@
 // Écran « Bilan » d'un portefeuille (commun ou Kelicful) — reprend le tableau de bord de l'Excel.
 // Règles : paris réglés = G, P, ½G, ½P ; ROI = (bénéfice + ajustements) ÷ misé ; « Vu pas pris » exclus ;
 // saisons masquées et date de remise à zéro appliquées sans rien supprimer.
-import { useState, useEffect, useRef, type ReactNode } from 'react'
+import { useState, useEffect, useRef, type ReactNode, type CSSProperties } from 'react'
 import type { Bet, BetResult, Market, MoneyMove, Portfolio } from '@/types/betting'
 import { RESULTS } from '@/types/betting'
 import { summarize, groupSummaries, cumulative, visible, formatEur, formatPct, formatNum, isSettled, resultProfit, type Summary } from '@/lib/betStats'
@@ -9,6 +9,14 @@ import { CumulativeChart, MonthlyBars } from '@/components/charts/Charts'
 import { BetTable, Signed } from '@/components/bets/BetTable'
 
 const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
+/** Teinte du CLV moyen (style Suisse) : rouge foncé sous −3 %, rouge-jaune → vert-jaune entre −3 et +3 %, de plus en plus vert au-delà. */
+function clvStyle(v: number | null): CSSProperties | undefined {
+  if (v == null) return undefined
+  const p = v * 100
+  if (p <= -3) return { '--clv-h': '0', '--clv-dark': '1' } as CSSProperties
+  const h = p < 3 ? 20 + ((p + 3) / 6) * 65 : 85 + Math.min(1, (p - 3) / 5) * 55   // 20 (rouge-jaune) → 85 (vert-jaune) → 140 (vert)
+  return { '--clv-h': h.toFixed(0), '--clv-dark': '0' } as CSSProperties
+}
 const eur0 = (n: number, signed = false) => formatEur(n, { signed, decimals: 0 })
 
 interface Props {
@@ -294,7 +302,7 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
           {([
             ['ROI', <span className={s.roi == null ? '' : s.roi >= 0 ? 'text-win' : 'text-loss'}>{formatPct(s.roi, { signed: true })}</span>, `${eur0(s.staked)} misés`],
             ['Réussite', formatPct(s.hitRate), `${s.wins} / ${s.count} réglés`],
-            ['CLV moyen', <span className="text-accent">{formatPct(s.clvAvg, { signed: true })}</span>, s.clvMixed ? 'méthodes mélangées avant 2026' : s.clvCount ? `${formatPct(s.clvPositiveShare, { decimals: 0 })} à CLV positif` : 'aucune clôture'],
+            ['CLV moyen', <span className="clv-grad text-accent" style={clvStyle(s.clvAvg)}>{formatPct(s.clvAvg, { signed: true })}</span>, s.clvMixed ? 'méthodes mélangées avant 2026' : s.clvCount ? `${formatPct(s.clvPositiveShare, { decimals: 0 })} à CLV positif` : 'aucune clôture'],
             ['Paris', String(betCount), `${s.refunded} remb. · ${s.pending} en cours`],
           ] as [string, ReactNode, string][]).map(([l, v, sub], i) => (
             <div key={l} className={`border-b border-line py-3 ${i % 2 ? 'pl-4' : 'pr-4'}`}>
