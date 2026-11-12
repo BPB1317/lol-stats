@@ -19,7 +19,7 @@ const SECTIONS = [
 ]
 const SUB: Record<string, { label: string; to: string }[]> = {
   '/paris': [{ label: 'Bilan', to: '/paris/bilan' }, { label: 'Récap', to: '/paris/recap' }, { label: 'Partage & compta', to: '/paris/partage' }, { label: 'Vu pas pris', to: '/paris/vu-pas-pris' }, { label: 'Calculateurs', to: '/paris/calculateurs' }],
-  '/kelicful': [{ label: 'Bilan perso', to: '/kelicful/bilan' }, { label: 'Elo ATP', to: '/kelicful/atp' }, { label: 'Elo WTA', to: '/kelicful/wta' }],
+  '/kelicful': [{ label: 'Bilan perso', to: '/kelicful/bilan' }, { label: 'Récap', to: '/kelicful/recap' }, { label: 'Elo ATP', to: '/kelicful/atp' }, { label: 'Elo WTA', to: '/kelicful/wta' }],
 }
 
 function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { v: T; content: ReactNode; title: string }[]; onChange: (v: T) => void; label: string }) {

@@ -40,7 +40,7 @@ export function AddLeagueDialog({ onClose, maxOrder, leagues }: AddLeagueDialogP
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(5 8 15 / 0.6)' }}>
-      <div className="panel w-full max-w-sm overflow-hidden">
+      <div className="w-full max-w-sm overflow-hidden border border-ink bg-bg">
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <h3 className="text-sm font-semibold">Ajouter une ligue</h3>
           <button onClick={onClose} className="text-muted hover:text-ink" aria-label="Fermer">✕</button>

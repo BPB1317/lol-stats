@@ -27,6 +27,7 @@ interface Props {
   teamKeys: Set<string>
   onSaved: (bet: Bet | null, values: BetInput) => void
   onClose: () => void
+  lockPortfolio?: boolean         // nouveau pari : portefeuille imposé par la section (pas de choix)
 }
 
 interface Draft {
@@ -94,10 +95,13 @@ function initialState(bet: Bet | undefined, prefill: Partial<BetInput> | undefin
   }
 }
 
-export function BetForm({ bet, prefill, defaults, sports, leagues, teamKeys, onSaved, onClose }: Props) {
+export function BetForm({ bet, prefill, defaults, sports, leagues, teamKeys, onSaved, onClose, lockPortfolio = false }: Props) {
   // Nouveau pari sans préremplissage : on reprend le brouillon s'il y en a un
   const [restored] = useState(() => (!bet && !prefill?.selection ? loadDraft() : null))
-  const [f, setF] = useState<Draft>(() => restored ?? initialState(bet, prefill, defaults))
+  const [f, setF] = useState<Draft>(() => {
+    const d = restored ?? initialState(bet, prefill, defaults)
+    return lockPortfolio ? { ...d, portfolio: defaults.portfolio } : d
+  })
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setF(p => ({ ...p, [k]: v }))
   const dateRef = useRef<HTMLInputElement>(null)
   const [kelText, setKelText] = useState<string | null>(null) // saisie en cours côté Kelicful (garde « 6. » tel quel)
@@ -180,7 +184,9 @@ export function BetForm({ bet, prefill, defaults, sports, leagues, teamKeys, onS
               <input inputMode="decimal" value={f.odds} onChange={e => set('odds', e.target.value)} className="field w-full px-3 py-2 font-mono text-xl" placeholder="1.85" /></label>
           </div>
 
-          <Segmented value={f.portfolio} options={['commun', 'kelicful'] as const} onChange={v => set('portfolio', v)} labels={{ commun: 'Commun', kelicful: 'Kelicful' }} />
+          {lockPortfolio
+            ? <div className="text-xs text-muted">Portefeuille <span className="font-semibold text-ink">{f.portfolio === 'commun' ? 'Commun' : 'Kelicful'}</span></div>
+            : <Segmented value={f.portfolio} options={['commun', 'kelicful'] as const} onChange={v => set('portfolio', v)} labels={{ commun: 'Commun', kelicful: 'Kelicful' }} />}
 
           {/* Facultatif : tout visible, en retrait */}
           <div className="border-t border-dashed border-line pt-3">

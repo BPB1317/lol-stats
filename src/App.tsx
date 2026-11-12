@@ -37,13 +37,14 @@ function AuthenticatedApp({ session }: { session: Session }) {
         <Route path="/modeles/calculateurs" element={<Navigate to="/paris/calculateurs" replace />} />
         <Route path="/modeles" element={<ModelsPage leagues={leagues} loading={loading} />} />
         <Route path="/modeles/:leagueId/:tab?" element={<ModelsPage leagues={leagues} loading={loading} />} />
-        <Route path="/paris/recap" element={<JournalPage bets={bets} loading={betsLoading} />} />
+        <Route path="/paris/recap" element={<JournalPage bets={bets} loading={betsLoading} portfolio="commun" />} />
         <Route path="/paris/journal" element={<Navigate to="/paris/recap" replace />} />
         <Route path="/paris/calculateurs" element={<CalculatorsPage />} />
         <Route path="/paris/bilan" element={<BilanPage portfolio="commun" bets={bets} loading={betsLoading} />} />
         <Route path="/paris/partage" element={<PartagePage bets={bets} loading={betsLoading} />} />
         <Route path="/paris/vu-pas-pris" element={<VuPasPrisPage bets={bets} loading={betsLoading} />} />
         <Route path="/kelicful/bilan" element={<BilanPage portfolio="kelicful" bets={bets} loading={betsLoading} sportFirst />} />
+        <Route path="/kelicful/recap" element={<JournalPage bets={bets} loading={betsLoading} portfolio="kelicful" />} />
         <Route path="/kelicful/atp" element={<TennisEloPage key="ATP" tour="ATP" />} />
         <Route path="/kelicful/wta" element={<TennisEloPage key="WTA" tour="WTA" />} />
         <Route path="/reglages" element={<SettingsPage bets={bets} />} />

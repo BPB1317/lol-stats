@@ -8,8 +8,6 @@ import { ResultButtons, ResultLabel } from '@/components/bets/ResultButtons'
 import { QuickAdd } from '@/components/bets/QuickAdd'
 import { ClosingCell } from '@/components/bets/ClosingCell'
 
-type Filter = 'tous' | Portfolio
-
 function ClosingPrompt({ bet, onDone }: { bet: Bet; onDone: () => void }) {
   const [v, setV] = useState('')
   const c = parseFloat(v.replace(',', '.'))
@@ -32,14 +30,14 @@ function ClosingPrompt({ bet, onDone }: { bet: Bet; onDone: () => void }) {
   )
 }
 
-export function JournalPage({ bets, loading }: { bets: Bet[]; loading: boolean }) {
-  const [filter, setFilter] = useState<Filter>('tous')
+/** Récap d'un portefeuille : le commun dans Paris, celui de Kelicful dans son espace. */
+export function JournalPage({ bets, loading, portfolio }: { bets: Bet[]; loading: boolean; portfolio: Portfolio }) {
   const [busy, setBusy] = useState<string | null>(null)
   const [justSettled, setJustSettled] = useState<string[]>([])
 
   if (loading) return <div className="py-16 text-center text-muted">Chargement…</div>
 
-  const taken = bets.filter(b => b.status === 'Pris' && (filter === 'tous' || b.portfolio === filter))
+  const taken = bets.filter(b => b.status === 'Pris' && b.portfolio === portfolio)
   const open = taken.filter(b => b.result === 'En cours').sort((a, b) => a.bet_date.localeCompare(b.bet_date))
   const engaged = (p: string) => open.filter(b => (b.placed_by ?? 'Non renseigné') === p).reduce((s, b) => s + Number(b.stake), 0)
   const placers = [...new Set(open.map(b => b.placed_by ?? 'Non renseigné'))]
@@ -54,12 +52,7 @@ export function JournalPage({ bets, loading }: { bets: Bet[]; loading: boolean }
 
   return (
     <main className="space-y-4 px-4 py-4 md:px-6">
-      <QuickAdd />
-      <div className="flex flex-wrap gap-1.5">
-        {(['tous', 'commun', 'kelicful'] as const).map(f => (
-          <button key={f} data-on={filter === f} onClick={() => setFilter(f)} className="pill px-3 py-1.5 text-xs">{f === 'tous' ? 'Tous' : f === 'commun' ? 'Commun' : 'Kelicful'}</button>
-        ))}
-      </div>
+      <QuickAdd portfolio={portfolio} />
 
       <section className="panel overflow-hidden">
         <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line px-4 py-3">
@@ -74,7 +67,7 @@ export function JournalPage({ bets, loading }: { bets: Bet[]; loading: boolean }
             <div className="flex items-baseline justify-between gap-3">
               <div className="min-w-0">
                 <div className="truncate text-sm font-medium">{b.selection}</div>
-                <div className="truncate text-xs text-muted">{b.game ? `${b.game} · ` : ''}{b.bet_date.split('-').reverse().join('/')} · {b.portfolio === 'commun' ? 'Commun' : 'Kelicful'}{b.placed_by ? ` · ${b.placed_by}` : ''}</div>
+                <div className="truncate text-xs text-muted">{b.game ? `${b.game} · ` : ''}{b.bet_date.split('-').reverse().join('/')}{b.placed_by ? ` · ${b.placed_by}` : ''}</div>
               </div>
               <div className="flex shrink-0 items-center gap-2 text-right font-mono text-sm"><span><span className="font-semibold">{Number(b.odds).toFixed(2)}</span> <span className="text-muted">· {formatEur(Number(b.stake), { decimals: 0 })}</span></span><ClosingCell bet={b} emptyLabel="clôture" className="text-xs" /></div>
             </div>
@@ -84,7 +77,7 @@ export function JournalPage({ bets, loading }: { bets: Bet[]; loading: boolean }
         {!open.length && !settledNow.length && <div className="px-4 py-6 text-center text-sm text-muted">Aucun pari en cours.</div>}
       </section>
 
-      <BetTable bets={taken} filename="journal" showPortfolio={filter === 'tous'} />
+      <BetTable bets={taken} filename={`recap-${portfolio}`} showPortfolio={false} />
     </main>
   )
 }

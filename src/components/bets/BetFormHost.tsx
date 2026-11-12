@@ -1,7 +1,7 @@
 // Ouvre le formulaire de pari depuis l'URL : ?pari=nouveau (avec préremplissage facultatif) ou ?pari=<id>.
 // Après un ajout : « Dupliquer » rouvre le formulaire avec les mêmes valeurs (ex. +1,5 pris à côté du sec).
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import type { Bet, BetInput } from '@/types/betting'
 import type { League } from '@/types'
 import { BetForm } from './BetForm'
@@ -14,6 +14,9 @@ const PREFILL_KEYS = ['game', 'selection', 'odds', 'league', 'sport'] as const
 
 export function BetFormHost({ bets, leagues }: { bets: Bet[]; leagues: League[] }) {
   const [params, setParams] = useSearchParams()
+  const { pathname } = useLocation()
+  // Portefeuille fixé par la section : Kelicful dans son espace, Commun partout ailleurs
+  const sectionPortfolio = pathname.startsWith('/kelicful') ? 'kelicful' as const : 'commun' as const
   const { userId, person } = useSession()
   const { settings } = useSettings()
   const { prefs, save: savePrefs } = useUserPrefs(userId)
@@ -44,7 +47,7 @@ export function BetFormHost({ bets, leagues }: { bets: Bet[]; leagues: League[] 
   if (saved) {
     return (
       <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center md:p-6" style={{ background: 'rgb(5 8 15 / 0.75)' }} onMouseDown={e => e.target === e.currentTarget && close()}>
-        <div className="panel w-full max-w-md space-y-3 p-4">
+        <div className="w-full max-w-md space-y-3 border border-ink bg-bg p-5">
           <div className="text-sm font-semibold">Pari enregistré</div>
           <div className="text-sm"><span className="font-medium">{saved.selection}</span> {saved.game && <span className="text-muted">— {saved.game}</span>}</div>
           <div className="font-mono text-sm text-muted">{formatEur(saved.stake)} à {saved.odds.toFixed(2)} · {saved.portfolio === 'commun' ? 'Commun' : 'Kelicful'}</div>
@@ -63,8 +66,8 @@ export function BetFormHost({ bets, leagues }: { bets: Bet[]; leagues: League[] 
       key={`${target}-${formKey}`}
       bet={editing}
       prefill={dup ? { ...dup, result: 'En cours', closing_odds: null, market: null } : fromUrl}
-      // Portefeuille toujours Commun par défaut ; Kelicful se choisit d'un clic
-      defaults={{ portfolio: 'commun', sport: prefs?.last_sport ?? 'E-sport', placedBy: person }}
+      defaults={{ portfolio: sectionPortfolio, sport: prefs?.last_sport ?? 'E-sport', placedBy: person }}
+      lockPortfolio={!editing}
       sports={settings.sports}
       leagues={leagues}
       teamKeys={teamKeys}
