@@ -187,7 +187,8 @@ export function beneficiary(b: Pick<Bet, 'portfolio'>): Person | null {
  * Le bénéficiaire lui doit donc le bénéfice (négatif si perte : c'est le placeur qui doit).
  */
 export function interPersonBalance(bets: Bet[], legacyBalance: number, moves: MoneyMove[] = []) {
-  const concerned = bets.filter(b => b.status === 'Pris' && b.placed_by && beneficiary(b) && b.placed_by !== beneficiary(b) && isSettled(b.result))
+  // Les paris importés de l'Excel sont déjà dans le solde historique (onglet « Compta Kévin ») : on ne les recompte pas
+  const concerned = bets.filter(b => b.source !== 'import_excel' && b.status === 'Pris' && b.placed_by && beneficiary(b) && b.placed_by !== beneficiary(b) && isSettled(b.result))
   let balance = legacyBalance
   for (const b of concerned) {
     const p = resultProfit(b)

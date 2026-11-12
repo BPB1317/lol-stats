@@ -118,6 +118,11 @@ describe('partage', () => {
     expect(r.balance).toBeCloseTo(1584.48 + 20 - 27)
     expect(r.concerned.length).toBe(2)
   })
+  it('compta entre nous : les paris importés de l’Excel ne sont pas recomptés (déjà dans le solde historique)', () => {
+    const imported = bet({ source: 'import_excel', portfolio: 'squawo', placed_by: 'Kelicful', result: 'Gagnant', stake: 100, odds: 2 })
+    expect(interPersonBalance([imported], 1584.48).balance).toBeCloseTo(1584.48)
+    expect(interPersonBalance([{ ...imported, source: 'app' }], 1584.48).balance).toBeCloseTo(1684.48)
+  })
   it('règlement : Kelicful paie 500 € à Squawo → la dette baisse de 500 ; bilans et bankroll inchangés', () => {
     const pay = move({ kind: 'Règlement', person: 'Kelicful', amount: 500 })
     expect(interPersonBalance([], 1584.48, [pay]).balance).toBeCloseTo(1084.48)
