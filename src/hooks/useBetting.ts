@@ -34,7 +34,14 @@ async function fetchAll<T>(table: string, order: string, eq?: [column: string, v
   return out
 }
 
-function useRealtimeTable<T>(table: string, order: string) {
+// Rafraîchissement local après chaque écriture faite depuis ce navigateur : l'écran se met à jour tout de suite,
+// sans dépendre du temps réel (qui reste là pour voir les saisies de l'autre). Un pari ajouté / modifié apparaît
+// immédiatement (mise à jour optimiste), puis la table est relue pour se caler sur la base.
+type LocalChange = { table: string; upsert?: { id: string }; remove?: string }
+const bus = new EventTarget()
+function changed(c: LocalChange) { bus.dispatchEvent(new CustomEvent('change', { detail: c })) }
+
+function useRealtimeTable<T extends { id: string }>(table: string, order: string) {
   const [rows, setRows] = useState<T[]>([])
   const [loading, setLoading] = useState(true)
   useEffect(() => {
@@ -47,7 +54,21 @@ function useRealtimeTable<T>(table: string, order: string) {
     const channel = supabase.channel(channelName(`rt-${table}`))
       .on('postgres_changes', { event: '*', schema: 'public', table }, load)
       .subscribe()
-    return () => { alive = false; supabase.removeChannel(channel) }
+    const onLocal = (e: Event) => {
+      const c = (e as CustomEvent<LocalChange>).detail
+      if (c.table !== table) return
+      if (c.upsert) {
+        const row = c.upsert as unknown as T
+        setRows(rs => rs.some(r => r.id === row.id) ? rs.map(r => (r.id === row.id ? { ...r, ...row } : r)) : [...rs, row])
+      }
+      if (c.remove) setRows(rs => rs.filter(r => r.id !== c.remove))
+      load()
+    }
+    bus.addEventListener('change', onLocal)
+    // Filet de sécurité si un message temps réel se perd : relecture quand on revient sur l'onglet
+    const onVisible = () => { if (document.visibilityState === 'visible') load() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => { alive = false; supabase.removeChannel(channel); bus.removeEventListener('change', onLocal); document.removeEventListener('visibilitychange', onVisible) }
   }, [table, order])
   return { rows, loading }
 }
@@ -73,6 +94,7 @@ export function prepareBet<T extends Partial<BetInput>>(b: T): T {
 /** `inline` : l'appelant affiche lui-même l'erreur (le formulaire garde le brouillon) — pas de « Réessayer » en double. */
 export async function addBet(b: BetInput, opts: { inline?: boolean } = {}): Promise<{ bet: Bet | null; error: PostgrestError | null }> {
   const { data, error } = await supabase.from('bets').insert(prepareBet({ ...b, source: 'app' })).select().single()
+  if (!error && data) changed({ table: 'bets', upsert: data as Bet })
   if (opts.inline) { if (!error) notify('ok', 'Pari enregistré') }
   else report(error, () => addBet(b), 'Pari enregistré')
   return { bet: data as Bet | null, error }
@@ -83,6 +105,7 @@ export async function updateBet(id: string, patch: Partial<BetInput>, current?: 
   const keys = new Set([...Object.keys(patch), 'clv', 'clv_method', 'market'])
   const changes = Object.fromEntries(Object.entries(merged).filter(([k]) => keys.has(k)))
   const { error } = await supabase.from('bets').update(changes).eq('id', id)
+  if (!error) changed({ table: 'bets', upsert: { id, ...changes } })
   return report(error, () => updateBet(id, patch, current), 'Enregistré')
 }
 
@@ -100,11 +123,13 @@ export async function fetchDeletedBets(limit = 50) {
 /** Remet un pari supprimé tel qu'il était (même identifiant). */
 export async function restoreBet(old: Bet): Promise<PostgrestError | null> {
   const { error } = await supabase.from('bets').insert(old)
+  if (!error) changed({ table: 'bets', upsert: old })
   return report(error, () => restoreBet(old), 'Pari restauré')
 }
 
 export async function deleteBet(id: string): Promise<PostgrestError | null> {
   const { error } = await supabase.from('bets').delete().eq('id', id)
+  if (!error) changed({ table: 'bets', remove: id })
   return report(error, () => deleteBet(id), 'Pari supprimé (restaurable dans Réglages → Paris supprimés)')
 }
 
@@ -117,11 +142,13 @@ export function useMoneyMoves() {
 
 export async function addMoneyMove(m: Omit<MoneyMove, 'id' | 'created_at' | 'source' | 'source_ref'>): Promise<PostgrestError | null> {
   const { error } = await supabase.from('money_moves').insert({ ...m, source: 'app' })
+  if (!error) changed({ table: 'money_moves' })
   return report(error, () => addMoneyMove(m), 'Mouvement enregistré')
 }
 
 export async function deleteMoneyMove(id: string): Promise<PostgrestError | null> {
   const { error } = await supabase.from('money_moves').delete().eq('id', id)
+  if (!error) changed({ table: 'money_moves', remove: id })
   return report(error, () => deleteMoneyMove(id), 'Mouvement supprimé')
 }
 
@@ -149,13 +176,16 @@ export function useSettings() {
     }
     load()
     const channel = supabase.channel(channelName('rt-app_settings')).on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, load).subscribe()
-    return () => { supabase.removeChannel(channel) }
+    const onLocal = (e: Event) => { if ((e as CustomEvent<LocalChange>).detail.table === 'app_settings') load() }
+    bus.addEventListener('change', onLocal)
+    return () => { supabase.removeChannel(channel); bus.removeEventListener('change', onLocal) }
   }, [])
   return { settings, loading }
 }
 
 export async function updateSettings(patch: Partial<AppSettings>): Promise<PostgrestError | null> {
   const { error } = await supabase.from('app_settings').update(patch).eq('id', true)
+  if (!error) changed({ table: 'app_settings' })
   return report(error, () => updateSettings(patch), 'Réglages enregistrés')
 }
 
@@ -198,7 +228,9 @@ export function useTennisElo(tour: 'ATP' | 'WTA') {
     }
     load()
     const channel = supabase.channel(channelName(`rt-tennis-${tour}`)).on('postgres_changes', { event: '*', schema: 'public', table: 'tennis_elo' }, load).subscribe()
-    return () => { alive = false; supabase.removeChannel(channel) }
+    const onLocal = (e: Event) => { if ((e as CustomEvent<LocalChange>).detail.table === 'tennis_elo') load() }
+    bus.addEventListener('change', onLocal)
+    return () => { alive = false; supabase.removeChannel(channel); bus.removeEventListener('change', onLocal) }
   }, [tour])
   return { players, loading }
 }
@@ -211,5 +243,6 @@ export async function replaceTennisElo(tour: 'ATP' | 'WTA', rows: Omit<TennisElo
     const { error } = await supabase.from('tennis_elo').insert(rows.slice(i, i + 500).map(r => ({ ...r, tour })))
     if (error) return error
   }
+  changed({ table: 'tennis_elo' })
   return null
 }
