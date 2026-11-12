@@ -233,7 +233,7 @@ export function EloCalculator({ ratings, defaultMode = 'teams', leagueName }: El
               <div className="grid gap-x-10 gap-y-6 lg:grid-cols-2">
                 {SERIES_BLOCKS.map(block => (
                   <div key={block.title} className="border-t-2 border-ink pt-2">
-                    <div className="mb-1 text-lg font-bold text-ink">{block.title}</div>
+                    <div className="mb-1 text-center text-lg font-bold text-ink">{block.title}</div>
                     <div className="grid grid-cols-2 gap-x-3 sm:gap-x-6">
                       <div className="truncate border-b border-ink pb-1 text-sm font-semibold text-ink">{result.label1}</div>
                       <div className="truncate border-b border-ink pb-1 text-sm font-semibold text-ink">{result.label2}</div>
