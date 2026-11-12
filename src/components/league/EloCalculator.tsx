@@ -1,4 +1,7 @@
 import { useState, Fragment } from 'react'
+
+const BO_KEY = 'sk-calc-bo'
+function loadBo(): 'BO3' | 'BO5' { try { return localStorage.getItem(BO_KEY) === 'BO5' ? 'BO5' : 'BO3' } catch { return 'BO3' } }
 import { Link, useLocation } from 'react-router-dom'
 import { useSettings } from '@/hooks/useBetting'
 import { seriesProbs, type SeriesProbs } from '@/lib/seriesOdds'
@@ -27,24 +30,18 @@ const SERIES_BLOCKS: { title: string; rows: { label: string; a: Side; b: Side }[
 ]
 
 // Une cote cliquable ouvre le formulaire de pari prérempli (« Prendre ce pari »)
-function OddsCell({ p, hdp, href }: { p: number; hdp?: string; href?: string }) {
+function OddsCell({ p, label, href }: { p: number; label: string; href?: string }) {
   const isFav = p >= 0.5
   const Tag = href ? Link : 'div'
   return (
-    <Tag
-      to={href ?? ''}
-      title={href ? 'Prendre ce pari' : undefined}
-      className={`flex items-center justify-between gap-2 border-b border-line px-1 py-2 ${href ? 'hover:bg-raised' : ''}`}
-    >
-      <span className="text-sm font-semibold font-mono" style={{ color: 'var(--color-muted)' }}>{hdp ?? ''}</span>
-      <div className="text-right">
-        <div className={`font-mono text-xl leading-tight ${isFav ? 'font-bold text-win' : 'font-semibold text-ink'}`}>
-          {(1 / p).toFixed(2)}
-        </div>
-        <div className="text-xs font-mono" style={{ color: 'var(--color-muted)' }}>
-          {(p * 100).toFixed(1)}%
-        </div>
-      </div>
+    <Tag to={href ?? ''} title={href ? 'Prendre ce pari' : undefined}
+      className={`flex items-baseline justify-between gap-3 border-b border-line px-1 py-2.5 ${href ? 'hover:bg-raised' : ''}`}>
+      <span className="min-w-0 truncate font-mono text-sm text-muted">{label === 'Vainqueur' ? <><span className="sm:hidden">Vainq.</span><span className="hidden sm:inline">Vainqueur</span></> : label}</span>
+      {/* Téléphone : proba sous la cote ; écran large : proba à gauche de la cote */}
+      <span className="flex shrink-0 flex-col items-end sm:flex-row sm:items-baseline sm:gap-3">
+        <span className={`order-1 text-right font-mono text-xl leading-tight sm:order-2 sm:w-16 ${isFav ? 'font-bold text-win' : 'font-semibold text-ink'}`}>{(1 / p).toFixed(2)}</span>
+        <span className="order-2 whitespace-nowrap font-mono text-[11px] text-faint sm:order-1 sm:text-xs">{(p * 100).toFixed(1)}&nbsp;%</span>
+      </span>
     </Tag>
   )
 }
@@ -73,6 +70,8 @@ export function EloCalculator({ ratings, defaultMode = 'teams', leagueName }: El
   const [manualDelta, setManualDelta] = useState('')
   const [mode, setMode] = useState<'teams' | 'manual'>(defaultMode)
   const [sEdit, setSInput] = useState<string | null>(null)
+  const [bo, setBoState] = useState<'BO3' | 'BO5'>(loadBo)
+  const setBo = (v: 'BO3' | 'BO5') => { setBoState(v); try { localStorage.setItem(BO_KEY, v) } catch { /* indisponible */ } }
   const sInput = sEdit ?? String(settings.series_concentration) // valeur des Réglages tant qu'on ne la change pas
   const s = parseFloat(sInput)
 
@@ -225,46 +224,34 @@ export function EloCalculator({ ratings, defaultMode = 'teams', leagueName }: El
           </div>
         )}
 
-        {/* BO3 / BO5 + handicaps, dérivés de la proba BO1 */}
+        {/* BO3 / BO5 + handicaps, dérivés de la proba BO1 : d'abord le format, puis A en face de B */}
         {result && (
-          <div className="space-y-3 pt-1">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-ink">Séries & handicaps</h3>
-              <label className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-muted)' }}>
+          <div className="space-y-3 border-t border-ink pt-3">
+            <div className="flex items-center justify-between gap-3">
+              <div role="tablist" aria-label="Format" className="flex border border-ink">
+                {(['BO3', 'BO5'] as const).map((v, i) => (
+                  <button key={v} role="tab" aria-selected={bo === v} onClick={() => setBo(v)}
+                    className={`h-9 px-5 text-sm font-bold ${i ? 'border-l border-ink' : ''} ${bo === v ? 'bg-ink text-bg' : 'text-ink hover:bg-raised'}`}>{v}</button>
+                ))}
+              </div>
+              <label className="flex items-center gap-2 text-xs text-muted" title="Concentration du modèle de séries (Réglages)">
                 s =
-                <input
-                  type="number"
-                  value={sInput}
-                  onChange={e => setSInput(e.target.value)}
-                  className="w-20 rounded-lg px-2 py-1.5 text-sm text-ink outline-none text-center font-mono"
-                  style={{ background: 'var(--color-bg)', border: '1px solid var(--color-line)' }}
-                />
+                <input type="number" value={sInput} onChange={e => setSInput(e.target.value)} className="field w-16 px-2 py-1 text-center font-mono text-sm" />
               </label>
             </div>
             {series ? (
-              <div className="grid gap-3 lg:grid-cols-2">
-                {SERIES_BLOCKS.map(block => (
-                  <div
-                    key={block.title}
-                    className="border-t border-ink pt-3"
-                  >
-                    <div className="grid grid-cols-[4.5rem_1fr_1fr] gap-2 items-center">
-                      <div className="text-base font-bold" style={{ color: 'var(--color-ink)' }}>{block.title}</div>
-                      <div className="text-sm font-semibold text-ink text-center truncate">{result.label1}</div>
-                      <div className="text-sm font-semibold text-ink text-center truncate">{result.label2}</div>
-                      {block.rows.map((row, i) => (
-                        <Fragment key={i}>
-                          <div className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{row.label}</div>
-                          <OddsCell p={series.a[row.a.key]} hdp={row.a.hdp} href={takeHref(result.label1, row.a.hdp, 1 / series.a[row.a.key])} />
-                          <OddsCell p={series.b[row.b.key]} hdp={row.b.hdp} href={takeHref(result.label2, row.b.hdp, 1 / series.b[row.b.key])} />
-                        </Fragment>
-                      ))}
-                    </div>
-                  </div>
+              <div className="grid grid-cols-2 gap-x-3 sm:gap-x-6">
+                <div className="truncate border-b-2 border-ink pb-1.5 text-base font-bold text-ink">{result.label1}</div>
+                <div className="truncate border-b-2 border-ink pb-1.5 text-base font-bold text-ink">{result.label2}</div>
+                {SERIES_BLOCKS.find(x => x.title === bo)!.rows.map((row, i) => (
+                  <Fragment key={i}>
+                    <OddsCell p={series.a[row.a.key]} label={row.a.hdp ?? 'Vainqueur'} href={takeHref(result.label1, row.a.hdp, 1 / series.a[row.a.key])} />
+                    <OddsCell p={series.b[row.b.key]} label={row.b.hdp ?? 'Vainqueur'} href={takeHref(result.label2, row.b.hdp, 1 / series.b[row.b.key])} />
+                  </Fragment>
                 ))}
               </div>
             ) : (
-              <div className="text-sm" style={{ color: 'var(--color-muted)' }}>s doit être &gt; 0.</div>
+              <div className="text-sm text-muted">s doit être &gt; 0.</div>
             )}
           </div>
         )}
