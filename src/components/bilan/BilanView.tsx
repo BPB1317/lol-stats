@@ -58,8 +58,16 @@ function useExcludedSports(portfolio: Portfolio) {
   return [excluded, save] as const
 }
 
+/** Compter ou non les paris en live, mémorisé par portefeuille sur cet appareil. */
+function useLiveCounted(portfolio: Portfolio) {
+  const key = `sk-bilan-live-${portfolio}`
+  const [on, setOn] = useState<boolean>(() => { try { return localStorage.getItem(key) !== '0' } catch { return true } })
+  const save = (v: boolean) => { setOn(v); try { localStorage.setItem(key, v ? '1' : '0') } catch { /* stockage indisponible */ } }
+  return [on, save] as const
+}
+
 /** Menu à coches des sports (barre d'outils de l'historique). */
-function SportChecklist({ sports, excluded, onChange }: { sports: string[]; excluded: string[]; onChange: (v: string[]) => void }) {
+function SportChecklist({ sports, excluded, onChange, live, onLive, hasLive }: { sports: string[]; excluded: string[]; onChange: (v: string[]) => void; live: boolean; onLive: (v: boolean) => void; hasLive: boolean }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -73,7 +81,7 @@ function SportChecklist({ sports, excluded, onChange }: { sports: string[]; excl
   return (
     <div ref={ref} className="relative">
       <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="field flex items-center gap-1.5 px-2 py-1.5 text-xs">
-        {excluded.length ? `Sports : ${counted.length} / ${sports.length}` : 'Tous les sports'} <span className="text-faint">▾</span>
+        {excluded.length ? `Sports : ${counted.length} / ${sports.length}` : 'Tous les sports'}{hasLive && !live ? ' · sans live' : ''} <span className="text-faint">▾</span>
       </button>
       {open && (
         <div className="absolute left-0 top-full z-20 mt-1 min-w-[190px] border border-ink bg-bg py-1 text-xs">
@@ -85,8 +93,13 @@ function SportChecklist({ sports, excluded, onChange }: { sports: string[]; excl
               <button type="button" onClick={() => onChange(sports.filter(y => y !== x))} className="text-[10px] text-faint hover:text-ink">seul</button>
             </div>
           ))}
+          {hasLive && (
+            <label className="mt-1 flex cursor-pointer items-center gap-2 border-t border-line px-3 pb-1 pt-1.5 hover:bg-raised">
+              <input type="checkbox" checked={live} onChange={() => onLive(!live)} className="accent-[var(--color-ink)]" />Paris en live
+            </label>
+          )}
           <div className="mt-1 border-t border-line px-3 pb-1 pt-1.5">
-            <button type="button" onClick={() => onChange([])} className="text-faint underline underline-offset-2 hover:text-ink">Tout cocher</button>
+            <button type="button" onClick={() => { onChange([]); onLive(true) }} className="text-faint underline underline-offset-2 hover:text-ink">Tout cocher</button>
           </div>
         </div>
       )}
@@ -146,6 +159,7 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
   const [showAll, setShowAll] = useState(false)
   const [year, setYear] = useState<string>('Toutes')
   const [excludedRaw, setExcluded] = useExcludedSports(portfolio)
+  const [liveRaw, setLive] = useLiveCounted(portfolio)
   const [market, setMarket] = useState<Market | null>(null)
   const [result, setResult] = useState<BetResult | 'Tous'>('Tous')
   const [mode, setMode] = useState<'continu' | 'superpose'>('continu')
@@ -161,12 +175,14 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
   const sports = [...new Set(base.map(b => b.sport))].sort()
   // Sports décochés : seuls ceux qui existent dans ce portefeuille comptent (un sport disparu ne bloque rien)
   const excluded = excludedRaw.filter(x => sports.includes(x))
-  const sportOn = (b: Bet) => !excluded.includes(b.sport)
+  const hasLive = base.some(b => b.is_live)
+  const live = liveRaw || !hasLive   // sans pari live dans ce portefeuille, la case n'a pas d'effet
+  const sportOn = (b: Bet) => !excluded.includes(b.sport) && (live || !b.is_live)
   const toggleSport = (x: string) => setExcluded(excluded.includes(x) ? excluded.filter(e => e !== x) : [...excluded, x])
   const inYear = (d: string) => year === 'Toutes' || d.startsWith(year)
   const bySportMarket = (b: Bet) => sportOn(b) && (!market || b.market === market)
   // Les ajustements n'ont ni sport ni marché : ils ne comptent que sans ces filtres
-  const movesOn = excluded.length === 0 && !market
+  const movesOn = excluded.length === 0 && live && !market
 
   const filtered = base.filter(b => inYear(b.bet_date) && bySportMarket(b))
   const filteredMoves = movesOn ? baseMoves.filter(m => inYear(m.move_date)) : []
@@ -203,16 +219,23 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
     ? (firstDate ? `Depuis ${MONTHS[+firstDate.slice(5, 7) - 1]} ${firstDate.slice(0, 4)}` : '')
     : `En ${year}`
   const counted = sports.filter(x => !excluded.includes(x))
-  const filterLabel = [excluded.length ? `sans ${excluded.join(', ')}` : null, market].filter(Boolean).join(', ')
+  const filterLabel = [excluded.length ? `sans ${excluded.join(', ')}` : null, live ? null : 'sans live', market].filter(Boolean).join(', ')
 
   // Coches de sports : pilule allumée = sport compté ; « Tous » recoche tout
-  const sportSelect = sports.length > 1 && (
+  const sportSelect = (sports.length > 1 || hasLive) && (
     <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Sports comptés">
       <button data-on={excluded.length === 0} onClick={() => setExcluded([])} className="pill shrink-0 px-3 py-1.5 text-xs">Tous</button>
       {sports.map(x => (
         <button key={x} data-on={excluded.length > 0 && !excluded.includes(x)} aria-pressed={!excluded.includes(x)} onClick={() => toggleSport(x)}
           className={`pill shrink-0 px-3 py-1.5 text-xs ${excluded.includes(x) ? 'line-through opacity-60' : ''}`}>{x}</button>
       ))}
+      {hasLive && (
+        <>
+          <span className="mx-1 h-5 w-px bg-line" aria-hidden />
+          <button aria-pressed={live} onClick={() => setLive(!live)} title="Compter ou non les paris pris en live"
+            className={`pill shrink-0 px-3 py-1.5 text-xs ${live ? '' : 'line-through opacity-60'}`}>● Live</button>
+        </>
+      )}
     </div>
   )
 
@@ -253,10 +276,12 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
               {s.adjustments !== 0 && <> Dont <span className="font-mono">{eur0(s.adjustments, true)}</span> d'ajustements.</>}
             </p>
           ) : <p className="mt-4 text-sm text-muted">Aucun pari réglé sur cette période.</p>}
-          {excluded.length > 0 && (
+          {(excluded.length > 0 || !live) && (
             <p className="mt-2 text-[11px] text-faint">
-              Sports comptés : {counted.join(', ') || 'aucun'} · non comptés : {excluded.join(', ')}
-              {' '}<button onClick={() => setExcluded([])} className="underline underline-offset-2 hover:text-ink">tout compter</button>
+              {excluded.length > 0 && <>Sports comptés : {counted.join(', ') || 'aucun'} · non comptés : {excluded.join(', ')}</>}
+              {excluded.length > 0 && !live && ' · '}
+              {!live && 'paris en live non comptés'}
+              {' '}<button onClick={() => { setExcluded([]); setLive(true) }} className="underline underline-offset-2 hover:text-ink">tout compter</button>
             </p>
           )}
         </div>
@@ -283,7 +308,7 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
             {year === 'Toutes' && years.length > 1 && (['continu', 'superpose'] as const).map(m => (
               <button key={m} onClick={() => setMode(m)} className={`text-xs ${mode === m ? 'text-ink underline underline-offset-4' : 'text-muted hover:text-ink'}`}>{m === 'continu' ? 'Continu' : 'Années superposées'}</button>
             ))}
-            <span className="font-mono text-xs text-accent">{heroInt}</span>
+            <span className="font-mono text-xs text-accent">{heroSign}{heroInt}</span>
           </span>
         </div>
         {monthEnd.length ? <CumulativeChart points={monthEnd} mode={year === 'Toutes' ? mode : 'continu'} height={260} endLabel={false} /> : <div className="py-10 text-center text-sm text-muted">Pas encore de données.</div>}
@@ -345,7 +370,7 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
                 <option value="Tous">Tous les résultats</option>
                 {RESULTS.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
-              <SportChecklist sports={sports} excluded={excluded} onChange={setExcluded} />
+              <SportChecklist sports={sports} excluded={excluded} onChange={setExcluded} live={live} onLive={setLive} hasLive={hasLive} />
             </>
           }
         />

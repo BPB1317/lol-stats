@@ -10,7 +10,7 @@ function bet(p: Partial<Bet>): Bet {
   return {
     id: String(++n), bet_date: '2026-03-01', game: 'A vs B', selection: 'A', sport: 'E-sport', stake: 100, odds: 2,
     result: 'Gagnant', status: 'Pris', portfolio: 'commun', closing_odds: null, clv: null, clv_method: null, league: null,
-    market: null, placed_by: null, share_squawo: null, note: null, source: 'app', source_ref: null, created_by: null,
+    market: null, placed_by: null, share_squawo: null, note: null, is_live: false, source: 'app', source_ref: null, created_by: null,
     created_at: '', updated_at: '', ...p,
   }
 }

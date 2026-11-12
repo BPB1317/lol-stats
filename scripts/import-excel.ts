@@ -88,7 +88,7 @@ const notes: string[] = []
 interface BetRow {
   bet_date: string; game: string | null; selection: string; sport: string; stake: number; odds: number; result: BetResult
   status: 'Pris' | 'Vu pas pris'; portfolio: 'commun' | 'kelicful'; closing_odds: number | null; clv: number | null; clv_method: ClvMethod | null
-  market: string; placed_by: 'Squawo' | 'Kelicful' | null; note: string | null; source: 'import_excel'; source_ref: string
+  market: string; placed_by: 'Squawo' | 'Kelicful' | null; note: string | null; is_live: boolean; source: 'import_excel'; source_ref: string
 }
 
 /** Méthode de CLV reconnue en recalculant les deux formules de l'Excel. */
@@ -118,7 +118,7 @@ function toBet(r: Row, o: { portfolio: 'commun' | 'kelicful'; status: 'Pris' | '
   return {
     bet_date: r.date, game: r.game, selection, sport: o.sport, stake: r.stake, odds: r.odds, result, status: o.status, portfolio: o.portfolio,
     closing_odds: r.closing && r.closing > 1 ? r.closing : null, clv, clv_method: method, market: inferMarket(selection), placed_by: o.placedBy,
-    note: null, source: 'import_excel', source_ref: ref(r),
+    note: null, is_live: false, source: 'import_excel', source_ref: ref(r),
   }
 }
 
@@ -182,7 +182,7 @@ async function main() {
   for (const [tab, label] of [['Bilan Live Kelicful 2026', 'live'], ['Bilan foot "compta" Kelicful 20', 'compta foot']] as const) {
     for (const r of readBetTab(wb, tab)) {
       const b = kelicfulRefs.get(key(r))
-      if (b) b.note = b.note ? `${b.note}, ${label}` : label
+      if (b) { b.note = b.note ? `${b.note}, ${label}` : label; if (label === 'live') b.is_live = true }
       else unmatched.push(`${ref(r)} : ${r.date} · ${r.bet} · ${r.game} · ${r.stake} € @ ${r.odds} · ${r.result}`)
     }
   }

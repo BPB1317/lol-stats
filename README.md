@@ -50,6 +50,7 @@ Le schéma complet est dans `supabase/schema.sql`. Chaque évolution passe par u
 | `20261111_04_poids_tennis.sql` | répartition Elo / Elo surface par surface |
 | `20261111_05_apparence.sql` | style et mode mémorisés par utilisateur |
 | `20261112_06_onglets.sql` | onglets personnalisés par utilisateur (ordre, masqués) |
+| `20261112_07_live.sql` | case « Live » sur les paris (reprise de la mention live de l'import) |
 
 Toutes les tables ont la RLS activée (accès aux utilisateurs connectés). **Les inscriptions sont fermées** dans Supabase :
 les comptes se créent par invitation. La table `profiles` relie chaque compte à Squawo ou Kelicful (remplie hors dépôt).

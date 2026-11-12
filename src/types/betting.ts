@@ -31,6 +31,7 @@ export interface Bet {
   placed_by: Person | null
   share_squawo: number | null
   note: string | null
+  is_live: boolean               // pari pris en live (migration 07)
   source: 'app' | 'import_excel'
   source_ref: string | null
   created_by: string | null

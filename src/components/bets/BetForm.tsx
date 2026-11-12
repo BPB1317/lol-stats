@@ -33,7 +33,7 @@ interface Props {
 interface Draft {
   betDate: string; game: string; selection: string; sport: string; sportTouched: boolean; market: Market | ''
   stake: string; odds: string; result: BetResult; status: 'Pris' | 'Vu pas pris'; portfolio: Portfolio
-  closing: string; league: string; placedBy: Person | ''; placedByTouched: boolean; share: string; note: string
+  closing: string; league: string; placedBy: Person | ''; placedByTouched: boolean; share: string; note: string; live: boolean
 }
 
 function loadDraft(): Draft | null {
@@ -91,7 +91,7 @@ function initialState(bet: Bet | undefined, prefill: Partial<BetInput> | undefin
     market: init.market ?? '', stake: init.stake != null ? String(init.stake) : '', odds: init.odds != null ? String(init.odds) : '',
     result: init.result ?? 'En cours', status: init.status ?? 'Pris', portfolio: init.portfolio ?? defaults.portfolio,
     closing: init.closing_odds != null ? String(init.closing_odds) : '', league: init.league ?? '', placedBy: init.placed_by ?? '', placedByTouched: init.placed_by != null,
-    share: init.share_squawo != null ? String(init.share_squawo) : '', note: init.note ?? '',
+    share: init.share_squawo != null ? String(init.share_squawo) : '', note: init.note ?? '', live: !!init.is_live,
   }
 }
 
@@ -136,7 +136,7 @@ export function BetForm({ bet, prefill, defaults, sports, leagues, teamKeys, onS
     const values: BetInput = {
       bet_date: f.betDate || today(), game: f.game.trim() || null, selection: f.selection.trim(), sport, stake: s, odds: o,
       result: f.result, status: f.status, portfolio: f.portfolio, closing_odds: c, clv: bet?.clv ?? null, clv_method: bet?.clv_method ?? null,
-      league: f.league || null, market, placed_by: placedBy || null, share_squawo: sh, note: f.note.trim() || null,
+      league: f.league || null, market, placed_by: placedBy || null, share_squawo: sh, note: f.note.trim() || null, is_live: !!f.live,
     }
     setSaving(true)
     if (bet) {
@@ -213,7 +213,13 @@ export function BetForm({ bet, prefill, defaults, sports, leagues, teamKeys, onS
               </Row>
               <Row k="Marché" hint={!f.market ? 'déduit' : undefined}><Pills value={market} options={MARKETS} onChange={v => set('market', v)} /></Row>
               <Row k="Résultat"><Pills value={f.result} options={RESULTS} onChange={v => set('result', v)} labels={{ '1/2 Gagnant': '½ Gagnant', '1/2 Perdant': '½ Perdant' }} /></Row>
-              <Row k="Statut"><Pills value={f.status} options={['Pris', 'Vu pas pris'] as const} onChange={v => set('status', v)} /></Row>
+              <Row k="Statut">
+                <div className="flex flex-wrap items-center gap-1">
+                  <Pills value={f.status} options={['Pris', 'Vu pas pris'] as const} onChange={v => set('status', v)} />
+                  <span className="mx-1 h-4 w-px bg-line" aria-hidden />
+                  <button type="button" data-on={!!f.live} onClick={() => set('live', !f.live)} className={PILL_SM} title="Pari pris pendant le match">● Live</button>
+                </div>
+              </Row>
               <Row k="Placé par"><Pills value={placedBy} options={['Squawo', 'Kelicful'] as const} onChange={v => setF(p => ({ ...p, placedBy: v, placedByTouched: true }))} /></Row>
               <Row k="Clôture · ligue">
                 <div className="grid grid-cols-2 gap-3">

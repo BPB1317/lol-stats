@@ -33,7 +33,7 @@ export function QuickAdd({ portfolio: pf }: { portfolio: Portfolio }) {
     const { error: err } = await addBet({
       bet_date: todayLocal(), game: null, selection: selection.trim(), sport, stake: s, odds: o,
       result: 'En cours', status: 'Pris', portfolio: pf, closing_odds: null, clv: null, clv_method: null, league: null,
-      market: inferMarket(selection), placed_by: pf === 'kelicful' ? 'Kelicful' : person, share_squawo: null, note: null,
+      market: inferMarket(selection), placed_by: pf === 'kelicful' ? 'Kelicful' : person, share_squawo: null, note: null, is_live: false,
     }, { inline: true })
     setBusy(false)
     if (err) return setError(`Non enregistré : ${err.message}`)

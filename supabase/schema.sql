@@ -115,6 +115,7 @@ CREATE TABLE IF NOT EXISTS bets (
   placed_by TEXT CHECK (placed_by IS NULL OR placed_by IN ('Squawo', 'Kelicful')),
   share_squawo NUMERIC(5, 2) CHECK (share_squawo IS NULL OR (share_squawo >= 0 AND share_squawo <= 100)),
   note TEXT,
+  is_live BOOLEAN NOT NULL DEFAULT FALSE,                    -- pari en live (migration 07)
   source TEXT NOT NULL DEFAULT 'app' CHECK (source IN ('app', 'import_excel')),
   source_ref TEXT,
   created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL DEFAULT auth.uid(),
