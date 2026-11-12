@@ -223,15 +223,20 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
 
   // Coches de sports : pilule allumée = sport compté ; « Tous » recoche tout
   const sportSelect = (sports.length > 1 || hasLive) && (
-    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Sports comptés">
+    <div className="flex flex-wrap items-start gap-1.5" role="group" aria-label="Sports comptés">
       <button data-on={excluded.length === 0} onClick={() => setExcluded([])} className="pill shrink-0 px-3 py-1.5 text-xs">Tous</button>
       {sports.map(x => (
-        <button key={x} data-on={excluded.length > 0 && !excluded.includes(x)} aria-pressed={!excluded.includes(x)} onClick={() => toggleSport(x)}
-          className={`pill shrink-0 px-3 py-1.5 text-xs ${excluded.includes(x) ? 'line-through opacity-60' : ''}`}>{x}</button>
+        <span key={x} className="flex shrink-0 flex-col items-center">
+          <button data-on={excluded.length > 0 && !excluded.includes(x)} aria-pressed={!excluded.includes(x)} onClick={() => toggleSport(x)}
+            className={`pill px-3 py-1.5 text-xs ${excluded.includes(x) ? 'line-through opacity-60' : ''}`}>{x}</button>
+          {/* « seul » : ne compter que ce sport */}
+          <button onClick={() => setExcluded(sports.filter(y => y !== x))} aria-label={`Seulement ${x}`}
+            className="mt-0.5 text-[10px] leading-none text-faint hover:text-ink">seul</button>
+        </span>
       ))}
       {hasLive && (
         <>
-          <span className="mx-1 h-5 w-px bg-line" aria-hidden />
+          <span className="mx-1 mt-1.5 h-5 w-px bg-line" aria-hidden />
           <button aria-pressed={live} onClick={() => setLive(!live)} title="Compter ou non les paris pris en live"
             className={`pill shrink-0 px-3 py-1.5 text-xs ${live ? '' : 'line-through opacity-60'}`}>● Live</button>
         </>
