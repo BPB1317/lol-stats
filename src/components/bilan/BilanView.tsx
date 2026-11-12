@@ -1,7 +1,7 @@
 // Écran « Bilan » d'un portefeuille (commun ou Kelicful) — reprend le tableau de bord de l'Excel.
 // Règles : paris réglés = G, P, ½G, ½P ; ROI = (bénéfice + ajustements) ÷ misé ; « Vu pas pris » exclus ;
 // saisons masquées et date de remise à zéro appliquées sans rien supprimer.
-import { useState, type ReactNode } from 'react'
+import { useState, useEffect, useRef, type ReactNode } from 'react'
 import type { Bet, BetResult, Market, MoneyMove, Portfolio } from '@/types/betting'
 import { RESULTS } from '@/types/betting'
 import { summarize, groupSummaries, cumulative, visible, formatEur, formatPct, formatNum, isSettled, resultProfit, type Summary } from '@/lib/betStats'
@@ -49,6 +49,50 @@ function Panel({ title, sub, right, children, flush }: { title: string; sub?: st
 }
 
 type Row = Summary & { key: string; label: ReactNode }
+
+/** Sports exclus du bilan, mémorisés par portefeuille sur cet appareil. */
+function useExcludedSports(portfolio: Portfolio) {
+  const key = `sk-bilan-sports-${portfolio}`
+  const [excluded, setExcluded] = useState<string[]>(() => { try { const v = JSON.parse(localStorage.getItem(key) ?? '[]'); return Array.isArray(v) ? v : [] } catch { return [] } })
+  const save = (v: string[]) => { setExcluded(v); try { localStorage.setItem(key, JSON.stringify(v)) } catch { /* stockage indisponible */ } }
+  return [excluded, save] as const
+}
+
+/** Menu à coches des sports (barre d'outils de l'historique). */
+function SportChecklist({ sports, excluded, onChange }: { sports: string[]; excluded: string[]; onChange: (v: string[]) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [open])
+  const counted = sports.filter(x => !excluded.includes(x))
+  const toggle = (x: string) => onChange(excluded.includes(x) ? excluded.filter(e => e !== x) : [...excluded, x])
+  return (
+    <div ref={ref} className="relative">
+      <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="field flex items-center gap-1.5 px-2 py-1.5 text-xs">
+        {excluded.length ? `Sports : ${counted.length} / ${sports.length}` : 'Tous les sports'} <span className="text-faint">▾</span>
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-20 mt-1 min-w-[190px] border border-ink bg-bg py-1 text-xs">
+          {sports.map(x => (
+            <div key={x} className="flex items-center justify-between gap-3 px-3 py-1 hover:bg-raised">
+              <label className="flex flex-1 cursor-pointer items-center gap-2">
+                <input type="checkbox" checked={!excluded.includes(x)} onChange={() => toggle(x)} className="accent-[var(--color-ink)]" />{x}
+              </label>
+              <button type="button" onClick={() => onChange(sports.filter(y => y !== x))} className="text-[10px] text-faint hover:text-ink">seul</button>
+            </div>
+          ))}
+          <div className="mt-1 border-t border-line px-3 pb-1 pt-1.5">
+            <button type="button" onClick={() => onChange([])} className="text-faint underline underline-offset-2 hover:text-ink">Tout cocher</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 /** Petit tableau de bilan (par année, par sport, par marché, par CLV) ; une ligne cliquable peut filtrer la page. */
 function SummaryTable({ rows, total, columns, selected, onPick }: {
@@ -101,7 +145,7 @@ function SummaryTable({ rows, total, columns, selected, onPick }: {
 export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sportFirst = false }: Props) {
   const [showAll, setShowAll] = useState(false)
   const [year, setYear] = useState<string>('Toutes')
-  const [sport, setSport] = useState<string>('Tous')
+  const [excludedRaw, setExcluded] = useExcludedSports(portfolio)
   const [market, setMarket] = useState<Market | null>(null)
   const [result, setResult] = useState<BetResult | 'Tous'>('Tous')
   const [mode, setMode] = useState<'continu' | 'superpose'>('continu')
@@ -115,10 +159,14 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
 
   const years = [...new Set(base.map(b => b.bet_date.slice(0, 4)))].sort()
   const sports = [...new Set(base.map(b => b.sport))].sort()
+  // Sports décochés : seuls ceux qui existent dans ce portefeuille comptent (un sport disparu ne bloque rien)
+  const excluded = excludedRaw.filter(x => sports.includes(x))
+  const sportOn = (b: Bet) => !excluded.includes(b.sport)
+  const toggleSport = (x: string) => setExcluded(excluded.includes(x) ? excluded.filter(e => e !== x) : [...excluded, x])
   const inYear = (d: string) => year === 'Toutes' || d.startsWith(year)
-  const bySportMarket = (b: Bet) => (sport === 'Tous' || b.sport === sport) && (!market || b.market === market)
+  const bySportMarket = (b: Bet) => sportOn(b) && (!market || b.market === market)
   // Les ajustements n'ont ni sport ni marché : ils ne comptent que sans ces filtres
-  const movesOn = sport === 'Tous' && !market
+  const movesOn = excluded.length === 0 && !market
 
   const filtered = base.filter(b => inYear(b.bet_date) && bySportMarket(b))
   const filteredMoves = movesOn ? baseMoves.filter(m => inYear(m.move_date)) : []
@@ -141,7 +189,7 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
   const lastBets = [...filtered].filter(b => isSettled(b.result)).sort((a, b) => b.bet_date.localeCompare(a.bet_date) || b.created_at.localeCompare(a.created_at)).slice(0, 5)
 
   const yearScoped = base.filter(b => inYear(b.bet_date))
-  const marketRows: Row[] = groupSummaries(yearScoped.filter(b => sport === 'Tous' || b.sport === sport), [], (_d, b) => b?.market ?? 'Autre').map(g => ({ ...g, label: g.key })).sort((a, b) => b.count - a.count)
+  const marketRows: Row[] = groupSummaries(yearScoped.filter(sportOn), [], (_d, b) => b?.market ?? 'Autre').map(g => ({ ...g, label: g.key })).sort((a, b) => b.count - a.count)
   const sportRows: Row[] = groupSummaries(yearScoped.filter(b => !market || b.market === market), [], (_d, b) => b?.sport ?? '—').map(g => ({ ...g, label: g.key })).sort((a, b) => b.count - a.count)
   const settled = filtered.filter(b => isSettled(b.result))
   const clvRows: Row[] = [
@@ -154,11 +202,17 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
   const since = year === 'Toutes'
     ? (firstDate ? `Depuis ${MONTHS[+firstDate.slice(5, 7) - 1]} ${firstDate.slice(0, 4)}` : '')
     : `En ${year}`
-  const filterLabel = [sport !== 'Tous' ? sport : null, market].filter(Boolean).join(', ')
+  const counted = sports.filter(x => !excluded.includes(x))
+  const filterLabel = [excluded.length ? `sans ${excluded.join(', ')}` : null, market].filter(Boolean).join(', ')
 
-  const sportSelect = (
-    <div className="flex flex-wrap gap-1.5">
-      {['Tous', ...sports].map(x => <button key={x} data-on={sport === x} onClick={() => setSport(x)} className="pill shrink-0 px-3 py-1.5 text-xs">{x}</button>)}
+  // Coches de sports : pilule allumée = sport compté ; « Tous » recoche tout
+  const sportSelect = sports.length > 1 && (
+    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Sports comptés">
+      <button data-on={excluded.length === 0} onClick={() => setExcluded([])} className="pill shrink-0 px-3 py-1.5 text-xs">Tous</button>
+      {sports.map(x => (
+        <button key={x} data-on={excluded.length > 0 && !excluded.includes(x)} aria-pressed={!excluded.includes(x)} onClick={() => toggleSport(x)}
+          className={`pill shrink-0 px-3 py-1.5 text-xs ${excluded.includes(x) ? 'line-through opacity-60' : ''}`}>{x}</button>
+      ))}
     </div>
   )
 
@@ -199,6 +253,12 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
               {s.adjustments !== 0 && <> Dont <span className="font-mono">{eur0(s.adjustments, true)}</span> d'ajustements.</>}
             </p>
           ) : <p className="mt-4 text-sm text-muted">Aucun pari réglé sur cette période.</p>}
+          {excluded.length > 0 && (
+            <p className="mt-2 text-[11px] text-faint">
+              Sports comptés : {counted.join(', ') || 'aucun'} · non comptés : {excluded.join(', ')}
+              {' '}<button onClick={() => setExcluded([])} className="underline underline-offset-2 hover:text-ink">tout compter</button>
+            </p>
+          )}
         </div>
         <dl className="grid grid-cols-2 self-start border-t border-ink">
           {([
@@ -260,8 +320,8 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
         <Panel title="Par type de marché" sub="Cliquez une ligne pour filtrer la page." flush>
           <SummaryTable rows={marketRows} columns={['n', 'staked', 'profit', 'roi']} selected={market} onPick={k => setMarket(market === k ? null : k as Market)} />
         </Panel>
-        <Panel title="Par sport" sub="Cliquez une ligne pour filtrer la page." flush>
-          <SummaryTable rows={sportRows} columns={['n', 'staked', 'profit', 'roi']} selected={sport === 'Tous' ? null : sport} onPick={k => setSport(sport === k ? 'Tous' : k)} />
+        <Panel title="Par sport" sub="Cliquez une ligne pour compter ou non ce sport." flush>
+          <SummaryTable rows={sportRows.map(r => excluded.includes(r.key) ? { ...r, label: <span className="text-faint line-through">{r.label}</span> } : r)} columns={['n', 'staked', 'profit', 'roi']} onPick={toggleSport} />
         </Panel>
       </div>
 
@@ -285,10 +345,7 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
                 <option value="Tous">Tous les résultats</option>
                 {RESULTS.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
-              <select value={sport} onChange={e => setSport(e.target.value)} className="field px-2 py-1.5 text-xs" aria-label="Sport">
-                <option value="Tous">Tous les sports</option>
-                {sports.map(x => <option key={x} value={x}>{x}</option>)}
-              </select>
+              <SportChecklist sports={sports} excluded={excluded} onChange={setExcluded} />
             </>
           }
         />
