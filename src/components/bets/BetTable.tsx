@@ -7,7 +7,12 @@ import { downloadCsv } from '@/lib/csv'
 import { ResultLabel } from './ResultButtons'
 import { ClosingCell } from './ClosingCell'
 
-const PAGE = 50
+// Lignes par page : 50 par défaut, 100, 200 ou tout (0), mémorisé sur cet appareil
+const SIZES = [50, 100, 200, 0] as const
+const SIZE_KEY = 'sk-page-size'
+function loadSize(): number {
+  try { const raw = localStorage.getItem(SIZE_KEY); const v = raw == null ? 50 : Number(raw); return (SIZES as readonly number[]).includes(v) ? v : 50 } catch { return 50 }
+}
 type SortKey = 'date' | 'stake' | 'odds' | 'clv' | 'profit'
 const fmtDate = (d: string) => d.split('-').reverse().join('/')
 
@@ -41,6 +46,9 @@ export function BetTable({ bets, theoretical = false, showPortfolio = true, tool
   const [q, setQ] = useState('')
   const [dense, setDense] = useState(true)
   const [page, setPage] = useState(0)
+  const [size, setSizeState] = useState<number>(loadSize)
+  const setSize = (v: number) => { setSizeState(v); setPage(0); try { localStorage.setItem(SIZE_KEY, String(v)) } catch { /* stockage indisponible */ } }
+  const PAGE = size || Math.max(1, bets.length)
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'date', dir: -1 })
   const location = useLocation()
 
@@ -123,9 +131,16 @@ export function BetTable({ bets, theoretical = false, showPortfolio = true, tool
           </tbody>
         </table>
       </div>
-      <div className="flex items-center justify-between px-4 py-2.5 text-xs text-muted">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-xs text-muted">
         <span>{filtered.length ? `${current * PAGE + 1}–${Math.min(filtered.length, (current + 1) * PAGE)} sur ${filtered.length}` : '0 pari'}</span>
-        <span className="flex gap-3">
+        <span className="flex items-center gap-1">
+          Afficher
+          {SIZES.map(v => (
+            <button key={v} onClick={() => setSize(v)} aria-pressed={size === v}
+              className={`px-1.5 py-0.5 font-mono ${size === v ? 'font-semibold text-ink underline underline-offset-4' : 'hover:text-ink'}`}>{v || 'tout'}</button>
+          ))}
+        </span>
+        <span className={`flex gap-3 ${pages > 1 ? '' : 'invisible'}`}>
           <button disabled={current === 0} onClick={() => setPage(current - 1)} className="hover:text-ink disabled:opacity-40">‹ Précédent</button>
           <button disabled={current >= pages - 1} onClick={() => setPage(current + 1)} className="hover:text-ink disabled:opacity-40">Suivant ›</button>
         </span>
