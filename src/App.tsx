@@ -42,7 +42,8 @@ function AuthenticatedApp({ session }: { session: Session }) {
         <Route path="/paris/calculateurs" element={<CalculatorsPage />} />
         <Route path="/paris/bilan" element={<BilanPage portfolio="commun" bets={bets} loading={betsLoading} />} />
         <Route path="/paris/partage" element={<PartagePage bets={bets} loading={betsLoading} />} />
-        <Route path="/paris/vu-pas-pris" element={<VuPasPrisPage bets={bets} loading={betsLoading} />} />
+        <Route path="/kelicful/vu-pas-pris" element={<VuPasPrisPage bets={bets} loading={betsLoading} />} />
+        <Route path="/paris/vu-pas-pris" element={<Navigate to="/kelicful/vu-pas-pris" replace />} />
         <Route path="/kelicful/bilan" element={<BilanPage portfolio="kelicful" bets={bets} loading={betsLoading} sportFirst />} />
         <Route path="/kelicful/recap" element={<JournalPage bets={bets} loading={betsLoading} portfolio="kelicful" />} />
         <Route path="/kelicful/atp" element={<TennisEloPage key="ATP" tour="ATP" />} />

@@ -12,9 +12,9 @@ React 19 · Vite · TypeScript · Tailwind 4 · Supabase · déployé sur GitHub
 
 | Section | Contenu |
 |---|---|
-| **Paris** | Bilan · Récap (paris en cours, résultat en un clic) · Partage & compta · Vu pas pris · Calculateurs |
+| **Paris** | Bilan · Récap du commun (paris en cours, résultat en un clic) · Partage & compta · Calculateurs |
 | **Modèles** | Ligues LoL (Classement, GDM, Matchs, Équipes) |
-| **Kelicful** | Bilan perso · Elo tennis ATP · Elo tennis WTA |
+| **Kelicful** | Bilan perso · Récap · Vu pas pris · Elo tennis ATP · Elo tennis WTA |
 | **Réglages** | Partage, bankroll, remises à zéro, saisons masquées, sports, paramètres des modèles, sauvegarde |
 
 Le bouton **+ Pari** est accessible partout (en-tête sur ordinateur, bouton flottant sur mobile). Thème clair / sombre en haut à droite.
