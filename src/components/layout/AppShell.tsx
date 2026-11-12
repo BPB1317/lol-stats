@@ -1,12 +1,13 @@
 // Coque « Hybride » : en-tête (sections, Style Suisse | Bourse, Mode clair | sombre, Pari +),
 // bandeau des derniers paris en style Bourse, sous-navigation de la section, contenu sur une grille commune.
 // Ni le style ni le mode ne changent la mise en page.
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import type { League } from '@/types'
 import type { Bet } from '@/types/betting'
 import { useAppearance } from '@/lib/appearance'
+import { useTabLayout } from '@/lib/tabLayout'
 import { resultProfit, isSettled } from '@/lib/betStats'
 import { LeagueNav } from './LeagueNav'
 import { Toaster } from './Toaster'
@@ -19,7 +20,7 @@ const SECTIONS = [
 ]
 const SUB: Record<string, { label: string; to: string }[]> = {
   '/paris': [{ label: 'Bilan', to: '/paris/bilan' }, { label: 'Récap', to: '/paris/recap' }, { label: 'Partage & compta', to: '/paris/partage' }, { label: 'Calculateurs', to: '/paris/calculateurs' }],
-  '/kelicful': [{ label: 'Bilan perso', to: '/kelicful/bilan' }, { label: 'Récap', to: '/kelicful/recap' }, { label: 'Vu pas pris', to: '/kelicful/vu-pas-pris' }, { label: 'Elo ATP', to: '/kelicful/atp' }, { label: 'Elo WTA', to: '/kelicful/wta' }],
+  '/kelicful': [{ label: 'Bilan', to: '/kelicful/bilan' }, { label: 'Récap', to: '/kelicful/recap' }, { label: 'Vu pas pris', to: '/kelicful/vu-pas-pris' }, { label: 'Elo ATP', to: '/kelicful/atp' }, { label: 'Elo WTA', to: '/kelicful/wta' }],
 }
 
 function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { v: T; content: ReactNode; title: string }[]; onChange: (v: T) => void; label: string }) {
@@ -32,6 +33,18 @@ function Segmented<T extends string>({ value, options, onChange, label }: { valu
         </button>
       ))}
     </div>
+  )
+}
+
+/** Contrôles discrets d'un onglet en mode personnalisation : déplacer (‹ ›) et masquer / afficher. */
+function TabTools({ first, last, hidden, canHide = true, onMove, onToggle, label }: { first: boolean; last: boolean; hidden: boolean; canHide?: boolean; onMove: (d: -1 | 1) => void; onToggle: () => void; label: string }) {
+  const btn = 'px-1 text-[11px] leading-none text-faint hover:text-ink disabled:opacity-30'
+  return (
+    <span className="ml-1 inline-flex items-center">
+      <button type="button" className={btn} disabled={first} onClick={() => onMove(-1)} aria-label={`Déplacer ${label} vers la gauche`}>‹</button>
+      <button type="button" className={btn} disabled={last} onClick={() => onMove(1)} aria-label={`Déplacer ${label} vers la droite`}>›</button>
+      {canHide && <button type="button" className={btn} onClick={onToggle} aria-label={hidden ? `Afficher ${label}` : `Masquer ${label}`}>{hidden ? 'afficher' : 'masquer'}</button>}
+    </span>
   )
 }
 
@@ -64,6 +77,15 @@ export function AppShell({ leagues, bets, userId, who, children }: { leagues: Le
   const { style, mode, setStyle, setMode } = useAppearance(userId)
   const section = SECTIONS.find(s => pathname.startsWith(s.base))?.base ?? '/paris'
   const newBetHref = `${pathname}?pari=nouveau`
+  const tabs = useTabLayout(userId)
+  const [editTabs, setEditTabs] = useState(false)
+  const sections = tabs.sort(SECTIONS, s => s.base)
+  const shownSections = sections.filter(s => editTabs || !tabs.isHidden(s.base))
+  const subOf = (base: string) => tabs.sort(SUB[base] ?? [], t => t.to)
+  const sub = subOf(section)
+  const shownSub = sub.filter(t => editTabs || !tabs.isHidden(t.to))
+  // Lien d'une section : son premier sous-onglet visible
+  const sectionHref = (s: typeof SECTIONS[number]) => subOf(s.base).find(t => !tabs.isHidden(t.to))?.to ?? s.to
 
   // Logo d'onglet : minimap rouge sur les sections communes, ambre dans l'espace Kelicful
   useEffect(() => {
@@ -77,8 +99,12 @@ export function AppShell({ leagues, bets, userId, who, children }: { leagues: Le
         <header className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b-2 border-ink py-3">
           <Link to="/paris/bilan" className="shrink-0 text-[15px] font-bold tracking-tight">Squawo &amp; Kelicful</Link>
           <nav className="-mx-1 flex overflow-x-auto" aria-label="Sections">
-            {SECTIONS.map(s => (
-              <NavLink key={s.base} to={s.to} className={`shrink-0 px-2 py-1 text-[15px] ${section === s.base ? 'text-nav' : 'text-ink hover:text-nav'}`}>{s.label}</NavLink>
+            {shownSections.map((s, i) => (
+              <span key={s.base} className={`flex shrink-0 items-center ${editTabs && tabs.isHidden(s.base) ? 'opacity-40' : ''}`}>
+                <NavLink to={sectionHref(s)} className={`px-2 py-1 text-[15px] ${section === s.base ? 'text-nav' : 'text-ink hover:text-nav'} ${editTabs && tabs.isHidden(s.base) ? 'line-through' : ''}`}>{s.label}</NavLink>
+                {editTabs && <TabTools label={s.label} first={i === 0} last={i === sections.length - 1} hidden={tabs.isHidden(s.base)} canHide={s.base !== '/reglages'}
+                  onMove={d => tabs.move(sections.map(x => x.base), s.base, d)} onToggle={() => tabs.toggle(s.base)} />}
+              </span>
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-2">
@@ -90,12 +116,24 @@ export function AppShell({ leagues, bets, userId, who, children }: { leagues: Le
 
         {style === 'terminal' && <Ticker bets={bets} portfolio={section === '/kelicful' ? 'kelicful' : 'commun'} />}
 
-        {(SUB[section] || section === '/modeles') && (
+        {editTabs && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line py-1.5 text-[11px] text-faint">
+            <span>Personnalisation des onglets : ‹ › pour déplacer, « masquer » pour retirer de la barre (la page reste accessible).</span>
+            {tabs.customized && <button onClick={tabs.reset} className="underline underline-offset-2 hover:text-ink">Tout réinitialiser</button>}
+            <button onClick={() => setEditTabs(false)} className="ml-auto font-semibold text-ink">Terminé</button>
+          </div>
+        )}
+
+        {((SUB[section] && shownSub.length > 0) || section === '/modeles') && (
           <nav className="flex items-center gap-x-5 gap-y-1 overflow-x-auto border-b border-line py-2 text-[13px]" aria-label="Sous-sections">
             {section === '/modeles'
               ? <LeagueNav leagues={leagues} />
-              : SUB[section].map(s => (
-                <NavLink key={s.to} to={s.to} className={({ isActive }) => `shrink-0 py-1 ${isActive ? 'font-semibold text-ink' : 'text-muted hover:text-ink'}`}>{s.label}</NavLink>
+              : shownSub.map((s, i) => (
+                <span key={s.to} className={`flex shrink-0 items-center ${editTabs && tabs.isHidden(s.to) ? 'opacity-40' : ''}`}>
+                  <NavLink to={s.to} className={({ isActive }) => `py-1 ${isActive ? 'font-semibold text-ink' : 'text-muted hover:text-ink'} ${editTabs && tabs.isHidden(s.to) ? 'line-through' : ''}`}>{s.label}</NavLink>
+                  {editTabs && <TabTools label={s.label} first={i === 0} last={i === sub.length - 1} hidden={tabs.isHidden(s.to)}
+                    onMove={d => tabs.move(sub.map(x => x.to), s.to, d)} onToggle={() => tabs.toggle(s.to)} />}
+                </span>
               ))}
           </nav>
         )}
@@ -104,7 +142,10 @@ export function AppShell({ leagues, bets, userId, who, children }: { leagues: Le
 
         <footer className="flex items-center justify-between border-t border-line py-4 text-xs text-muted">
           <span>Squawo &amp; Kelicful{who ? ` · ${who}` : ''}</span>
-          <button onClick={() => supabase.auth.signOut()} className="hover:text-ink">Déconnexion</button>
+          <span className="flex items-center gap-4">
+            <button onClick={() => setEditTabs(e => !e)} className="text-faint hover:text-ink">{editTabs ? 'Terminer la personnalisation' : 'Personnaliser les onglets'}</button>
+            <button onClick={() => supabase.auth.signOut()} className="hover:text-ink">Déconnexion</button>
+          </span>
         </footer>
       </div>
 

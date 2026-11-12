@@ -14,7 +14,7 @@ React 19 · Vite · TypeScript · Tailwind 4 · Supabase · déployé sur GitHub
 |---|---|
 | **Paris** | Bilan · Récap du commun (paris en cours, résultat en un clic) · Partage & compta · Calculateurs |
 | **Modèles** | Ligues LoL (Classement, GDM, Matchs, Équipes) |
-| **Kelicful** | Bilan perso · Récap · Vu pas pris · Elo tennis ATP · Elo tennis WTA |
+| **Kelicful** | Bilan · Récap · Vu pas pris · Elo tennis ATP · Elo tennis WTA |
 | **Réglages** | Partage, bankroll, remises à zéro, saisons masquées, sports, paramètres des modèles, sauvegarde |
 
 Le bouton **+ Pari** est accessible partout (en-tête sur ordinateur, bouton flottant sur mobile). Thème clair / sombre en haut à droite.
@@ -48,6 +48,8 @@ Le schéma complet est dans `supabase/schema.sql`. Chaque évolution passe par u
 | `20261110_02_historique.sql` | nom du match facultatif ; `data_history` : copie de chaque ajout / modification / suppression |
 | `20261111_03_reglement.sql` | mouvement « Règlement » (paiement entre nous) |
 | `20261111_04_poids_tennis.sql` | répartition Elo / Elo surface par surface |
+| `20261111_05_apparence.sql` | style et mode mémorisés par utilisateur |
+| `20261112_06_onglets.sql` | onglets personnalisés par utilisateur (ordre, masqués) |
 
 Toutes les tables ont la RLS activée (accès aux utilisateurs connectés). **Les inscriptions sont fermées** dans Supabase :
 les comptes se créent par invitation. La table `profiles` relie chaque compte à Squawo ou Kelicful (remplie hors dépôt).
