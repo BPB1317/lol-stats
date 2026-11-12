@@ -321,7 +321,7 @@ export function BilanView({ portfolio, bets, moves, hiddenSeasons, resetDate, sp
             {year === 'Toutes' && years.length > 1 && (['continu', 'superpose'] as const).map(m => (
               <button key={m} onClick={() => setMode(m)} className={`text-xs ${mode === m ? 'text-ink underline underline-offset-4' : 'text-muted hover:text-ink'}`}>{m === 'continu' ? 'Continu' : 'Années superposées'}</button>
             ))}
-            <span className="font-mono text-xs text-accent">{heroSign}{heroInt}</span>
+            <span className={`font-mono text-xs ${heroRounded > 0 ? 'text-win' : heroRounded < 0 ? 'text-loss' : 'text-muted'}`}>{heroSign}{heroInt}</span>
           </span>
         </div>
         {monthEnd.length ? <CumulativeChart points={monthEnd} mode={year === 'Toutes' ? mode : 'continu'} height={260} endLabel={false} /> : <div className="py-10 text-center text-sm text-muted">Pas encore de données.</div>}
