@@ -1,7 +1,4 @@
 import { useState, Fragment } from 'react'
-
-const BO_KEY = 'sk-calc-bo'
-function loadBo(): 'BO3' | 'BO5' { try { return localStorage.getItem(BO_KEY) === 'BO5' ? 'BO5' : 'BO3' } catch { return 'BO3' } }
 import { Link, useLocation } from 'react-router-dom'
 import { useSettings } from '@/hooks/useBetting'
 import { seriesProbs, type SeriesProbs } from '@/lib/seriesOdds'
@@ -70,8 +67,6 @@ export function EloCalculator({ ratings, defaultMode = 'teams', leagueName }: El
   const [manualDelta, setManualDelta] = useState('')
   const [mode, setMode] = useState<'teams' | 'manual'>(defaultMode)
   const [sEdit, setSInput] = useState<string | null>(null)
-  const [bo, setBoState] = useState<'BO3' | 'BO5'>(loadBo)
-  const setBo = (v: 'BO3' | 'BO5') => { setBoState(v); try { localStorage.setItem(BO_KEY, v) } catch { /* indisponible */ } }
   const sInput = sEdit ?? String(settings.series_concentration) // valeur des Réglages tant qu'on ne la change pas
   const s = parseFloat(sInput)
 
@@ -224,30 +219,32 @@ export function EloCalculator({ ratings, defaultMode = 'teams', leagueName }: El
           </div>
         )}
 
-        {/* BO3 / BO5 + handicaps, dérivés de la proba BO1 : d'abord le format, puis A en face de B */}
+        {/* BO3 et BO5 affichés ensemble ; dans chaque format, Équipe A en face d'Équipe B */}
         {result && (
-          <div className="space-y-3 border-t border-ink pt-3">
+          <div className="space-y-3 pt-1">
             <div className="flex items-center justify-between gap-3">
-              <div role="tablist" aria-label="Format" className="flex border border-ink">
-                {(['BO3', 'BO5'] as const).map((v, i) => (
-                  <button key={v} role="tab" aria-selected={bo === v} onClick={() => setBo(v)}
-                    className={`h-9 px-5 text-sm font-bold ${i ? 'border-l border-ink' : ''} ${bo === v ? 'bg-ink text-bg' : 'text-ink hover:bg-raised'}`}>{v}</button>
-                ))}
-              </div>
+              <h3 className="text-sm font-semibold text-ink">Séries &amp; handicaps</h3>
               <label className="flex items-center gap-2 text-xs text-muted" title="Concentration du modèle de séries (Réglages)">
                 s =
                 <input type="number" value={sInput} onChange={e => setSInput(e.target.value)} className="field w-16 px-2 py-1 text-center font-mono text-sm" />
               </label>
             </div>
             {series ? (
-              <div className="grid grid-cols-2 gap-x-3 sm:gap-x-6">
-                <div className="truncate border-b-2 border-ink pb-1.5 text-base font-bold text-ink">{result.label1}</div>
-                <div className="truncate border-b-2 border-ink pb-1.5 text-base font-bold text-ink">{result.label2}</div>
-                {SERIES_BLOCKS.find(x => x.title === bo)!.rows.map((row, i) => (
-                  <Fragment key={i}>
-                    <OddsCell p={series.a[row.a.key]} label={row.a.hdp ?? 'Vainqueur'} href={takeHref(result.label1, row.a.hdp, 1 / series.a[row.a.key])} />
-                    <OddsCell p={series.b[row.b.key]} label={row.b.hdp ?? 'Vainqueur'} href={takeHref(result.label2, row.b.hdp, 1 / series.b[row.b.key])} />
-                  </Fragment>
+              <div className="grid gap-x-10 gap-y-6 lg:grid-cols-2">
+                {SERIES_BLOCKS.map(block => (
+                  <div key={block.title} className="border-t-2 border-ink pt-2">
+                    <div className="mb-1 text-lg font-bold text-ink">{block.title}</div>
+                    <div className="grid grid-cols-2 gap-x-3 sm:gap-x-6">
+                      <div className="truncate border-b border-ink pb-1 text-sm font-semibold text-ink">{result.label1}</div>
+                      <div className="truncate border-b border-ink pb-1 text-sm font-semibold text-ink">{result.label2}</div>
+                      {block.rows.map((row, i) => (
+                        <Fragment key={i}>
+                          <OddsCell p={series.a[row.a.key]} label={row.a.hdp ?? 'Vainqueur'} href={takeHref(result.label1, row.a.hdp, 1 / series.a[row.a.key])} />
+                          <OddsCell p={series.b[row.b.key]} label={row.b.hdp ?? 'Vainqueur'} href={takeHref(result.label2, row.b.hdp, 1 / series.b[row.b.key])} />
+                        </Fragment>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
